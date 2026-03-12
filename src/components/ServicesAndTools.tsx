@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Network, FileSearch, MessageSquareCode, Terminal, ExternalLink, Database, Rocket } from "lucide-react";
+import { Network, FileSearch, MessageSquareCode, Terminal, ExternalLink, Database, GitCompare, ScanSearch, BookOpen, Clock } from "lucide-react";
 
 export function ServicesAndTools() {
   const services = [
@@ -25,16 +25,37 @@ export function ServicesAndTools() {
     }
   ];
 
-  const tools = [
+  const liveTool = {
+    id: "synaptica-knowledge",
+    title: "Synaptica Knowledge Architecture",
+    description: "A suite of 5 AI-powered knowledge tools: semantic search, documentation gap analysis, smart FAQ builder, RAG onboarding assistant, and a prompt engineering toolkit.",
+    tech: ["React", "OpenAI GPT", "PostgreSQL", "SSE Streaming"],
+    link: "https://synaptica-knowledge-architecture-mcp.replit.app/search",
+    linkLabel: "Open Tool",
+    icon: <Database className="w-6 h-6" />,
+  };
+
+  const upcomingTools = [
     {
-      id: "synaptica-knowledge",
-      title: "Synaptica Knowledge Architecture",
-      description: "A suite of 5 AI-powered knowledge tools: semantic search, documentation gap analysis, smart FAQ builder, RAG onboarding assistant, and a prompt engineering toolkit.",
-      tech: ["React", "OpenAI GPT", "PostgreSQL", "SSE Streaming"],
-      link: "https://synaptica-knowledge-architecture-mcp.replit.app/search",
-      linkLabel: "Open Tool",
-      icon: <Database className="w-6 h-6" />,
-      featured: true,
+      id: "document-comparison",
+      icon: <GitCompare className="w-6 h-6 text-secondary" />,
+      title: "Document Comparison Engine",
+      description: "Side-by-side AI analysis of two knowledge base versions — surfaces gaps, contradictions, duplicate content, and update priorities at a glance.",
+      eta: "Q2 2025",
+    },
+    {
+      id: "deep-analysis",
+      icon: <ScanSearch className="w-6 h-6 text-primary" />,
+      title: "Deep Document Analysis",
+      description: "Upload any document and receive a structured breakdown of ambiguities, missing context, structural issues, and AI-powered rewrite suggestions.",
+      eta: "Q2 2025",
+    },
+    {
+      id: "prompt-library",
+      icon: <BookOpen className="w-6 h-6 text-secondary" />,
+      title: "Prompt Library Generator",
+      description: "Automatically build a reusable, version-controlled prompt framework from your existing documentation — ready to plug into any LLM workflow.",
+      eta: "Q3 2025",
     },
   ];
 
@@ -98,29 +119,37 @@ export function ServicesAndTools() {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {tools.map((tool, idx) => (
-            <motion.div
-              key={tool.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ delay: idx * 0.1 }}
-              className="glass p-8 rounded-2xl flex flex-col h-full relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 lg:col-span-2 border-primary/20 hover:border-primary/50 glow-ambient"
-            >
-              <div className="absolute top-6 right-6 bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
-                Featured
+        {/* ── Featured live tool ── */}
+        <div className="mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            className="glass p-8 rounded-2xl flex flex-col md:flex-row gap-8 relative overflow-hidden group hover:-translate-y-1 transition-all duration-300 border-primary/20 hover:border-primary/50 glow-ambient"
+          >
+            <div className="absolute top-6 right-6 bg-primary/10 text-primary border border-primary/20 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">
+              Featured
+            </div>
+
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center border bg-primary/10 text-primary border-primary/20 mb-4">
+                {liveTool.icon}
               </div>
-
-              <div className="w-12 h-12 rounded-lg flex items-center justify-center mb-6 border bg-primary/10 text-primary border-primary/20">
-                {tool.icon}
+              <div className="hidden md:flex flex-wrap gap-2 max-w-[200px]">
+                {liveTool.tech.map(t => (
+                  <span key={t} className="text-xs font-medium bg-white/5 border border-white/10 px-2.5 py-1 rounded-md text-gray-300">
+                    {t}
+                  </span>
+                ))}
               </div>
+            </div>
 
-              <h3 className="text-2xl font-semibold mb-3">{tool.title}</h3>
-              <p className="text-muted-foreground mb-6 flex-grow">{tool.description}</p>
+            <div className="flex flex-col flex-grow">
+              <h3 className="text-2xl font-semibold mb-3 pr-24">{liveTool.title}</h3>
+              <p className="text-muted-foreground mb-6 flex-grow leading-relaxed">{liveTool.description}</p>
 
-              <div className="flex flex-wrap gap-2 mb-8">
-                {tool.tech.map(t => (
+              <div className="flex md:hidden flex-wrap gap-2 mb-6">
+                {liveTool.tech.map(t => (
                   <span key={t} className="text-xs font-medium bg-white/5 border border-white/10 px-2.5 py-1 rounded-md text-gray-300">
                     {t}
                   </span>
@@ -128,39 +157,54 @@ export function ServicesAndTools() {
               </div>
 
               <a
-                href={tool.link}
+                href={liveTool.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,200,160,0.3)]"
+                className="self-start inline-flex items-center gap-2 py-3 px-6 rounded-xl font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,200,160,0.3)]"
               >
-                {tool.linkLabel}
+                {liveTool.linkLabel}
                 <ExternalLink className="w-4 h-4" />
               </a>
+            </div>
+          </motion.div>
+        </div>
+
+        {/* ── Upcoming tools ── */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {upcomingTools.map((tool, idx) => (
+            <motion.div
+              key={tool.id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: idx * 0.1 }}
+              className="glass p-7 rounded-2xl flex flex-col border-dashed border-2 border-white/10 hover:border-white/20 transition-colors group"
+            >
+              <div className="flex items-center justify-between mb-5">
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center border border-white/10 bg-white/5 group-hover:bg-white/8 transition-colors">
+                  {tool.icon}
+                </div>
+                <span className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground bg-white/5 border border-white/10 px-2.5 py-1 rounded-full">
+                  <Clock className="w-3 h-3" />
+                  {tool.eta}
+                </span>
+              </div>
+
+              <h3 className="text-lg font-semibold mb-3 text-gray-200 group-hover:text-foreground transition-colors">
+                {tool.title}
+              </h3>
+              <p className="text-sm text-muted-foreground leading-relaxed flex-grow">
+                {tool.description}
+              </p>
+
+              <button
+                onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
+                className="mt-6 text-sm font-medium text-muted-foreground hover:text-primary transition-colors border-b border-transparent hover:border-primary/50 pb-0.5 self-start"
+              >
+                Discuss early access &rarr;
+              </button>
             </motion.div>
           ))}
-
-          {/* Placeholder */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ delay: 0.1 }}
-            className="glass p-8 rounded-2xl border-dashed border-2 border-white/10 flex flex-col h-full items-center justify-center text-center hover:border-white/20 transition-colors"
-          >
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-6">
-              <Rocket className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-xl font-semibold mb-3 text-gray-300">More Tools Coming</h3>
-            <p className="text-muted-foreground mb-8 text-sm">
-              New AI knowledge tools are in development. Follow along or get in touch to discuss a custom solution for your team.
-            </p>
-            <button
-              onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}
-              className="text-sm font-medium text-foreground hover:text-primary transition-colors border-b border-transparent hover:border-primary pb-0.5"
-            >
-              Discuss a project &rarr;
-            </button>
-          </motion.div>
         </div>
 
       </div>
