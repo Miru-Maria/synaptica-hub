@@ -28,6 +28,12 @@ import { defineConfig } from "vite";
       port,
       host: "0.0.0.0",
       allowedHosts: true,
+      hmr: {
+        clientPort: 443,
+      },
+      watch: {
+        ignored: ["**/.cache/**", "**/.local/**", "**/node_modules/**"],
+      },
     },
     preview: {
       port,
