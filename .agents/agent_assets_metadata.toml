@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "Dku3nS3Suk8OsDhRP60Bf"
+uri = "file://attached_assets/synaptica-strategy-briefing_1773297163088.md"
+type = "text"
+title = "Synaptica Strategy & Legal Briefing (updated)"

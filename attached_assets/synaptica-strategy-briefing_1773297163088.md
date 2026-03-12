@@ -12,6 +12,7 @@
 3. [Service Packages](#3-service-packages)
 4. [Target Buyers](#4-target-buyers)
 5. [Trademark Registration Guide](#5-trademark-registration-guide)
+6. [Pricing Model & First Client Strategy](#6-pricing-model--first-client-strategy)
 
 ---
 
@@ -210,6 +211,62 @@ Filing can be done directly online through OSIM or EUIPO. However, a Romanian IP
 - Once registered, you hold exclusive commercial rights in the registered classes and geography, including the right to challenge infringing uses
 - Registration also makes it significantly easier to defend the corresponding domain name and social handles if challenged
 - **This document is general orientation and not legal advice.** Verify current fees and procedures with OSIM, EUIPO, or a qualified IP attorney before filing
+
+---
+
+## 6. Pricing Model & First Client Strategy
+
+*Added March 2026*
+
+### Who to Target First
+
+Of the buyer segments listed in Section 4, **startups at 20–100 people** are the strongest first target — not because they are the easiest, but because:
+
+- They make decisions fast, without procurement committees or lengthy approval chains
+- They feel knowledge chaos acutely and recognise it as a problem worth paying to solve
+- They are accustomed to working with small, solo operators and will give a testimonial if the work is good
+- They are reachable directly via LinkedIn without gatekeepers
+
+The **HR & People Ops** angle is also a strong first-door entry point. The Onboarding Assistant is a direct, tangible demonstration of a pain they already have budget allocated for — making the business case easier to make than in any other segment.
+
+### Pricing — Starting Out
+
+Since the practice is launching without an existing client list or testimonials, the recommended approach is a **pilot engagement model** for the first two to three clients — not a permanent discount, but a clearly framed, time-limited rate in exchange for a case study and testimonial.
+
+| Package | Full Rate (Target) | Pilot Rate (First 2–3 Clients) |
+|---|---|---|
+| Documentation Audit (1 week) | £1,500–£2,000 | £800–£1,000 |
+| Knowledge Architecture Sprint (1–2 weeks) | £2,500–£4,000 | £1,500–£2,000 |
+| Prompt Engineering Workshop (1–2 weeks) | £2,000–£3,000 | £1,200–£1,500 |
+| RAG Pipeline Design & Build (4–8 weeks) | £8,000–£15,000 | *Hold — do not take yet* |
+
+Rates are quoted in GBP for international clients. EUR equivalent is also appropriate for EU-based clients. Do not quote in RON — pricing in local currency anchors expectations to local market rates and is difficult to reverse.
+
+### Sequencing Principles
+
+**1. Start with the Documentation Audit.**
+It is the lowest-risk engagement for a first client — short enough that neither party is overcommitted, bounded in scope, and it naturally leads into a larger engagement if the work lands well. It is the foot in the door.
+
+**2. Hold off on the RAG Pipeline build for now.**
+A 4–8 week engagement with no existing reference points is high-risk for both sides. Build up to it after completing one or two smaller, successful engagements. Use that work as proof before pitching the larger build.
+
+**3. Frame pilot pricing as selective, not desperate.**
+Do not volunteer that you are new. Instead: *"I'm taking on a small number of pilot engagements this quarter at a reduced rate, in exchange for a case study and testimonial."* This positions the offer as selective access, not a price reduction due to inexperience.
+
+**4. Never work for free.**
+Even for a testimonial. Even a nominal rate of £300–£500 for a half-day audit signals mutual commitment and sets the correct professional dynamic from the outset. Free work is typically undervalued and rarely produces useful testimonials.
+
+**5. Use the Lab tools as a substitute for case studies.**
+Until testimonials exist, the live tools carry the credibility weight that case studies would otherwise provide. When reaching out to a prospect cold, linking to the Lab and offering to run the Gap Analyzer or Semantic Search against their own documentation gives them something tangible to evaluate — before a single meeting is booked.
+
+### When to Raise Rates
+
+Move from pilot to full rates after:
+- Two to three completed engagements with positive feedback
+- At least one written testimonial or case study permission
+- Any inbound enquiry (proof that word-of-mouth or the Lab is working)
+
+The full rates listed above are not a ceiling — they are a starting point for a practice with a short track record. As the client list and reputation grow, rates should increase accordingly.
 
 ---
 
