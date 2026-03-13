@@ -445,6 +445,26 @@ export default function AdminDashboard() {
                 </a>
               </CardContent>
             </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-purple-400">RAG</span> Pipeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
+                </p>
+                <a
+                  href="/admin/rag-pipeline"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

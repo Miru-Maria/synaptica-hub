@@ -8,6 +8,7 @@ import NotFound from "@/pages/not-found";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import KASprint from "@/pages/admin/KASprint";
+import RAGPipeline from "@/pages/admin/RAGPipeline";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,7 @@ function Router() {
       </Route>
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/ka-sprint" component={KASprint} />
+      <Route path="/admin/rag-pipeline" component={RAGPipeline} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

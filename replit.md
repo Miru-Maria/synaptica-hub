@@ -98,3 +98,14 @@ A documentation gap analysis tool accessible at `/docaudit`. Users submit knowle
 - Notion API integration
 
 Content is chunked, embedded via OpenAI, and compared against user-selected topic taxonomies (4 presets + custom topics). Results show coverage scores, radar chart visualization, severity-ranked gaps, and actionable recommendations. Reports can be exported to PDF.
+
+## RAG Pipeline Tool
+
+An admin-only RAG (Retrieval-Augmented Generation) pipeline tool at `/admin/rag-pipeline`. Features:
+- **Ingest**: Paste document text, configure chunk size and overlap, embed via OpenAI `text-embedding-3-small`, and store in-memory
+- **Chat**: Ask natural language questions answered by GPT-4o using cosine-similarity-retrieved document chunks as context
+- **Sources**: Each response cites specific chunk IDs with similarity scores and text previews
+- Status badge shows total indexed chunk count; state persists for the server session
+- Backend routes: `GET /api/admin/rag/status`, `POST /api/admin/rag/ingest`, `POST /api/admin/rag/chat`
+- Frontend: `src/pages/admin/RAGPipeline.tsx` with dark teal/purple Synaptica theme
+- Accessible from Admin Dashboard "Internal Tools" tab via "Launch Tool" card
