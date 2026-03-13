@@ -29,6 +29,23 @@ app.post("/api/contact", async (req, res) => {
        VALUES ($1, $2, $3, $4)`,
       [name, email, subject || null, message]
     );
+
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const { Resend: ResendClient } = await import("resend");
+        const resend = new ResendClient(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: "Synaptica Contact Form <onboarding@resend.dev>",
+          to: ["cristiana_paun@protonmail.com"],
+          replyTo: email,
+          subject: `New message from ${name}`,
+          text: `You have a new contact form submission.\n\nFrom: ${name} <${email}>\nSubject: ${subject || "(none)"}\n\nLog in to your admin inbox to read the full message:\nhttps://synaptica-knowledge-systems.replit.app/admin`,
+        });
+      } catch (mailErr) {
+        console.error("Notification email failed:", mailErr?.message || mailErr);
+      }
+    }
+
     res.json({ success: true });
   } catch (err) {
     console.error("DB insert error:", err?.message || err);
