@@ -195,7 +195,7 @@ export function ServicesAndTools() {
         </div>
 
         {/* ── Live tools ── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {liveTools.filter((tool) => {
             const status = toolStatuses.find((ts) => ts.slug === tool.id);
             return !status || status.enabled;
