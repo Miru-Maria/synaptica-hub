@@ -28,6 +28,11 @@ interface ClientTool {
   enabled: boolean;
 }
 
+function authHeaders(): Record<string, string> {
+  const token = sessionStorage.getItem("admin_token");
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
@@ -38,7 +43,9 @@ export default function AdminDashboard() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/me", { credentials: "include" });
+      const res = await fetch("/api/admin/me", {
+        headers: authHeaders(),
+      });
       if (!res.ok) {
         setLocation("/admin/login");
         return false;
@@ -56,8 +63,8 @@ export default function AdminDashboard() {
       if (!authed) return;
 
       const [pkgRes, toolRes] = await Promise.all([
-        fetch("/api/admin/packages", { credentials: "include" }),
-        fetch("/api/admin/tools", { credentials: "include" }),
+        fetch("/api/admin/packages", { headers: authHeaders() }),
+        fetch("/api/admin/tools", { headers: authHeaders() }),
       ]);
 
       if (pkgRes.ok) setPackages(await pkgRes.json());
@@ -68,7 +75,7 @@ export default function AdminDashboard() {
   }, [checkAuth]);
 
   const handleLogout = async () => {
-    await fetch("/api/admin/logout", { method: "POST", credentials: "include" });
+    sessionStorage.removeItem("admin_token");
     setLocation("/admin/login");
   };
 
@@ -78,8 +85,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/packages", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(packages),
       });
       if (res.ok) setStatus("Packages saved");
@@ -97,8 +103,7 @@ export default function AdminDashboard() {
     try {
       const res = await fetch("/api/admin/tools", {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(tools),
       });
       if (res.ok) setStatus("Tools saved");

@@ -22,20 +22,10 @@ adminRouter.post("/login", (req: Request, res: Response) => {
   }
 
   const token = signToken(username);
-
-  res.cookie("admin_token", token, {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 8 * 60 * 60 * 1000,
-    path: "/",
-  });
-
-  res.json({ ok: true });
+  res.json({ ok: true, token });
 });
 
-adminRouter.post("/logout", requireAuth, (_req: Request, res: Response) => {
-  res.clearCookie("admin_token", { path: "/" });
+adminRouter.post("/logout", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 

@@ -25,7 +25,9 @@ export function verifyToken(token: string): { sub: string } | null {
 }
 
 export function requireAuth(req: AuthenticatedRequest, res: Response, next: NextFunction) {
-  const token = req.cookies?.admin_token;
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+
   if (!token) {
     res.status(401).json({ error: "Not authenticated" });
     return;
