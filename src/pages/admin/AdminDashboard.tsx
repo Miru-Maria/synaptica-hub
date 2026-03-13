@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Wrench, Plus, Trash2, GripVertical } from "lucide-react";
+import { LogOut, Save, Package, Wrench, Plus, Trash2, GripVertical, ExternalLink } from "lucide-react";
 
 interface ServicePackage {
   id: string;
@@ -371,7 +371,18 @@ export default function AdminDashboard() {
               <Card key={tool.slug} className="bg-neutral-900 border-neutral-800">
                 <CardContent className="flex items-center justify-between py-4">
                   <div>
-                    <p className="font-medium text-neutral-100">{tool.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-neutral-100">{tool.name}</p>
+                      <a
+                        href={`/${tool.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-neutral-500 hover:text-neutral-300 transition-colors"
+                        title={`Open /${tool.slug}`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
                     <p className="text-sm text-neutral-500">/{tool.slug}</p>
                   </div>
                   <div className="flex items-center gap-3">
