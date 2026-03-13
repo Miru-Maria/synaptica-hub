@@ -27,8 +27,8 @@ export function Navbar() {
   const navLinks = [
     { name: "About", id: "about" },
     { name: "Services & Lab", id: "services" },
-    { name: "Packages", id: "packages" },
     { name: "Learning OS", id: "learning-os" },
+    { name: "Packages", id: "packages" },
   ];
 
   return (
