@@ -29,6 +29,9 @@ function Router() {
       <Route path="/synaptica-ka">
         <ExternalRedirect url="https://synaptica-knowledge-architecture-mcp.replit.app/search" />
       </Route>
+      <Route path="/docforge">
+        <ExternalRedirect url="https://docforge-pdf.replit.app/" />
+      </Route>
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
