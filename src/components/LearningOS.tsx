@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check, Minus, ExternalLink, BookOpen, Brain, Map, FolderKanban, StickyNote, Sparkles } from "lucide-react";
 import { useCurrency } from "@/context/currency";
 import { CurrencySelector } from "./CurrencySelector";
+import { initializePaddle, type Paddle } from "@paddle/paddle-js";
+
+const LEARNING_OS_URL = "https://synaptica-knowledge-systems-learning-os.replit.app/";
 
 const tierData = [
   {
@@ -11,7 +15,7 @@ const tierData = [
     priceNote: "No credit card required",
     description: "Get a feel for the platform before committing.",
     cta: "Start Free",
-    href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
+    paddleId: null,
     highlighted: false,
     badge: null,
     features: [
@@ -31,7 +35,7 @@ const tierData = [
     priceNote: "per month",
     description: "Full access to Tier 1 — the AI Transition curriculum.",
     cta: "Get Started",
-    href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
+    paddleId: import.meta.env.VITE_PADDLE_FOUNDATION_PRICE as string,
     highlighted: false,
     badge: null,
     features: [
@@ -51,7 +55,7 @@ const tierData = [
     priceNote: "per month",
     description: "The full Knowledge Systems curriculum plus AI-assisted learning.",
     cta: "Become an Architect",
-    href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
+    paddleId: import.meta.env.VITE_PADDLE_ARCHITECT_PRICE as string,
     highlighted: true,
     badge: "Recommended",
     features: [
@@ -71,7 +75,7 @@ const tierData = [
     priceNote: "per month",
     description: "Every tier, unlimited AI Tutor, and direct access to support.",
     cta: "Go Expert",
-    href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
+    paddleId: import.meta.env.VITE_PADDLE_EXPERT_PRICE as string,
     highlighted: false,
     badge: null,
     features: [
@@ -96,6 +100,23 @@ const modules = [
 
 export function LearningOS() {
   const { format } = useCurrency();
+  const [paddle, setPaddle] = useState<Paddle | undefined>();
+
+  useEffect(() => {
+    initializePaddle({
+      token: import.meta.env.VITE_PADDLE_TOKEN as string,
+      environment: "production",
+    }).then(setPaddle);
+  }, []);
+
+  const openCheckout = (priceId: string) => {
+    paddle?.Checkout.open({
+      items: [{ priceId, quantity: 1 }],
+      settings: {
+        successUrl: LEARNING_OS_URL,
+      },
+    });
+  };
 
   return (
     <section id="learning-os" className="py-24 relative z-10">
@@ -159,7 +180,7 @@ export function LearningOS() {
           className="flex justify-center sm:justify-start mb-12"
         >
           <a
-            href="https://synaptica-knowledge-systems-learning-os.replit.app/"
+            href={LEARNING_OS_URL}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
@@ -220,18 +241,27 @@ export function LearningOS() {
                 ))}
               </ul>
 
-              <a
-                href={tier.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
-                  tier.highlighted
-                    ? "bg-primary text-background hover:bg-primary/90"
-                    : "border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
-                }`}
-              >
-                {tier.cta}
-              </a>
+              {tier.paddleId ? (
+                <button
+                  onClick={() => openCheckout(tier.paddleId!)}
+                  className={`w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+                    tier.highlighted
+                      ? "bg-primary text-background hover:bg-primary/90"
+                      : "border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+                  }`}
+                >
+                  {tier.cta}
+                </button>
+              ) : (
+                <a
+                  href={LEARNING_OS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+                >
+                  {tier.cta}
+                </a>
+              )}
             </motion.div>
           ))}
         </div>

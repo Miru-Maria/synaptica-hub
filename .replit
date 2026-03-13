@@ -54,6 +54,10 @@ outputType = "webview"
 [userenv.shared]
 VITE_WEB3FORMS_KEY = "29065818-3e9d-47f6-8fc9-514585783844"
 ADMIN_KEY = "bf6378d9af28d83a67f4e01c5efcf5fa40e21f440d658e0b15502160e56d00a6"
+VITE_PADDLE_TOKEN = "live_9915f1793d8195901c899274417"
+VITE_PADDLE_FOUNDATION_PRICE = "pri_01kkma0d3ye2yhm26sh5f4dzek"
+VITE_PADDLE_ARCHITECT_PRICE = "pri_01kkm9yrdwhkzgrd3sh5yje7jx"
+VITE_PADDLE_EXPERT_PRICE = "pri_01kkm9xmgkkq44fr0t63rfgs93"
 
 [postMerge]
 path = "scripts/post-merge.sh"
