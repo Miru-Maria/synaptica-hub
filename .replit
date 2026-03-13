@@ -43,4 +43,9 @@ waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[userenv]
+
+[userenv.shared]
+VITE_WEB3FORMS_KEY = "29065818-3e9d-47f6-8fc9-514585783844"
   
