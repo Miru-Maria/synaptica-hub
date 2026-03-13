@@ -1,11 +1,7 @@
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail } from "lucide-react";
-import { ContactModal } from "./ContactModal";
 
 export function Contact() {
-  const [modalOpen, setModalOpen] = useState(false);
-
   return (
     <section id="contact" className="py-24 relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -43,8 +39,8 @@ export function Contact() {
             I take on a select number of freelance engagements each quarter. If you're building AI-powered knowledge systems, need documentation strategy, or want to explore what knowledge architecture could look like for your organization — I'd love to hear from you.
           </p>
 
-          <button
-            onClick={() => setModalOpen(true)}
+          <a
+            href="mailto:contact.synapticaks@pm.me"
             className="flex items-center gap-4 group bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/50 transition-all rounded-2xl p-5 w-full text-left"
           >
             <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
@@ -52,9 +48,9 @@ export function Contact() {
             </div>
             <div>
               <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Send a Message</p>
-              <p className="text-lg font-medium text-white">Open Contact Form</p>
+              <p className="text-lg font-medium text-white">contact.synapticaks@pm.me</p>
             </div>
-          </button>
+          </a>
 
           <div className="mt-10 pt-8 border-t border-white/5">
             <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -65,8 +61,6 @@ export function Contact() {
 
         </motion.div>
       </div>
-
-      <ContactModal open={modalOpen} onOpenChange={setModalOpen} />
     </section>
   );
 }
