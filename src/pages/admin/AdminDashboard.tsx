@@ -485,6 +485,26 @@ export default function AdminDashboard() {
                 </a>
               </CardContent>
             </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-teal-400">MR</span> Monthly Retainer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Manage ongoing retainer client relationships — track commitments, monthly health checks, support sessions, and priority requests for clients on the knowledge architecture support retainer.
+                </p>
+                <a
+                  href="/admin/monthly-retainer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

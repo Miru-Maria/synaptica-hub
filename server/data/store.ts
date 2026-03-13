@@ -160,3 +160,45 @@ export function getTools(): ClientTool[] {
 export function saveTools(tools: ClientTool[]) {
   writeJson(TOOLS_FILE, tools);
 }
+
+export interface HealthCheckEntry {
+  id: string;
+  date: string;
+  notes: string;
+  recommendations: string;
+}
+
+export interface SupportSessionEntry {
+  id: string;
+  date: string;
+  description: string;
+}
+
+export interface PriorityRequest {
+  id: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  completed: boolean;
+}
+
+export interface RetainerClient {
+  id: string;
+  name: string;
+  startDate: string;
+  monthlyRate: number;
+  notes: string;
+  healthChecks: HealthCheckEntry[];
+  supportSessions: SupportSessionEntry[];
+  priorityRequests: PriorityRequest[];
+}
+
+const RETAINERS_FILE = path.join(DATA_DIR, "retainers.json");
+
+export function getRetainerClients(): RetainerClient[] {
+  return readJson(RETAINERS_FILE, []);
+}
+
+export function saveRetainerClients(clients: RetainerClient[]) {
+  writeJson(RETAINERS_FILE, clients);
+}

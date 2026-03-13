@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools } from "../data/store.js";
-import type { ServicePackage, ClientTool } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient } from "../data/store.js";
 
 export const adminRouter = Router();
 
@@ -95,4 +95,131 @@ adminRouter.put("/tools", requireAuth, (req: Request, res: Response) => {
   }
   saveTools(tools);
   res.json({ ok: true });
+});
+
+adminRouter.get("/retainers", requireAuth, (_req: Request, res: Response) => {
+  res.json(getRetainerClients());
+});
+
+adminRouter.post("/retainers", requireAuth, (req: Request, res: Response) => {
+  const { name, startDate, monthlyRate, notes } = req.body;
+  if (!name || !startDate || typeof monthlyRate !== "number") {
+    res.status(400).json({ error: "name, startDate, and monthlyRate are required" });
+    return;
+  }
+  const clients = getRetainerClients();
+  const newClient: RetainerClient = {
+    id: `ret-${Date.now()}`,
+    name,
+    startDate,
+    monthlyRate,
+    notes: notes || "",
+    healthChecks: [],
+    supportSessions: [],
+    priorityRequests: [],
+  };
+  clients.push(newClient);
+  saveRetainerClients(clients);
+  res.json(newClient);
+});
+
+adminRouter.put("/retainers/:id", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const idx = clients.findIndex((c) => c.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  const { name, startDate, monthlyRate, notes } = req.body;
+  if (name !== undefined) clients[idx].name = name;
+  if (startDate !== undefined) clients[idx].startDate = startDate;
+  if (monthlyRate !== undefined) clients[idx].monthlyRate = monthlyRate;
+  if (notes !== undefined) clients[idx].notes = notes;
+  saveRetainerClients(clients);
+  res.json(clients[idx]);
+});
+
+adminRouter.delete("/retainers/:id", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const idx = clients.findIndex((c) => c.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  clients.splice(idx, 1);
+  saveRetainerClients(clients);
+  res.json({ ok: true });
+});
+
+adminRouter.post("/retainers/:id/health-checks", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  const { date, notes, recommendations } = req.body;
+  if (!date || !notes) {
+    res.status(400).json({ error: "date and notes are required" });
+    return;
+  }
+  const entry = { id: `hc-${Date.now()}`, date, notes, recommendations: recommendations || "" };
+  client.healthChecks.push(entry);
+  saveRetainerClients(clients);
+  res.json(entry);
+});
+
+adminRouter.post("/retainers/:id/support-sessions", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  const { date, description } = req.body;
+  if (!date || !description) {
+    res.status(400).json({ error: "date and description are required" });
+    return;
+  }
+  const entry = { id: `ss-${Date.now()}`, date, description };
+  client.supportSessions.push(entry);
+  saveRetainerClients(clients);
+  res.json(entry);
+});
+
+adminRouter.post("/retainers/:id/priority-requests", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  const { title, description } = req.body;
+  if (!title) {
+    res.status(400).json({ error: "title is required" });
+    return;
+  }
+  const entry = { id: `pr-${Date.now()}`, title, description: description || "", createdAt: new Date().toISOString(), completed: false };
+  client.priorityRequests.push(entry);
+  saveRetainerClients(clients);
+  res.json(entry);
+});
+
+adminRouter.put("/retainers/:id/priority-requests/:requestId", requireAuth, (req: Request, res: Response) => {
+  const clients = getRetainerClients();
+  const client = clients.find((c) => c.id === req.params.id);
+  if (!client) {
+    res.status(404).json({ error: "Client not found" });
+    return;
+  }
+  const request = client.priorityRequests.find((r) => r.id === req.params.requestId);
+  if (!request) {
+    res.status(404).json({ error: "Request not found" });
+    return;
+  }
+  if (req.body.completed !== undefined) request.completed = req.body.completed;
+  if (req.body.title !== undefined) request.title = req.body.title;
+  if (req.body.description !== undefined) request.description = req.body.description;
+  saveRetainerClients(clients);
+  res.json(request);
 });
