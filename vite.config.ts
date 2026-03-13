@@ -51,6 +51,9 @@ import { defineConfig } from "vite";
       watch: {
         ignored: ["**/.cache/**", "**/.local/**", "**/node_modules/**"],
       },
+      proxy: {
+        "/api": "http://localhost:3001",
+      },
     },
     preview: {
       port,

@@ -29,17 +29,10 @@ export function ContactModal({ open, onOpenChange }: ContactModalProps) {
     setStatus("sending");
 
     try {
-      const res = await fetch("https://api.web3forms.com/submit", {
+      const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
-        body: JSON.stringify({
-          access_key: import.meta.env.VITE_WEB3FORMS_KEY,
-          name: form.name,
-          email: form.email,
-          subject: form.subject || "New message from Synaptica site",
-          message: form.message,
-          from_name: "Synaptica Contact Form",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
       });
 
       const data = await res.json();
