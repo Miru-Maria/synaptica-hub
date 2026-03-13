@@ -43,13 +43,16 @@ export function ContactModal({ open, onOpenChange }: ContactModalProps) {
       });
 
       const data = await res.json();
+      console.log("Web3Forms response:", data);
       if (data.success) {
         setStatus("success");
         setForm({ name: "", email: "", subject: "", message: "" });
       } else {
+        console.error("Web3Forms error:", data.message, data);
         setStatus("error");
       }
-    } catch {
+    } catch (err) {
+      console.error("Form submission exception:", err);
       setStatus("error");
     }
   };
