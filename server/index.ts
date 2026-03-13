@@ -30,6 +30,10 @@ app.get("/difflens", (_req, res) => {
   res.redirect(302, "https://diff-lens.replit.app/");
 });
 
+app.get("/docscope", (_req, res) => {
+  res.redirect(302, "https://intel-engine-scope.replit.app/");
+});
+
 if (isProd) {
   const distPath = join(__dirname, "..", "dist");
   if (existsSync(distPath)) {
