@@ -1,15 +1,19 @@
 import { motion } from "framer-motion";
 import { Check, Minus, ExternalLink, BookOpen, Brain, Map, FolderKanban, StickyNote, Sparkles } from "lucide-react";
+import { useCurrency } from "@/context/currency";
+import { CurrencySelector } from "./CurrencySelector";
 
-const tiers = [
+const tierData = [
   {
     name: "Explorer",
-    price: "Free",
+    usdPrice: null,
+    priceLabel: "Free",
     priceNote: "No credit card required",
     description: "Get a feel for the platform before committing.",
     cta: "Start Free",
     href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
     highlighted: false,
+    badge: null,
     features: [
       { label: "Dashboard overview", included: true },
       { label: "Skill Map (5 skills)", included: true },
@@ -22,9 +26,10 @@ const tiers = [
   },
   {
     name: "Foundation",
-    price: "£19",
+    usdPrice: 25,
+    priceLabel: null,
     priceNote: "per month",
-    description: "Full access to Tier 1 — the AI transition curriculum.",
+    description: "Full access to Tier 1 — the AI Transition curriculum.",
     cta: "Get Started",
     href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
     highlighted: false,
@@ -41,9 +46,10 @@ const tiers = [
   },
   {
     name: "Architect",
-    price: "£49",
+    usdPrice: 65,
+    priceLabel: null,
     priceNote: "per month",
-    description: "The full knowledge systems curriculum plus AI-assisted learning.",
+    description: "The full Knowledge Systems curriculum plus AI-assisted learning.",
     cta: "Become an Architect",
     href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
     highlighted: true,
@@ -60,9 +66,10 @@ const tiers = [
   },
   {
     name: "Expert",
-    price: "£99",
+    usdPrice: 125,
+    priceLabel: null,
     priceNote: "per month",
-    description: "Every tier, unlimited AI Tutor, and direct access to Miruna.",
+    description: "Every tier, unlimited AI Tutor, and direct access to support.",
     cta: "Go Expert",
     href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
     highlighted: false,
@@ -88,27 +95,41 @@ const modules = [
 ];
 
 export function LearningOS() {
+  const { format } = useCurrency();
+
   return (
     <section id="learning-os" className="py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-100px" }}
-          className="text-center max-w-3xl mx-auto mb-6"
-        >
-          <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-primary mb-4">
-            <Sparkles className="w-3.5 h-3.5" /> Product
-          </span>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Synaptica Learning OS
-          </h2>
-          <p className="text-lg text-muted-foreground">
-            A structured operating system for professionals transitioning into AI knowledge architecture. Five integrated modules. Three progressive learning tiers. One AI tutor that knows the field.
-          </p>
-        </motion.div>
+        {/* Header row */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            className="text-center sm:text-left max-w-2xl"
+          >
+            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-widest uppercase text-primary mb-4">
+              <Sparkles className="w-3.5 h-3.5" /> Product
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Synaptica Learning OS
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              A structured operating system for professionals transitioning into AI knowledge architecture. Five integrated modules. Three progressive learning tiers. One AI tutor that knows the field.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="sm:pt-10 flex sm:justify-end"
+          >
+            <CurrencySelector />
+          </motion.div>
+        </div>
 
         {/* Module chips */}
         <motion.div
@@ -116,7 +137,7 @@ export function LearningOS() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: "-80px" }}
           transition={{ delay: 0.1 }}
-          className="flex flex-wrap justify-center gap-3 mb-6"
+          className="flex flex-wrap justify-center sm:justify-start gap-3 mb-6"
         >
           {modules.map((m) => (
             <span
@@ -129,13 +150,13 @@ export function LearningOS() {
           ))}
         </motion.div>
 
-        {/* Open app link */}
+        {/* Preview link */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.15 }}
-          className="flex justify-center mb-16"
+          className="flex justify-center sm:justify-start mb-12"
         >
           <a
             href="https://synaptica-knowledge-systems-learning-os.replit.app/"
@@ -150,7 +171,7 @@ export function LearningOS() {
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {tiers.map((tier, idx) => (
+          {tierData.map((tier, idx) => (
             <motion.div
               key={tier.name}
               initial={{ opacity: 0, y: 24 }}
@@ -175,7 +196,7 @@ export function LearningOS() {
                 </p>
                 <div className="flex items-baseline gap-1 mb-1">
                   <span className={`text-3xl font-bold ${tier.highlighted ? "text-primary" : "text-foreground"}`}>
-                    {tier.price}
+                    {tier.usdPrice !== null ? format(tier.usdPrice) : tier.priceLabel}
                   </span>
                   <span className="text-sm text-muted-foreground">{tier.priceNote}</span>
                 </div>
