@@ -24,7 +24,7 @@ const symbols: Record<Currency, string> = {
 function round(n: number, currency: Currency): number {
   if (currency === "RON") return Math.round(n / 50) * 50;
   if (currency === "EUR") return Math.round(n / 10) * 10;
-  return Math.round(n / 50) * 50;
+  return Math.round(n);
 }
 
 const CurrencyContext = createContext<CurrencyContextType>({
