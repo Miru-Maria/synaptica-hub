@@ -110,7 +110,7 @@ export function ServicesAndTools() {
         {/* ── Divider ── */}
         <div className="flex items-center gap-6 mb-16">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-2">Live in the Lab</span>
+          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-2">Free AI Tools — No Login Required</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
@@ -121,9 +121,9 @@ export function ServicesAndTools() {
           viewport={{ once: true, margin: "-100px" }}
           className="mb-12"
         >
-          <h2 className="text-3xl md:text-4xl font-bold mb-4" id="tools">Live Tools</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4" id="tools">Try the Tools</h2>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Four working AI knowledge tools — each one solving a real problem in documentation, analysis, and knowledge delivery.
+            Four working AI tools built around real knowledge work problems. Use them on your own content — no account, no paywall.
           </p>
         </motion.div>
 
