@@ -43,8 +43,15 @@ src/
   lib/                 # Utilities (cn, etc.)
 server/
   index.ts             # Express server entry (port 3001)
+  middleware/
+    auth.ts            # JWT auth middleware (requireAuth, signToken, verifyToken)
   routes/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
+    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD)
+    public.ts          # Public read-only routes (packages, tools)
+  data/
+    store.ts           # JSON file-persisted data store for packages and tools
+    persist/           # Auto-created directory for JSON data files
   services/
     parser.ts          # PDF, DOCX, Markdown, text parsing + chunking
     scraper.ts         # URL scraping with SSRF protection
@@ -62,12 +69,25 @@ Workflow: **Start application** → `npm run dev` on port 5000 (webview)
 ### Environment Variables
 
 - `OPENAI_API_KEY` — Required for DocAudit analysis (embeddings + GPT-4o)
+- `ADMIN_USERNAME` — Username for admin dashboard login
+- `ADMIN_PASSWORD` — Password for admin dashboard login
+- `JWT_SECRET` — Secret key for JWT token signing (required, server fails to start without it)
 
 ### Vite Configuration Notes
 
 - `hmr.clientPort: 443` — required for HMR WebSocket to work through Replit's HTTPS proxy
 - `watch.ignored` — excludes `.cache/`, `.local/`, and `node_modules/` from file watching
 - `/api` proxy → `http://localhost:3001` for DocAudit backend
+
+## Admin Dashboard
+
+A credential-protected admin area at `/admin` for the site owner. Features:
+- JWT-based authentication with httpOnly cookies
+- Login page at `/admin/login` (redirects unauthenticated users)
+- Package Manager: view and edit all service packages inline (name, price, features, etc.)
+- Tools Manager: toggle client-facing tools (e.g. DocAudit) on/off
+- Changes persist to JSON files and are reflected live on the public site
+- Public site reads package data from `/api/public/packages` and tool status from `/api/public/tools`
 
 ## DocAudit Feature
 

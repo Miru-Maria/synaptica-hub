@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, FileSearch, Shield, Zap, Target } from "lucide-react";
+import { ArrowLeft, FileSearch, Shield, Zap, Target, AlertTriangle } from "lucide-react";
 import { InputPanel } from "@/components/docaudit/InputPanel";
 import { TaxonomyConfig } from "@/components/docaudit/TaxonomyConfig";
 import { GapReport } from "@/components/docaudit/GapReport";
@@ -28,6 +28,21 @@ interface AuditResult {
 }
 
 export default function DocAudit() {
+  const [toolEnabled, setToolEnabled] = useState(true);
+  const [checkingTool, setCheckingTool] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/public/tools")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((tools) => {
+        if (Array.isArray(tools)) {
+          const docaudit = tools.find((t: { slug: string; enabled: boolean }) => t.slug === "docaudit");
+          if (docaudit && !docaudit.enabled) setToolEnabled(false);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setCheckingTool(false));
+  }, []);
   const [step, setStep] = useState<Step>("input");
   const [chunks, setChunks] = useState<string[]>([]);
   const [kbName, setKbName] = useState("");
@@ -78,6 +93,27 @@ export default function DocAudit() {
     { icon: <Zap className="w-5 h-5" />, title: "Actionable Insights", desc: "Prioritized recommendations powered by GPT-4o" },
     { icon: <Shield className="w-5 h-5" />, title: "Exportable Reports", desc: "Download your gap analysis as a branded PDF" },
   ];
+
+  if (checkingTool) {
+    return (
+      <div className="bg-background min-h-screen text-foreground flex items-center justify-center">
+        <p className="text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!toolEnabled) {
+    return (
+      <div className="bg-background min-h-screen text-foreground flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <AlertTriangle className="w-12 h-12 text-amber-400 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold mb-2">Tool Unavailable</h1>
+          <p className="text-muted-foreground mb-6">DocAudit is currently disabled. Please check back later.</p>
+          <a href="/" className="text-primary hover:underline">← Back to home</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white">

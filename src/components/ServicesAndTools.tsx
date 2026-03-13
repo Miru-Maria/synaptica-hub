@@ -1,10 +1,27 @@
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Network, FileSearch, MessageSquareCode, Terminal,
-  ExternalLink, Database, GitCompare, ScanSearch, FileOutput, ClipboardCheck,
+  ExternalLink, Database, GitCompare, ScanSearch, FileOutput,
 } from "lucide-react";
 
+interface ToolStatus {
+  name: string;
+  slug: string;
+  enabled: boolean;
+}
+
 export function ServicesAndTools() {
+  const [toolStatuses, setToolStatuses] = useState<ToolStatus[]>([]);
+
+  useEffect(() => {
+    fetch("/api/public/tools")
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: ToolStatus[]) => {
+        if (Array.isArray(data)) setToolStatuses(data);
+      })
+      .catch(() => {});
+  }, []);
   const services = [
     {
       icon: <Network className="w-8 h-8 text-primary" />,
@@ -30,10 +47,10 @@ export function ServicesAndTools() {
 
   const featuredTool = {
     title: "Synaptica Knowledge Architecture",
-    description: "A suite of 5 AI-powered knowledge tools: semantic search, documentation gap analysis, smart FAQ builder, RAG onboarding assistant, and a prompt engineering toolkit.",
+    description: "A limited public demo of the Synaptica knowledge toolkit — try the semantic search module to explore AI-powered document retrieval.",
     tech: ["React", "OpenAI GPT", "PostgreSQL", "SSE Streaming"],
     link: "https://synaptica-knowledge-architecture-mcp.replit.app/search",
-    linkLabel: "Open Tool",
+    linkLabel: "Try Demo",
     icon: <Database className="w-6 h-6" />,
   };
 
@@ -63,15 +80,6 @@ export function ServicesAndTools() {
       description: "Paste or upload any content — Slack threads, email chains, work items, or documents — and get a structured AI analysis of gaps, inconsistencies, and coverage issues.",
       tech: ["Claude AI", "NLP", "React"],
       link: "https://intel-engine-scope.replit.app/",
-      linkLabel: "Open Tool",
-    },
-    {
-      id: "docaudit",
-      icon: <ClipboardCheck className="w-6 h-6 text-secondary" />,
-      title: "DocAudit",
-      description: "Submit your knowledge base via file upload, URL, or Notion import — get an AI-powered gap analysis with coverage scores, severity-ranked gaps, and actionable recommendations.",
-      tech: ["OpenAI Embeddings", "GPT-4o", "React"],
-      link: "/docaudit",
       linkLabel: "Open Tool",
     },
   ];
@@ -188,7 +196,10 @@ export function ServicesAndTools() {
 
         {/* ── Live tools ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {liveTools.map((tool, idx) => (
+          {liveTools.filter((tool) => {
+            const status = toolStatuses.find((ts) => ts.slug === tool.id);
+            return !status || status.enabled;
+          }).map((tool, idx) => (
             <motion.div
               key={tool.id}
               initial={{ opacity: 0, y: 20 }}

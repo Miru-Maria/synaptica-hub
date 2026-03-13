@@ -1,8 +1,19 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import multer from "multer";
 import { parsePDF, parseDOCX, parseMarkdown, chunkText } from "../services/parser.js";
 import { scrapeUrl } from "../services/scraper.js";
 import { analyzeDocumentation, AuditResult } from "../services/analyzer.js";
+import { getTools } from "../data/store.js";
+
+function requireToolEnabled(req: Request, res: Response, next: NextFunction) {
+  const tools = getTools();
+  const docaudit = tools.find((t) => t.slug === "docaudit");
+  if (docaudit && !docaudit.enabled) {
+    res.status(503).json({ error: "DocAudit is currently disabled" });
+    return;
+  }
+  next();
+}
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -56,6 +67,8 @@ interface NotionListResponse {
 }
 
 export const auditRouter = Router();
+
+auditRouter.use(requireToolEnabled);
 
 auditRouter.post("/parse-files", upload.array("files", 20), async (req: Request, res: Response) => {
   try {
