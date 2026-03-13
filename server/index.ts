@@ -26,6 +26,10 @@ app.use("/api/audit", auditRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/public", publicRouter);
 
+app.get("/difflens", (_req, res) => {
+  res.redirect(302, "https://diff-lens.replit.app/");
+});
+
 if (isProd) {
   const distPath = join(__dirname, "..", "dist");
   if (existsSync(distPath)) {
