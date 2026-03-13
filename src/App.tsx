@@ -1,4 +1,5 @@
-import { Switch, Route, Router as WouterRouter, Redirect } from "wouter";
+import { useEffect } from "react";
+import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "@/pages/Home";
 import Legal from "@/pages/Legal";
@@ -9,6 +10,13 @@ import AdminDashboard from "@/pages/admin/AdminDashboard";
 
 const queryClient = new QueryClient();
 
+function ExternalRedirect({ url }: { url: string }) {
+  useEffect(() => {
+    window.location.replace(url);
+  }, [url]);
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
@@ -18,6 +26,9 @@ function Router() {
       <Route path="/privacy" component={Legal} />
       <Route path="/refund" component={Legal} />
       <Route path="/docaudit" component={DocAudit} />
+      <Route path="/synaptica-ka">
+        <ExternalRedirect url="https://synaptica-knowledge-architecture-mcp.replit.app/search" />
+      </Route>
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
