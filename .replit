@@ -5,9 +5,10 @@ modules = ["nodejs-20", "postgresql-16"]
   channel = "stable-24_05"
 
   [deployment]
-deploymentTarget = "static"
+deploymentTarget = "autoscale"
 build = ["npm", "run", "build"]
 publicDir = "dist"
+run = ["npm", "run", "start"]
 
 [[ports]]
 localPort = 3001
