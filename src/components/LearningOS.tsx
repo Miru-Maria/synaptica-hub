@@ -47,7 +47,7 @@ const tiers = [
     cta: "Become an Architect",
     href: "https://synaptica-knowledge-systems-learning-os.replit.app/",
     highlighted: true,
-    badge: "Most Popular",
+    badge: "Recommended",
     features: [
       { label: "Dashboard overview", included: true },
       { label: "Skill Map (unlimited)", included: true },
