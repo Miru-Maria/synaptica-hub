@@ -97,14 +97,14 @@ export default function Legal() {
             These Terms of Service govern your access to and use of products and services provided by {BUSINESS}, including the Synaptica Learning OS platform and any consulting services. By accessing or using these services you agree to be bound by these terms.
           </P>
 
-          <H3>1. Who We Are</H3>
+          <H3>1. Who I Am</H3>
           <P>
-            Synaptica Knowledge Systems is a trade name operated by Miruna Paun PFA, a sole trader registered in Romania (Bucharest) under Romanian fiscal law. Contact: {EMAIL}.
+            Synaptica Knowledge Systems is a trade name I operate as Miruna Cristiana Paun PFA, a sole trader registered in Romania (Bucharest) under Romanian fiscal law. Contact: {EMAIL}.
           </P>
 
           <H3>2. Services</H3>
           <P>
-            We provide two categories of service:
+            I provide two categories of service:
           </P>
           <UL items={[
             "Synaptica Learning OS — a web-based SaaS subscription platform offering structured learning paths, skill tracking, project management tools, and an AI tutor for professionals transitioning into AI knowledge architecture.",
@@ -113,16 +113,16 @@ export default function Legal() {
 
           <H3>3. Accounts and Access</H3>
           <P>
-            To access paid features of the Learning OS you must create an account and provide accurate information. You are responsible for maintaining the confidentiality of your credentials. We reserve the right to suspend accounts that violate these terms.
+            To access paid features of the Learning OS you must create an account and provide accurate information. You are responsible for maintaining the confidentiality of your credentials. I reserve the right to suspend accounts that violate these terms.
           </P>
 
           <H3>4. Subscriptions and Payment</H3>
           <UL items={[
             "Subscriptions are billed monthly in advance.",
-            "Payment for Learning OS subscriptions is processed by Paddle.com (our Merchant of Record), who handles all billing, VAT, and payment infrastructure.",
+            "Payment for Learning OS subscriptions is processed by Paddle.com (my Merchant of Record), who handles all billing, VAT, and payment infrastructure.",
             "Subscription prices are listed in USD. Approximate EUR and RON equivalents are shown for reference; the USD price is the binding amount.",
             "You may cancel your subscription at any time. Cancellation takes effect at the end of the current billing period; access continues until then.",
-            "Consulting services are invoiced separately via Stripe and governed by individual engagement agreements.",
+            "Consulting services are invoiced separately and governed by individual engagement agreements.",
           ]} />
 
           <H3>5. Free Trial</H3>
@@ -132,12 +132,12 @@ export default function Legal() {
 
           <H3>6. Intellectual Property</H3>
           <P>
-            All content, curriculum, tools, and software on this site and within the Learning OS are owned by or licensed to Miruna Paun PFA. You may not copy, distribute, or create derivative works from any of our content without written permission. Your own data and content uploaded to the platform remain yours.
+            All content, curriculum, tools, and software on this site and within the Learning OS are owned by or licensed to me. You may not copy, distribute, or create derivative works from any of my content without written permission. Your own data and content uploaded to the platform remain yours.
           </P>
 
           <H3>7. Limitation of Liability</H3>
           <P>
-            To the maximum extent permitted by applicable law, Synaptica Knowledge Systems shall not be liable for indirect, incidental, or consequential damages. Our total liability to you shall not exceed the amount you paid us in the 12 months preceding the claim.
+            To the maximum extent permitted by applicable law, my total liability to you shall not exceed the amount you paid me in the 12 months preceding the claim. I am not liable for indirect, incidental, or consequential damages.
           </P>
 
           <H3>8. Governing Law</H3>
@@ -147,36 +147,36 @@ export default function Legal() {
 
           <H3>9. Changes to These Terms</H3>
           <P>
-            We may update these terms from time to time. We will notify active subscribers of material changes by email at least 14 days before they take effect. Continued use of the services after that date constitutes acceptance.
+            I may update these terms from time to time. I will notify active subscribers of material changes by email at least 14 days before they take effect. Continued use of the services after that date constitutes acceptance.
           </P>
         </Section>
 
         {/* ── PRIVACY POLICY ── */}
         <Section id="privacy" title="Privacy Policy">
           <P>
-            This Privacy Policy describes how {BUSINESS} collects, uses, and protects your personal data in accordance with the EU General Data Protection Regulation (GDPR) and Romanian data protection law.
+            This Privacy Policy describes how I, {BUSINESS}, collect, use, and protect your personal data in accordance with the EU General Data Protection Regulation (GDPR) and Romanian data protection law.
           </P>
 
           <H3>1. Data Controller</H3>
           <P>
-            The data controller is Miruna Paun PFA, Bucharest, Romania. Contact: {EMAIL}.
+            I am the data controller: Miruna Cristiana Paun PFA, Bucharest, Romania. Contact: {EMAIL}.
           </P>
 
-          <H3>2. Data We Collect</H3>
+          <H3>2. Data I Collect</H3>
           <UL items={[
             "Account data: name, email address, password (hashed).",
-            "Payment data: billing address and payment method details — processed and stored by Paddle.com on our behalf. We do not store raw card data.",
+            "Payment data: billing address and payment method details — processed and stored by Paddle.com on my behalf. I do not store raw card data.",
             "Usage data: pages visited, features used, session timestamps — collected to improve the platform.",
-            "Communications: emails or messages you send us directly.",
+            "Communications: emails or messages you send me directly.",
           ]} />
 
-          <H3>3. How We Use Your Data</H3>
+          <H3>3. How I Use Your Data</H3>
           <UL items={[
             "To provide and maintain the Learning OS platform and consulting services.",
             "To process payments via Paddle.",
             "To send transactional emails (receipts, cancellation confirmations, service updates).",
-            "To improve our services through aggregated, anonymized usage analysis.",
-            "We do not sell your personal data to third parties."
+            "To improve my services through aggregated, anonymized usage analysis.",
+            "I do not sell your personal data to third parties."
           ]} />
 
           <H3>4. Data Processors</H3>
@@ -188,30 +188,30 @@ export default function Legal() {
           <H3>5. Your GDPR Rights</H3>
           <P>You have the right to:</P>
           <UL items={[
-            "Access the personal data we hold about you.",
+            "Access the personal data I hold about you.",
             "Request correction of inaccurate data.",
             "Request deletion of your data ('right to be forgotten').",
             "Object to or restrict processing.",
             "Request data portability.",
             "Lodge a complaint with the Romanian National Supervisory Authority for Personal Data Processing (ANSPDCP)."
           ]} />
-          <P>To exercise any of these rights, contact us at {EMAIL}.</P>
+          <P>To exercise any of these rights, contact me at {EMAIL}.</P>
 
           <H3>6. Data Retention</H3>
           <P>
-            We retain account data for as long as your account is active and for up to 3 years after closure for legal and accounting purposes. Payment records are retained as required by Romanian fiscal law (5 years).
+            I retain account data for as long as your account is active and for up to 3 years after closure for legal and accounting purposes. Payment records are retained as required by Romanian fiscal law (5 years).
           </P>
 
           <H3>7. Cookies</H3>
           <P>
-            We use only essential cookies required for authentication and session management. We do not use advertising or tracking cookies.
+            I use only essential cookies required for authentication and session management. I do not use advertising or tracking cookies.
           </P>
         </Section>
 
         {/* ── REFUND POLICY ── */}
         <Section id="refund" title="Refund Policy">
           <P>
-            We want you to feel confident purchasing from Synaptica Knowledge Systems. This policy covers the Synaptica Learning OS subscription product.
+            I want you to feel confident purchasing from Synaptica Knowledge Systems. This policy covers the Synaptica Learning OS subscription product.
           </P>
 
           <H3>1. Free Trial</H3>
@@ -221,17 +221,17 @@ export default function Legal() {
 
           <H3>2. EU Statutory Withdrawal Right</H3>
           <P>
-            Under EU consumer law, you have the right to withdraw from a digital subscription contract within 14 days of purchase without giving any reason, provided you have not yet accessed the digital content or requested that delivery begin. If you have accessed the platform and requested immediate access at the time of purchase, the right of withdrawal may not apply. To exercise this right, contact us at {EMAIL} within 14 days of your first charge.
+            Under EU consumer law, you have the right to withdraw from a digital subscription contract within 14 days of purchase without giving any reason, provided you have not yet accessed the digital content or requested that delivery begin. If you have accessed the platform and requested immediate access at the time of purchase, the right of withdrawal may not apply. To exercise this right, contact me at {EMAIL} within 14 days of your first charge.
           </P>
 
           <H3>3. Refund Requests After the Trial</H3>
           <P>
-            Outside of the statutory withdrawal period, subscription payments are non-refundable. If you cancel your subscription, you retain access until the end of the current billing period. We do not offer partial-month refunds.
+            Outside of the statutory withdrawal period, subscription payments are non-refundable. If you cancel your subscription, you retain access until the end of the current billing period. I do not offer partial-month refunds.
           </P>
 
           <H3>4. Exceptions</H3>
           <P>
-            If a technical fault on our side prevents you from accessing the platform for an extended period, we will issue a pro-rated credit or refund at our discretion. Contact us at {EMAIL} with details.
+            If a technical fault on my side prevents you from accessing the platform for an extended period, I will issue a pro-rated credit or refund at my discretion. Contact me at {EMAIL} with details.
           </P>
 
           <H3>5. Consulting Services</H3>
@@ -241,7 +241,7 @@ export default function Legal() {
 
           <H3>6. How to Request a Refund</H3>
           <P>
-            Email {EMAIL} with your name, registered email address, and the reason for your request. We process refund requests within 5 business days. Approved refunds are returned via the original payment method through Paddle.
+            Email {EMAIL} with your name, registered email address, and the reason for your request. I process refund requests within 5 business days. Approved refunds are returned via the original payment method through Paddle.
           </P>
         </Section>
 
