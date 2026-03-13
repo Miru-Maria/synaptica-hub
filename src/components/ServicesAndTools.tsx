@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import {
   Network, FileSearch, MessageSquareCode, Terminal,
-  ExternalLink, Database, GitCompare, ScanSearch, FileOutput,
+  ExternalLink, Database, GitCompare, ScanSearch, FileOutput, ClipboardCheck,
 } from "lucide-react";
 
 export function ServicesAndTools() {
@@ -65,6 +65,15 @@ export function ServicesAndTools() {
       link: "https://intel-engine-scope.replit.app/",
       linkLabel: "Open Tool",
     },
+    {
+      id: "docaudit",
+      icon: <ClipboardCheck className="w-6 h-6 text-secondary" />,
+      title: "DocAudit",
+      description: "Submit your knowledge base via file upload, URL, or Notion import — get an AI-powered gap analysis with coverage scores, severity-ranked gaps, and actionable recommendations.",
+      tech: ["OpenAI Embeddings", "GPT-4o", "React"],
+      link: "/docaudit",
+      linkLabel: "Open Tool",
+    },
   ];
 
   return (
@@ -123,7 +132,7 @@ export function ServicesAndTools() {
         >
           <h2 className="text-3xl md:text-4xl font-bold mb-4" id="tools">Try the Tools</h2>
           <p className="text-lg text-muted-foreground max-w-2xl">
-            Four working AI tools built around real knowledge work problems. Use them on your own content — no account, no paywall.
+            Five working AI tools built around real knowledge work problems. Use them on your own content — no account, no paywall.
           </p>
         </motion.div>
 
@@ -177,8 +186,8 @@ export function ServicesAndTools() {
           </motion.div>
         </div>
 
-        {/* ── Three live tools ── */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ── Live tools ── */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {liveTools.map((tool, idx) => (
             <motion.div
               key={tool.id}
