@@ -18,7 +18,7 @@ const rates: Record<Currency, number> = {
 const symbols: Record<Currency, string> = {
   USD: "$",
   EUR: "€",
-  RON: "RON ",
+  RON: "",
 };
 
 function round(n: number, currency: Currency): number {
@@ -39,12 +39,14 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const format = (usdAmount: number): string => {
     const converted = round(usdAmount * rates[currency], currency);
+    if (currency === "RON") return `${converted.toLocaleString("en-US")} RON`;
     return `${symbols[currency]}${converted.toLocaleString("en-US")}`;
   };
 
   const formatRange = (usdLow: number, usdHigh: number): string => {
     const lo = round(usdLow * rates[currency], currency);
     const hi = round(usdHigh * rates[currency], currency);
+    if (currency === "RON") return `${lo.toLocaleString("en-US")} – ${hi.toLocaleString("en-US")} RON`;
     return `${symbols[currency]}${lo.toLocaleString("en-US")} – ${symbols[currency]}${hi.toLocaleString("en-US")}`;
   };
 
