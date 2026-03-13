@@ -4,7 +4,7 @@ import { Link } from "wouter";
 import { PhoenixLogo } from "@/components/PhoenixLogo";
 
 const BUSINESS = "Miruna Paun PFA (trading as Synaptica Knowledge Systems)";
-const EMAIL = "miruna@synaptica.dev";
+const EMAIL = "cristiana_paun@protonmail.com";
 const EFFECTIVE = "March 13, 2026";
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {

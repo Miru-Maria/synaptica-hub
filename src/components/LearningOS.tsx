@@ -237,15 +237,32 @@ export function LearningOS() {
         </div>
 
         {/* Footnote */}
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="text-center text-xs text-muted-foreground mt-8"
+          className="text-center mt-8 space-y-2"
         >
-          All paid plans include a 7-day free trial. Cancel any time.
-        </motion.p>
+          <p className="text-xs text-muted-foreground">
+            All paid plans include a 7-day free trial. Cancel any time.
+          </p>
+          <p className="text-xs text-muted-foreground/50">
+            By subscribing you agree to our{" "}
+            <a href="/legal#terms" className="underline underline-offset-2 hover:text-primary transition-colors">
+              Terms of Service
+            </a>
+            ,{" "}
+            <a href="/legal#privacy" className="underline underline-offset-2 hover:text-primary transition-colors">
+              Privacy Policy
+            </a>
+            , and{" "}
+            <a href="/legal#refund" className="underline underline-offset-2 hover:text-primary transition-colors">
+              Refund Policy
+            </a>
+            .
+          </p>
+        </motion.div>
 
       </div>
     </section>
