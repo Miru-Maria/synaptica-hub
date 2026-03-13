@@ -17,6 +17,15 @@ interface InputPanelProps {
 
 type TabId = "upload" | "paste" | "url" | "notion";
 
+async function safeJsonParse(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error("Service unavailable, please try again");
+  }
+}
+
 export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("upload");
   const [files, setFiles] = useState<File[]>([]);
@@ -72,9 +81,9 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ apiToken: notionToken, query: "" }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      setNotionSearchResults(data.results);
+      const data = await safeJsonParse(res);
+      if (!res.ok) throw new Error((data.error as string) || "Request failed");
+      setNotionSearchResults(data.results as NotionPage[]);
       setNotionConnected(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
@@ -102,9 +111,9 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
         const formData = new FormData();
         files.forEach((f) => formData.append("files", f));
         const res = await fetch("/api/audit/parse-files", { method: "POST", body: formData });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        chunks = data.chunks;
+        const data = await safeJsonParse(res);
+        if (!res.ok) throw new Error((data.error as string) || "Request failed");
+        chunks = data.chunks as string[];
       } else if (activeTab === "paste") {
         if (!pasteText.trim()) throw new Error("Please paste some text");
         const res = await fetch("/api/audit/parse-text", {
@@ -112,9 +121,9 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ text: pasteText }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        chunks = data.chunks;
+        const data = await safeJsonParse(res);
+        if (!res.ok) throw new Error((data.error as string) || "Request failed");
+        chunks = data.chunks as string[];
       } else if (activeTab === "url") {
         const validUrls = urls.filter((u) => u.trim());
         if (validUrls.length === 0) throw new Error("Please enter at least one URL");
@@ -123,9 +132,9 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ urls: validUrls }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        chunks = data.chunks;
+        const data = await safeJsonParse(res);
+        if (!res.ok) throw new Error((data.error as string) || "Request failed");
+        chunks = data.chunks as string[];
       } else if (activeTab === "notion") {
         if (!notionToken.trim()) throw new Error("Please enter your Notion API token");
         if (notionPageIds.length === 0) throw new Error("Please connect and select at least one page or database");
@@ -137,9 +146,9 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ apiToken: notionToken, items: selectedItems }),
         });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error);
-        chunks = data.chunks;
+        const data = await safeJsonParse(res);
+        if (!res.ok) throw new Error((data.error as string) || "Request failed");
+        chunks = data.chunks as string[];
       }
 
       if (chunks.length === 0) throw new Error("No content could be extracted from the provided source");

@@ -5,6 +5,15 @@ import { InputPanel } from "@/components/docaudit/InputPanel";
 import { TaxonomyConfig } from "@/components/docaudit/TaxonomyConfig";
 import { GapReport } from "@/components/docaudit/GapReport";
 
+async function safeJsonParse(res: Response): Promise<Record<string, unknown>> {
+  const text = await res.text();
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    throw new Error("Service unavailable, please try again");
+  }
+}
+
 type Step = "input" | "configure" | "report";
 
 interface AuditResult {
@@ -43,10 +52,10 @@ export default function DocAudit() {
         body: JSON.stringify({ chunks, topics, kbName }),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
+      const data = await safeJsonParse(res);
+      if (!res.ok) throw new Error((data.error as string) || "Request failed");
 
-      setResult(data);
+      setResult(data as unknown as AuditResult);
       setStep("report");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
