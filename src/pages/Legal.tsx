@@ -4,8 +4,8 @@ import { Link } from "wouter";
 import { PhoenixLogo } from "@/components/PhoenixLogo";
 
 const BUSINESS = "Miruna Cristiana Paun PFA (trading as Synaptica Knowledge Systems)";
-const EMAIL = "cristiana_paun@protonmail.com";
 const EFFECTIVE = "March 13, 2026";
+const CONTACT_LINK = <a href="/#contact" className="underline underline-offset-2 hover:text-primary transition-colors">the contact form on this site</a>;
 
 function Section({ id, title, children }: { id: string; title: string; children: React.ReactNode }) {
   return (
@@ -99,7 +99,7 @@ export default function Legal() {
 
           <H3>1. Who I Am</H3>
           <P>
-            Synaptica Knowledge Systems is a trade name I operate as Miruna Cristiana Paun PFA, a sole trader registered in Romania (Bucharest) under Romanian fiscal law. Contact: {EMAIL}.
+            Synaptica Knowledge Systems is a trade name I operate as Miruna Cristiana Paun PFA, a sole trader registered in Romania (Bucharest) under Romanian fiscal law. You can reach me using {CONTACT_LINK}.
           </P>
 
           <H3>2. Services</H3>
@@ -159,7 +159,7 @@ export default function Legal() {
 
           <H3>1. Data Controller</H3>
           <P>
-            I am the data controller: Miruna Cristiana Paun PFA, Bucharest, Romania. Contact: {EMAIL}.
+            I am the data controller: Miruna Cristiana Paun PFA, Bucharest, Romania. You can reach me using {CONTACT_LINK}.
           </P>
 
           <H3>2. Data I Collect</H3>
@@ -195,7 +195,7 @@ export default function Legal() {
             "Request data portability.",
             "Lodge a complaint with the Romanian National Supervisory Authority for Personal Data Processing (ANSPDCP)."
           ]} />
-          <P>To exercise any of these rights, contact me at {EMAIL}.</P>
+          <P>To exercise any of these rights, use {CONTACT_LINK}.</P>
 
           <H3>6. Data Retention</H3>
           <P>
@@ -221,7 +221,7 @@ export default function Legal() {
 
           <H3>2. EU Statutory Withdrawal Right</H3>
           <P>
-            Under EU consumer law, you have the right to withdraw from a digital subscription contract within 14 days of purchase without giving any reason, provided you have not yet accessed the digital content or requested that delivery begin. If you have accessed the platform and requested immediate access at the time of purchase, the right of withdrawal may not apply. To exercise this right, contact me at {EMAIL} within 14 days of your first charge.
+            Under EU consumer law, you have the right to withdraw from a digital subscription contract within 14 days of purchase without giving any reason, provided you have not yet accessed the digital content or requested that delivery begin. If you have accessed the platform and requested immediate access at the time of purchase, the right of withdrawal may not apply. To exercise this right, use {CONTACT_LINK} within 14 days of your first charge.
           </P>
 
           <H3>3. Refund Requests After the Trial</H3>
@@ -231,7 +231,7 @@ export default function Legal() {
 
           <H3>4. Exceptions</H3>
           <P>
-            If a technical fault on my side prevents you from accessing the platform for an extended period, I will issue a pro-rated credit or refund at my discretion. Contact me at {EMAIL} with details.
+            If a technical fault on my side prevents you from accessing the platform for an extended period, I will issue a pro-rated credit or refund at my discretion. Use {CONTACT_LINK} with details.
           </P>
 
           <H3>5. Consulting Services</H3>
@@ -241,13 +241,13 @@ export default function Legal() {
 
           <H3>6. How to Request a Refund</H3>
           <P>
-            Email {EMAIL} with your name, registered email address, and the reason for your request. I process refund requests within 5 business days. Approved refunds are returned via the original payment method through Paddle.
+            Use {CONTACT_LINK} with your name, registered email address, and the reason for your request. I process refund requests within 5 business days. Approved refunds are returned via the original payment method through Paddle.
           </P>
         </Section>
 
         {/* Footer note */}
         <p className="text-xs text-muted-foreground/50 border-t border-white/5 pt-8">
-          Last updated: {EFFECTIVE} · {BUSINESS} · {EMAIL}
+          Last updated: {EFFECTIVE} · {BUSINESS}
         </p>
       </main>
     </div>
