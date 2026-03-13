@@ -9,6 +9,7 @@ import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import KASprint from "@/pages/admin/KASprint";
 import RAGPipeline from "@/pages/admin/RAGPipeline";
+import PromptWorkshop from "@/pages/admin/PromptWorkshop";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/ka-sprint" component={KASprint} />
       <Route path="/admin/rag-pipeline" component={RAGPipeline} />
+      <Route path="/admin/prompt-workshop" component={PromptWorkshop} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

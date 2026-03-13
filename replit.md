@@ -49,8 +49,11 @@ server/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
     admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD)
     public.ts          # Public read-only routes (packages, tools)
+    ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes
+    prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide routes
   data/
     store.ts           # JSON file-persisted data store for packages and tools
+    prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
     persist/           # Auto-created directory for JSON data files
   services/
     parser.ts          # PDF, DOCX, Markdown, text parsing + chunking
@@ -88,6 +91,18 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - Tools Manager: toggle client-facing tools (e.g. DocAudit) on/off
 - Changes persist to JSON files and are reflected live on the public site
 - Public site reads package data from `/api/public/packages` and tool status from `/api/public/tools`
+- Internal Tools tab with KA Sprint and Prompt Engineering Workshop
+
+## Prompt Engineering Workshop
+
+An admin-only internal tool at `/admin/prompt-workshop` for designing, testing, and documenting prompt templates. Features:
+- Prompt library with CRUD operations, search, and category filtering
+- `{{variable}}` placeholder syntax with auto-detection and labeled input fields
+- Live test panel that runs prompts against OpenAI's API with variable substitution
+- Global style guide editor that can be auto-appended to prompts
+- Handover documentation export as formatted Markdown (clipboard copy)
+- API routes at `/api/admin/prompt-workshop/*` (prompts CRUD, test, style-guide, categories)
+- Data persisted to JSON files in `server/data/persist/`
 
 ## DocAudit Feature
 

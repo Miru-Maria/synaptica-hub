@@ -465,6 +465,26 @@ export default function AdminDashboard() {
                 </a>
               </CardContent>
             </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-purple-400">PE</span> Prompt Engineering Workshop
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Design, test, document, and share prompt templates with variable placeholders. Includes a live test panel powered by OpenAI, style guide enforcement, and exportable handover documentation for team use.
+                </p>
+                <a
+                  href="/admin/prompt-workshop"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
