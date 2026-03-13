@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Wrench, Plus, Trash2, GripVertical, ExternalLink, Hammer } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer } from "lucide-react";
 
 interface ServicePackage {
   id: string;
@@ -212,13 +212,9 @@ export default function AdminDashboard() {
               <Package className="w-4 h-4" />
               Packages
             </TabsTrigger>
-            <TabsTrigger value="tools" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Wrench className="w-4 h-4" />
-              Tools
-            </TabsTrigger>
             <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
               <Hammer className="w-4 h-4" />
-              Internal Tools
+              Tools
             </TabsTrigger>
           </TabsList>
 
@@ -360,151 +356,162 @@ export default function AdminDashboard() {
             ))}
           </TabsContent>
 
-          <TabsContent value="tools" className="mt-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-neutral-400">
-                Toggle client-facing tools on or off.
-              </p>
-              <Button size="sm" onClick={saveTools} disabled={saving}>
-                <Save className="w-4 h-4 mr-1" />
-                Save Changes
-              </Button>
-            </div>
+          <TabsContent value="internal" className="mt-6 space-y-8">
 
-            {tools.map((tool, idx) => (
-              <div key={tool.slug}>
-                <Card className="bg-neutral-900 border-neutral-800">
-                  <CardContent className="flex items-center justify-between py-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium text-neutral-100">{tool.name}</p>
-                        <a
-                          href={`/${tool.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-neutral-500 hover:text-neutral-300 transition-colors"
-                          title={`Open /${tool.slug}`}
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+            {/* Client-facing tools */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-sm font-semibold text-neutral-200">Client-Facing Tools</h2>
+                  <p className="text-xs text-neutral-500 mt-0.5">Public tools accessible from the site. Toggle visibility on or off.</p>
+                </div>
+                <Button size="sm" onClick={saveTools} disabled={saving}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Save
+                </Button>
+              </div>
+
+              {tools.map((tool, idx) => (
+                <div key={tool.slug}>
+                  <Card className="bg-neutral-900 border-neutral-800">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                          <span className="text-emerald-400">↗</span>
+                          {tool.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs ${tool.enabled ? "text-emerald-400" : "text-neutral-500"}`}>
+                            {tool.enabled ? "Enabled" : "Disabled"}
+                          </span>
+                          <Switch checked={tool.enabled} onCheckedChange={() => toggleTool(idx)} />
+                        </div>
                       </div>
-                      <p className="text-sm text-neutral-500">/{tool.slug}</p>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className={`text-xs ${tool.enabled ? "text-emerald-400" : "text-neutral-500"}`}>
-                        {tool.enabled ? "Enabled" : "Disabled"}
-                      </span>
-                      <Switch checked={tool.enabled} onCheckedChange={() => toggleTool(idx)} />
-                    </div>
-                  </CardContent>
-                </Card>
-                {tool.slug === "docaudit" && (
-                  <div className="ml-6 mt-1 border-l-2 border-neutral-700 pl-4 py-2">
-                    <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
-                      <div>
-                        <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
-                        <p className="text-sm font-medium text-neutral-300">SEOScope</p>
-                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-neutral-500 mb-4">/{tool.slug}</p>
                       <a
-                        href="https://seo-scope.replit.app/"
+                        href={`/${tool.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                       >
-                        Open SEOScope
-                        <ExternalLink className="w-3 h-3" />
+                        Open Tool
+                        <ExternalLink className="w-3.5 h-3.5" />
                       </a>
+                    </CardContent>
+                  </Card>
+                  {tool.slug === "docaudit" && (
+                    <div className="ml-6 mt-1 border-l-2 border-neutral-700 pl-4 py-2">
+                      <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
+                        <div>
+                          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
+                          <p className="text-sm font-medium text-neutral-300">SEOScope</p>
+                        </div>
+                        <a
+                          href="https://seo-scope.replit.app/"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
+                        >
+                          Open SEOScope
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Internal admin tools */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-sm font-semibold text-neutral-200">Internal Admin Tools</h2>
+                <p className="text-xs text-neutral-500 mt-0.5">Admin-only tools for knowledge architecture and client management work.</p>
               </div>
-            ))}
-          </TabsContent>
 
-          <TabsContent value="internal" className="mt-6 space-y-4">
-            <p className="text-sm text-neutral-400">
-              Internal admin-only tools for knowledge architecture work.
-            </p>
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                    <span className="text-emerald-400">KA</span> Knowledge Architecture Sprint
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-neutral-400 mb-4">
+                    Walk through a guided, AI-powered sprint to design taxonomy, retrieval logic, metadata schemas, and generate a complete knowledge architecture document — ready for client delivery or internal use.
+                  </p>
+                  <a
+                    href="/admin/ka-sprint"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                  >
+                    Launch Tool
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-neutral-900 border-neutral-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-emerald-400">KA</span> Knowledge Architecture Sprint
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-neutral-400 mb-4">
-                  Walk through a guided, AI-powered sprint to design taxonomy, retrieval logic, metadata schemas, and generate a complete knowledge architecture document — ready for client delivery or internal use.
-                </p>
-                <a
-                  href="/admin/ka-sprint"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
-                >
-                  Launch Tool
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </CardContent>
-            </Card>
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                    <span className="text-purple-400">RAG</span> Pipeline
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-neutral-400 mb-4">
+                    Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
+                  </p>
+                  <a
+                    href="/admin/rag-pipeline"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                  >
+                    Launch Tool
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-neutral-900 border-neutral-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-purple-400">RAG</span> Pipeline
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-neutral-400 mb-4">
-                  Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
-                </p>
-                <a
-                  href="/admin/rag-pipeline"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-                >
-                  Launch Tool
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </CardContent>
-            </Card>
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                    <span className="text-purple-400">PE</span> Prompt Engineering Workshop
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-neutral-400 mb-4">
+                    Design, test, document, and share prompt templates with variable placeholders. Includes a live test panel powered by OpenAI, style guide enforcement, and exportable handover documentation for team use.
+                  </p>
+                  <a
+                    href="/admin/prompt-workshop"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                  >
+                    Launch Tool
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </CardContent>
+              </Card>
 
-            <Card className="bg-neutral-900 border-neutral-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-purple-400">PE</span> Prompt Engineering Workshop
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-neutral-400 mb-4">
-                  Design, test, document, and share prompt templates with variable placeholders. Includes a live test panel powered by OpenAI, style guide enforcement, and exportable handover documentation for team use.
-                </p>
-                <a
-                  href="/admin/prompt-workshop"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-                >
-                  Launch Tool
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </CardContent>
-            </Card>
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                    <span className="text-teal-400">MR</span> Monthly Retainer
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-neutral-400 mb-4">
+                    Manage ongoing retainer client relationships — track commitments, monthly health checks, support sessions, and priority requests for clients on the knowledge architecture support retainer.
+                  </p>
+                  <a
+                    href="/admin/monthly-retainer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                  >
+                    Launch Tool
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </CardContent>
+              </Card>
+            </div>
 
-            <Card className="bg-neutral-900 border-neutral-800">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-teal-400">MR</span> Monthly Retainer
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-neutral-400 mb-4">
-                  Manage ongoing retainer client relationships — track commitments, monthly health checks, support sessions, and priority requests for clients on the knowledge architecture support retainer.
-                </p>
-                <a
-                  href="/admin/monthly-retainer"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
-                >
-                  Launch Tool
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-              </CardContent>
-            </Card>
           </TabsContent>
         </Tabs>
       </main>
