@@ -8,6 +8,7 @@ import { existsSync } from "fs";
 import { auditRouter } from "./routes/audit.js";
 import { adminRouter } from "./routes/admin.js";
 import { publicRouter } from "./routes/public.js";
+import { kaSprintRouter } from "./routes/ka-sprint.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === "production";
@@ -23,6 +24,7 @@ app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 
 app.use("/api/audit", auditRouter);
+app.use("/api/admin/ka-sprint", kaSprintRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/public", publicRouter);
 

@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Wrench, Plus, Trash2, GripVertical, ExternalLink } from "lucide-react";
+import { LogOut, Save, Package, Wrench, Plus, Trash2, GripVertical, ExternalLink, Hammer } from "lucide-react";
 
 interface ServicePackage {
   id: string;
@@ -216,6 +216,10 @@ export default function AdminDashboard() {
               <Wrench className="w-4 h-4" />
               Tools
             </TabsTrigger>
+            <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Hammer className="w-4 h-4" />
+              Internal Tools
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="packages" className="mt-6 space-y-4">
@@ -415,6 +419,32 @@ export default function AdminDashboard() {
                 )}
               </div>
             ))}
+          </TabsContent>
+
+          <TabsContent value="internal" className="mt-6 space-y-4">
+            <p className="text-sm text-neutral-400">
+              Internal admin-only tools for knowledge architecture work.
+            </p>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">KA</span> Knowledge Architecture Sprint
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Walk through a guided, AI-powered sprint to design taxonomy, retrieval logic, metadata schemas, and generate a complete knowledge architecture document — ready for client delivery or internal use.
+                </p>
+                <a
+                  href="/admin/ka-sprint"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>
