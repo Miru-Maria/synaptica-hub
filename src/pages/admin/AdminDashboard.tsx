@@ -368,31 +368,52 @@ export default function AdminDashboard() {
             </div>
 
             {tools.map((tool, idx) => (
-              <Card key={tool.slug} className="bg-neutral-900 border-neutral-800">
-                <CardContent className="flex items-center justify-between py-4">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-neutral-100">{tool.name}</p>
+              <div key={tool.slug}>
+                <Card className="bg-neutral-900 border-neutral-800">
+                  <CardContent className="flex items-center justify-between py-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-neutral-100">{tool.name}</p>
+                        <a
+                          href={`/${tool.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-neutral-500 hover:text-neutral-300 transition-colors"
+                          title={`Open /${tool.slug}`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </a>
+                      </div>
+                      <p className="text-sm text-neutral-500">/{tool.slug}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className={`text-xs ${tool.enabled ? "text-emerald-400" : "text-neutral-500"}`}>
+                        {tool.enabled ? "Enabled" : "Disabled"}
+                      </span>
+                      <Switch checked={tool.enabled} onCheckedChange={() => toggleTool(idx)} />
+                    </div>
+                  </CardContent>
+                </Card>
+                {tool.slug === "docaudit" && (
+                  <div className="ml-6 mt-1 border-l-2 border-neutral-700 pl-4 py-2">
+                    <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
+                      <div>
+                        <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
+                        <p className="text-sm font-medium text-neutral-300">SEOScope</p>
+                      </div>
                       <a
-                        href={`/${tool.slug}`}
+                        href="https://seo-scope.replit.app/"
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-neutral-500 hover:text-neutral-300 transition-colors"
-                        title={`Open /${tool.slug}`}
+                        className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
                       >
-                        <ExternalLink className="w-3.5 h-3.5" />
+                        Open SEOScope
+                        <ExternalLink className="w-3 h-3" />
                       </a>
                     </div>
-                    <p className="text-sm text-neutral-500">/{tool.slug}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-xs ${tool.enabled ? "text-emerald-400" : "text-neutral-500"}`}>
-                      {tool.enabled ? "Enabled" : "Disabled"}
-                    </span>
-                    <Switch checked={tool.enabled} onCheckedChange={() => toggleTool(idx)} />
-                  </div>
-                </CardContent>
-              </Card>
+                )}
+              </div>
             ))}
           </TabsContent>
         </Tabs>
