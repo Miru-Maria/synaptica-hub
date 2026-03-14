@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession } from "../data/store.js";
-import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings, ProjectStatus, ProjectTaskStatus, ProjectTaskPriority } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
 
@@ -721,6 +721,141 @@ adminRouter.delete("/chat-sessions/:id", requireAuth, async (req: Request, res: 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to delete chat session" });
+  }
+});
+
+const VALID_PROJECT_STATUSES: ProjectStatus[] = ["active", "on-hold", "complete"];
+const VALID_TASK_STATUSES: ProjectTaskStatus[] = ["todo", "in-progress", "done"];
+const VALID_TASK_PRIORITIES: ProjectTaskPriority[] = ["low", "medium", "high"];
+
+adminRouter.get("/projects", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    res.json(await getProjects());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load projects" });
+  }
+});
+
+adminRouter.get("/projects/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const project = await getProject(req.params.id);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+    res.json(project);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load project" });
+  }
+});
+
+adminRouter.post("/projects", requireAuth, async (req: Request, res: Response) => {
+  const { name, description, status, startDate, dueDate } = req.body;
+  if (!name || typeof name !== "string") { res.status(400).json({ error: "name is required" }); return; }
+  try {
+    const project = await createProject({
+      name: String(name).slice(0, 200),
+      description: String(description || "").slice(0, 2000),
+      status: VALID_PROJECT_STATUSES.includes(status) ? status : "active",
+      startDate: startDate || undefined,
+      dueDate: dueDate || undefined,
+    });
+    res.json(project);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create project" });
+  }
+});
+
+adminRouter.put("/projects/:id", requireAuth, async (req: Request, res: Response) => {
+  const updates: Record<string, unknown> = {};
+  const { name, description, status, startDate, dueDate, archived } = req.body;
+  if (name !== undefined) updates.name = String(name).slice(0, 200);
+  if (description !== undefined) updates.description = String(description).slice(0, 2000);
+  if (status !== undefined && VALID_PROJECT_STATUSES.includes(status)) updates.status = status;
+  if (startDate !== undefined) updates.startDate = startDate || undefined;
+  if (dueDate !== undefined) updates.dueDate = dueDate || undefined;
+  if (archived !== undefined) updates.archived = Boolean(archived);
+  try {
+    const updated = await updateProject(req.params.id, updates);
+    if (!updated) { res.status(404).json({ error: "Project not found" }); return; }
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update project" });
+  }
+});
+
+adminRouter.delete("/projects/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!await deleteProject(req.params.id)) {
+      res.status(404).json({ error: "Project not found" }); return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete project" });
+  }
+});
+
+adminRouter.get("/projects/:id/tasks", requireAuth, async (req: Request, res: Response) => {
+  try {
+    res.json(await getProjectTasks(req.params.id));
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load tasks" });
+  }
+});
+
+adminRouter.post("/projects/:id/tasks", requireAuth, async (req: Request, res: Response) => {
+  const { title, description, status, owner, priority, dueDate } = req.body;
+  if (!title || typeof title !== "string") { res.status(400).json({ error: "title is required" }); return; }
+  try {
+    const project = await getProject(req.params.id);
+    if (!project) { res.status(404).json({ error: "Project not found" }); return; }
+    const task = await createProjectTask({
+      projectId: req.params.id,
+      title: String(title).slice(0, 500),
+      description: String(description || "").slice(0, 2000),
+      status: VALID_TASK_STATUSES.includes(status) ? status : "todo",
+      owner: String(owner || "").slice(0, 200),
+      priority: VALID_TASK_PRIORITIES.includes(priority) ? priority : "medium",
+      dueDate: dueDate || undefined,
+    });
+    res.json(task);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to create task" });
+  }
+});
+
+adminRouter.put("/projects/:projectId/tasks/:taskId", requireAuth, async (req: Request, res: Response) => {
+  const updates: Record<string, unknown> = {};
+  const { title, description, status, owner, priority, dueDate } = req.body;
+  if (title !== undefined) updates.title = String(title).slice(0, 500);
+  if (description !== undefined) updates.description = String(description).slice(0, 2000);
+  if (status !== undefined && VALID_TASK_STATUSES.includes(status)) updates.status = status;
+  if (owner !== undefined) updates.owner = String(owner).slice(0, 200);
+  if (priority !== undefined && VALID_TASK_PRIORITIES.includes(priority)) updates.priority = priority;
+  if (dueDate !== undefined) updates.dueDate = dueDate || undefined;
+  try {
+    const updated = await updateProjectTask(req.params.projectId, req.params.taskId, updates);
+    if (!updated) { res.status(404).json({ error: "Task not found" }); return; }
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to update task" });
+  }
+});
+
+adminRouter.delete("/projects/:projectId/tasks/:taskId", requireAuth, async (req: Request, res: Response) => {
+  try {
+    if (!await deleteProjectTask(req.params.projectId, req.params.taskId)) {
+      res.status(404).json({ error: "Task not found" }); return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete task" });
   }
 });
 

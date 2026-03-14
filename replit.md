@@ -47,7 +47,7 @@ server/
     auth.ts            # JWT auth middleware (requireAuth, signToken, verifyToken)
   routes/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
-    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics, pipeline CRM CRUD, notifications CRUD, admin settings)
+    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics, pipeline CRM CRUD, notifications CRUD, admin settings, projects CRUD with nested tasks)
     public.ts          # Public read-only routes (packages, tools, discovery call + email capture with notification triggers)
     blog.ts            # Blog article CRUD (admin) + public listing/detail routes
     ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export

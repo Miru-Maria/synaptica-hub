@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
 import InvoiceManager from "./InvoiceManager";
 import ChatSessionsViewer from "./ChatSessionsViewer";
+import ProjectManager from "./ProjectManager";
 import NotificationBell from "@/components/NotificationBell";
 import AnalyticsOverview from "./AnalyticsOverview";
 
@@ -469,6 +470,7 @@ export default function AdminDashboard() {
             {navBtn("leads", Mail, "Email Leads", leads.length || undefined)}
             {navBtn("chat-sessions", Bot, "Chat Sessions")}
             {navBtn("invoicing", Receipt, "Invoicing")}
+            {navBtn("projects", ClipboardList, "Projects")}
 
             <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Tools</p>
             {navBtn("internal", Hammer, "Internal Tools")}
@@ -492,6 +494,7 @@ export default function AdminDashboard() {
           {mobileNavBtn("leads", Mail, "Leads")}
           {mobileNavBtn("chat-sessions", Bot, "Chat")}
           {mobileNavBtn("invoicing", Receipt, "Invoicing")}
+          {mobileNavBtn("projects", ClipboardList, "Projects")}
           {mobileNavBtn("internal", Hammer, "Tools")}
           {mobileNavBtn("metrics", Activity, "Metrics")}
           {mobileNavBtn("sessions", FolderOpen, "Sessions")}
@@ -1301,6 +1304,10 @@ export default function AdminDashboard() {
 
           <div className={activeTab === "invoicing" ? "mt-6" : "hidden"}>
             <InvoiceManager />
+          </div>
+
+          <div className={activeTab === "projects" ? "mt-6" : "hidden"}>
+            <ProjectManager />
           </div>
 
           <div className={activeTab === "settings" ? "mt-6 space-y-4" : "hidden"}>

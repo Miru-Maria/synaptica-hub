@@ -913,3 +913,184 @@ export async function deleteChatSession(id: string): Promise<boolean> {
   const result = await pool.query("DELETE FROM chat_sessions WHERE id = $1", [id]);
   return (result.rowCount ?? 0) > 0;
 }
+
+export type ProjectStatus = "active" | "on-hold" | "complete";
+
+export interface Project {
+  id: string;
+  name: string;
+  description: string;
+  status: ProjectStatus;
+  startDate?: string;
+  dueDate?: string;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ProjectTaskStatus = "todo" | "in-progress" | "done";
+export type ProjectTaskPriority = "low" | "medium" | "high";
+
+export interface ProjectTask {
+  id: string;
+  projectId: string;
+  title: string;
+  description: string;
+  status: ProjectTaskStatus;
+  owner: string;
+  priority: ProjectTaskPriority;
+  dueDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ProjectWithProgress extends Project {
+  totalTasks: number;
+  completedTasks: number;
+}
+
+function rowToProject(r: Record<string, unknown>): Project {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    description: r.description as string,
+    status: r.status as ProjectStatus,
+    startDate: (r.start_date as string | null) ?? undefined,
+    dueDate: (r.due_date as string | null) ?? undefined,
+    archived: r.archived as boolean,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToProjectTask(r: Record<string, unknown>): ProjectTask {
+  return {
+    id: r.id as string,
+    projectId: r.project_id as string,
+    title: r.title as string,
+    description: r.description as string,
+    status: r.status as ProjectTaskStatus,
+    owner: r.owner as string,
+    priority: r.priority as ProjectTaskPriority,
+    dueDate: (r.due_date as string | null) ?? undefined,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+export async function getProjects(): Promise<ProjectWithProgress[]> {
+  const { rows } = await pool.query(
+    `SELECT p.*, 
+      COALESCE(tc.total, 0) as total_tasks, 
+      COALESCE(tc.completed, 0) as completed_tasks
+    FROM projects p
+    LEFT JOIN (
+      SELECT project_id, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'done') as completed
+      FROM project_tasks GROUP BY project_id
+    ) tc ON p.id = tc.project_id
+    WHERE p.archived = false
+    ORDER BY p.created_at DESC`
+  );
+  return rows.map((r) => ({
+    ...rowToProject(r),
+    totalTasks: Number(r.total_tasks),
+    completedTasks: Number(r.completed_tasks),
+  }));
+}
+
+export async function getProject(id: string): Promise<ProjectWithProgress | null> {
+  const { rows } = await pool.query(
+    `SELECT p.*, 
+      COALESCE(tc.total, 0) as total_tasks, 
+      COALESCE(tc.completed, 0) as completed_tasks
+    FROM projects p
+    LEFT JOIN (
+      SELECT project_id, COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'done') as completed
+      FROM project_tasks GROUP BY project_id
+    ) tc ON p.id = tc.project_id
+    WHERE p.id = $1`,
+    [id]
+  );
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    ...rowToProject(r),
+    totalTasks: Number(r.total_tasks),
+    completedTasks: Number(r.completed_tasks),
+  };
+}
+
+export async function createProject(project: Omit<Project, "id" | "createdAt" | "updatedAt" | "archived">): Promise<Project> {
+  const now = new Date().toISOString();
+  const newProject: Project = {
+    id: `proj-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ...project,
+    archived: false,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await pool.query(
+    `INSERT INTO projects (id, name, description, status, start_date, due_date, archived, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+    [newProject.id, newProject.name, newProject.description, newProject.status, newProject.startDate ?? null, newProject.dueDate ?? null, newProject.archived, newProject.createdAt, newProject.updatedAt]
+  );
+  return newProject;
+}
+
+export async function updateProject(id: string, updates: Partial<Pick<Project, "name" | "description" | "status" | "startDate" | "dueDate" | "archived">>): Promise<Project | null> {
+  const { rows } = await pool.query("SELECT * FROM projects WHERE id = $1", [id]);
+  if (rows.length === 0) return null;
+  const current = rowToProject(rows[0]);
+  const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
+  await pool.query(
+    `UPDATE projects SET name=$1, description=$2, status=$3, start_date=$4, due_date=$5, archived=$6, updated_at=$7 WHERE id=$8`,
+    [updated.name, updated.description, updated.status, updated.startDate ?? null, updated.dueDate ?? null, updated.archived, updated.updatedAt, id]
+  );
+  return updated;
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  const result = await pool.query("DELETE FROM projects WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export async function getProjectTasks(projectId: string): Promise<ProjectTask[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM project_tasks WHERE project_id = $1 ORDER BY created_at ASC",
+    [projectId]
+  );
+  return rows.map(rowToProjectTask);
+}
+
+export async function createProjectTask(task: Omit<ProjectTask, "id" | "createdAt" | "updatedAt">): Promise<ProjectTask> {
+  const now = new Date().toISOString();
+  const newTask: ProjectTask = {
+    id: `ptask-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    ...task,
+    createdAt: now,
+    updatedAt: now,
+  };
+  await pool.query(
+    `INSERT INTO project_tasks (id, project_id, title, description, status, owner, priority, due_date, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+    [newTask.id, newTask.projectId, newTask.title, newTask.description, newTask.status, newTask.owner, newTask.priority, newTask.dueDate ?? null, newTask.createdAt, newTask.updatedAt]
+  );
+  return newTask;
+}
+
+export async function updateProjectTask(projectId: string, id: string, updates: Partial<Pick<ProjectTask, "title" | "description" | "status" | "owner" | "priority" | "dueDate">>): Promise<ProjectTask | null> {
+  const { rows } = await pool.query("SELECT * FROM project_tasks WHERE id = $1 AND project_id = $2", [id, projectId]);
+  if (rows.length === 0) return null;
+  const current = rowToProjectTask(rows[0]);
+  const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
+  await pool.query(
+    `UPDATE project_tasks SET title=$1, description=$2, status=$3, owner=$4, priority=$5, due_date=$6, updated_at=$7 WHERE id=$8 AND project_id=$9`,
+    [updated.title, updated.description, updated.status, updated.owner, updated.priority, updated.dueDate ?? null, updated.updatedAt, id, projectId]
+  );
+  return updated;
+}
+
+export async function deleteProjectTask(projectId: string, id: string): Promise<boolean> {
+  const result = await pool.query("DELETE FROM project_tasks WHERE id = $1 AND project_id = $2", [id, projectId]);
+  return (result.rowCount ?? 0) > 0;
+}
