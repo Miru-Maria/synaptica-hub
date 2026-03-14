@@ -154,6 +154,11 @@ A documentation gap analysis tool accessible at `/docaudit`. Users submit knowle
 
 Content is chunked, embedded via OpenAI, and compared against user-selected topic taxonomies (4 presets + custom topics). Results show coverage scores, radar chart visualization, severity-ranked gaps, and actionable recommendations. Reports can be exported as branded PDF with Synaptica logo, dark header, severity breakdown, section-by-section findings, priority recommendations, and paginated footer.
 
+## Known Notes (Non-Critical)
+
+- **Production SSL deprecation warning** — On startup, the `pg` library prints a "SECURITY WARNING" about SSL mode changes coming in pg v9. This is cosmetic. The database connects and initializes correctly ("Database initialized" always follows). No action needed until upgrading to pg v9.
+- **Double tool-run query in analytics** — The `/api/admin/analytics/overview` endpoint calls `getMetrics()` (which internally calls `getToolRuns()`) and then also calls `getToolRuns()` directly for its own date-range filtering. This results in two identical DB queries per analytics page load. At current data volumes this is imperceptible. If tool run volume grows significantly, refactor to pass the runs array into `getMetrics()` instead of fetching internally.
+
 ## RAG Pipeline Tool
 
 An admin-only RAG (Retrieval-Augmented Generation) pipeline tool at `/admin/rag-pipeline`. Features:

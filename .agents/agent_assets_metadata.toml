@@ -6,3 +6,9 @@ id = "Dku3nS3Suk8OsDhRP60Bf"
 uri = "file://attached_assets/synaptica-strategy-briefing_1773297163088.md"
 type = "text"
 title = "Synaptica Strategy & Legal Briefing (updated)"
+
+[[outputs]]
+id = "s7l6TUyqfwmVJPOmxXxzf"
+uri = "file://synaptica-audit-2026-03-14.md"
+type = "text"
+title = "Synaptica Audit — March 14, 2026"
