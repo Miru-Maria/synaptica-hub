@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 import { ArrowLeft, Loader2, Send, Database, MessageSquare, Upload, Info } from "lucide-react";
 
 function authHeaders(): Record<string, string> {
-  const token = sessionStorage.getItem("admin_token");
+  const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }
 

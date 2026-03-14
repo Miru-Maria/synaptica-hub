@@ -23,7 +23,7 @@ interface ServicePackage {
 }
 
 function authHeaders(): Record<string, string> {
-  const token = sessionStorage.getItem("admin_token");
+  const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -63,7 +63,7 @@ export default function AdminDashboard() {
   }, [checkAuth]);
 
   const handleLogout = async () => {
-    sessionStorage.removeItem("admin_token");
+    localStorage.removeItem("admin_token");
     setLocation("/admin/login");
   };
 

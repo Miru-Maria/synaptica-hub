@@ -32,7 +32,7 @@ export default function AdminLogin() {
         return;
       }
 
-      sessionStorage.setItem("admin_token", data.token);
+      localStorage.setItem("admin_token", data.token);
       setLocation("/admin");
     } catch {
       setError("Network error. Please try again.");
