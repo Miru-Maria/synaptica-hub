@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard } from "lucide-react";
@@ -393,11 +393,50 @@ export default function AdminDashboard() {
     );
   }
 
+  type NavIcon = React.ComponentType<{ className?: string }>;
+
+  const navBtn = (value: string, Icon: NavIcon, label: string, badge?: number, extraOnClick?: () => void) => (
+    <button
+      key={value}
+      onClick={() => { setActiveTab(value); extraOnClick?.(); }}
+      className={cn(
+        "w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left",
+        activeTab === value
+          ? "bg-neutral-800 text-neutral-100"
+          : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50"
+      )}
+    >
+      <Icon className="w-4 h-4 flex-shrink-0" />
+      <span className="flex-1 truncate">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-full font-medium min-w-[18px] text-center leading-4">
+          {badge}
+        </span>
+      )}
+    </button>
+  );
+
+  const mobileNavBtn = (value: string, Icon: NavIcon, label: string, extraOnClick?: () => void) => (
+    <button
+      key={value}
+      onClick={() => { setActiveTab(value); extraOnClick?.(); }}
+      className={cn(
+        "flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors",
+        activeTab === value
+          ? "text-emerald-400"
+          : "text-neutral-500 hover:text-neutral-300"
+      )}
+    >
+      <Icon className="w-4 h-4" />
+      <span className="whitespace-nowrap">{label}</span>
+    </button>
+  );
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-neutral-100">
-      <header className="border-b border-neutral-800 bg-neutral-900/50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
-          <h1 className="font-semibold text-lg">Admin Dashboard</h1>
+    <div className="min-h-screen bg-neutral-950 text-neutral-100 flex flex-col">
+      <header className="border-b border-neutral-800 bg-neutral-900/60 flex-shrink-0 sticky top-0 z-20">
+        <div className="h-14 px-4 sm:px-6 flex items-center justify-between">
+          <h1 className="font-semibold text-base tracking-tight">Synaptica Admin</h1>
           <div className="flex items-center gap-3">
             {status && (
               <span className="text-sm text-emerald-400">{status}</span>
@@ -411,75 +450,59 @@ export default function AdminDashboard() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-neutral-900 border border-neutral-800">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-neutral-800 gap-2">
-              <LayoutDashboard className="w-4 h-4" />
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="packages" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Package className="w-4 h-4" />
-              Packages
-            </TabsTrigger>
-            <TabsTrigger value="pipeline" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Users className="w-4 h-4" />
-              Pipeline
-            </TabsTrigger>
-            <TabsTrigger value="inquiries" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Inbox className="w-4 h-4" />
-              Inquiries{inquiries.length > 0 && ` (${inquiries.length})`}
-            </TabsTrigger>
-            <TabsTrigger value="blog" className="data-[state=active]:bg-neutral-800 gap-2">
-              <PenLine className="w-4 h-4" />
-              Blog
-            </TabsTrigger>
-            <TabsTrigger value="testimonials" className="data-[state=active]:bg-neutral-800 gap-2">
-              <MessageSquare className="w-4 h-4" />
-              Testimonials
-            </TabsTrigger>
-            <TabsTrigger value="case-studies" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Briefcase className="w-4 h-4" />
-              Case Studies
-            </TabsTrigger>
-            <TabsTrigger value="stats" className="data-[state=active]:bg-neutral-800 gap-2">
-              <BarChart3 className="w-4 h-4" />
-              Statistics
-            </TabsTrigger>
-            <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Hammer className="w-4 h-4" />
-              Tools
-            </TabsTrigger>
-            <TabsTrigger value="metrics" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Activity className="w-4 h-4" />
-              Metrics
-            </TabsTrigger>
-            <TabsTrigger value="sessions" className="data-[state=active]:bg-neutral-800 gap-2" onClick={() => { if (sessions.length === 0) loadSessions(); }}>
-              <FolderOpen className="w-4 h-4" />
-              Sessions
-            </TabsTrigger>
-            <TabsTrigger value="invoicing" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Receipt className="w-4 h-4" />
-              Invoicing
-            </TabsTrigger>
-            <TabsTrigger value="leads" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Mail className="w-4 h-4" />
-              Email Leads
-              {leads.length > 0 && (
-                <span className="ml-1 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">{leads.length}</span>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-neutral-800 gap-2">
-              <Settings className="w-4 h-4" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
+      <div className="flex flex-1 min-h-0">
+        <aside className="w-52 border-r border-neutral-800 bg-neutral-900/30 hidden md:flex flex-col sticky top-14 self-start h-[calc(100vh-3.5rem)] overflow-y-auto flex-shrink-0">
+          <nav className="py-3 px-2 space-y-0.5">
+            {navBtn("overview", LayoutDashboard, "Overview")}
 
-          <TabsContent value="overview" className="mt-6">
+            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Content</p>
+            {navBtn("packages", Package, "Packages")}
+            {navBtn("blog", PenLine, "Blog")}
+            {navBtn("testimonials", MessageSquare, "Testimonials")}
+            {navBtn("case-studies", Briefcase, "Case Studies")}
+            {navBtn("stats", BarChart3, "Statistics")}
+
+            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Business</p>
+            {navBtn("pipeline", Users, "Pipeline")}
+            {navBtn("inquiries", Inbox, "Inquiries", inquiries.length || undefined)}
+            {navBtn("leads", Mail, "Email Leads", leads.length || undefined)}
+            {navBtn("invoicing", Receipt, "Invoicing")}
+
+            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Tools</p>
+            {navBtn("internal", Hammer, "Internal Tools")}
+            {navBtn("metrics", Activity, "Metrics")}
+            {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
+
+            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Account</p>
+            {navBtn("settings", Settings, "Settings")}
+          </nav>
+        </aside>
+
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-10 bg-neutral-900/95 border-t border-neutral-800 flex overflow-x-auto px-2 py-1.5 gap-0.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {mobileNavBtn("overview", LayoutDashboard, "Overview")}
+          {mobileNavBtn("packages", Package, "Packages")}
+          {mobileNavBtn("blog", PenLine, "Blog")}
+          {mobileNavBtn("testimonials", MessageSquare, "Social")}
+          {mobileNavBtn("case-studies", Briefcase, "Cases")}
+          {mobileNavBtn("stats", BarChart3, "Stats")}
+          {mobileNavBtn("pipeline", Users, "Pipeline")}
+          {mobileNavBtn("inquiries", Inbox, "Inquiries")}
+          {mobileNavBtn("leads", Mail, "Leads")}
+          {mobileNavBtn("invoicing", Receipt, "Invoicing")}
+          {mobileNavBtn("internal", Hammer, "Tools")}
+          {mobileNavBtn("metrics", Activity, "Metrics")}
+          {mobileNavBtn("sessions", FolderOpen, "Sessions")}
+          {mobileNavBtn("settings", Settings, "Settings")}
+        </div>
+
+        <main className="flex-1 min-w-0">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 pb-24 md:pb-8">
+
+          <div className={activeTab === "overview" ? "mt-6" : "hidden"}>
             <AnalyticsOverview onNavigate={setActiveTab} />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="packages" className="mt-6 space-y-4">
+          <div className={activeTab === "packages" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Manage service packages shown on the public site.
@@ -615,13 +638,13 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="pipeline" className="mt-6">
+          <div className={activeTab === "pipeline" ? "mt-6" : "hidden"}>
             <PipelineManager />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="inquiries" className="mt-6 space-y-4">
+          <div className={activeTab === "inquiries" ? "mt-6 space-y-4" : "hidden"}>
             <p className="text-sm text-neutral-400">
               Discovery call inquiries submitted through the Work With Me page.
             </p>
@@ -658,13 +681,13 @@ export default function AdminDashboard() {
                 </Card>
               ))
             )}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="blog" className="mt-6">
+          <div className={activeTab === "blog" ? "mt-6" : "hidden"}>
             <BlogManager />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="testimonials" className="mt-6 space-y-4">
+          <div className={activeTab === "testimonials" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Manage testimonials shown on the public site.
@@ -724,9 +747,9 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="case-studies" className="mt-6 space-y-4">
+          <div className={activeTab === "case-studies" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Manage case studies shown on the public site.
@@ -782,9 +805,9 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="stats" className="mt-6 space-y-4">
+          <div className={activeTab === "stats" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Manage outcome statistics shown on the public site.
@@ -829,9 +852,9 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="internal" className="mt-6 space-y-4">
+          <div className={activeTab === "internal" ? "mt-6 space-y-4" : "hidden"}>
 
             <Card className="bg-neutral-900 border-neutral-800 border-emerald-500/30">
               <CardHeader className="pb-3">
@@ -1119,13 +1142,13 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-          </TabsContent>
+          </div>
 
-          <TabsContent value="metrics" className="mt-6">
+          <div className={activeTab === "metrics" ? "mt-6" : "hidden"}>
             <MetricsPanel />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="sessions" className="mt-6 space-y-4">
+          <div className={activeTab === "sessions" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Recent saved sessions from KA Sprint and Prompt Workshop tools.
@@ -1193,9 +1216,9 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="leads" className="mt-6 space-y-4">
+          <div className={activeTab === "leads" ? "mt-6 space-y-4" : "hidden"}>
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
                 Email leads captured from public tools.
@@ -1267,13 +1290,13 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
+          </div>
 
-          <TabsContent value="invoicing" className="mt-6">
+          <div className={activeTab === "invoicing" ? "mt-6" : "hidden"}>
             <InvoiceManager />
-          </TabsContent>
+          </div>
 
-          <TabsContent value="settings" className="mt-6 space-y-4">
+          <div className={activeTab === "settings" ? "mt-6 space-y-4" : "hidden"}>
             <p className="text-sm text-neutral-400">
               Configure notification preferences and admin settings.
             </p>
@@ -1351,9 +1374,10 @@ export default function AdminDashboard() {
                 </Button>
               </CardContent>
             </Card>
-          </TabsContent>
-        </Tabs>
-      </main>
+          </div>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
