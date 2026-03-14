@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { PhoenixLogo } from "./PhoenixLogo";
+import { useLocation } from "wouter";
 
 export function Navbar() {
   const [, setLocation] = useLocation();
@@ -26,10 +27,12 @@ export function Navbar() {
     }
   };
 
-  const navLinks = [
+  const [, navigate] = useLocation();
+
+  const navLinks: { name: string; id: string; href?: string }[] = [
     { name: "About", id: "about" },
     { name: "Services & Lab", id: "services" },
-    { name: "Learning OS", id: "learning-os" },
+    { name: "Learning OS", id: "learning-os", href: "/learning-os" },
     { name: "Packages", id: "packages" },
   ];
 
@@ -59,7 +62,14 @@ export function Navbar() {
           {navLinks.map((link) => (
             <button
               key={link.name}
-              onClick={() => scrollTo(link.id)}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                if (link.href) {
+                  navigate(link.href);
+                } else {
+                  scrollTo(link.id);
+                }
+              }}
               className="nav-link text-sm font-medium"
             >
               {link.name}
@@ -95,7 +105,14 @@ export function Navbar() {
               {navLinks.map((link) => (
                 <button
                   key={link.name}
-                  onClick={() => scrollTo(link.id)}
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    if (link.href) {
+                      navigate(link.href);
+                    } else {
+                      scrollTo(link.id);
+                    }
+                  }}
                   className="text-left text-lg font-medium text-foreground py-2 border-b border-white/5"
                 >
                   {link.name}

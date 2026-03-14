@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Switch, Route, Router as WouterRouter } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "@/pages/Home";
+import LearningOSPage from "@/pages/LearningOS";
 import Legal from "@/pages/Legal";
 import DocAudit from "@/pages/DocAudit";
 import WorkWithMe from "@/pages/WorkWithMe";
@@ -26,6 +27,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/learning-os" component={LearningOSPage} />
       <Route path="/legal" component={Legal} />
       <Route path="/terms" component={Legal} />
       <Route path="/privacy" component={Legal} />
