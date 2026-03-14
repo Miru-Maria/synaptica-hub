@@ -1,0 +1,271 @@
+<<<<<<< HEAD
+const VALID_INVOICE_STATUSES: InvoiceStatus[] = ["Draft", "Sent", "Paid", "Overdue"];
+
+adminRouter.get("/invoices", requireAuth, (_req: Request, res: Response) => {
+  res.json(getInvoices());
+});
+
+adminRouter.get("/invoices/contacts", requireAuth, (_req: Request, res: Response) => {
+  const inquiries = getDiscoveryInquiries();
+  const retainers = getRetainerClients();
+  const leads = getEmailLeads();
+  const pipeline = getPipelineContacts();
+
+  const contactMap = new Map<string, { id: string; name: string; source: string }>();
+
+  for (const inq of inquiries) {
+    const key = inq.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: inq.id, name: inq.name, source: "inquiry" });
+    }
+  }
+
+  for (const ret of retainers) {
+    const key = ret.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: ret.id, name: ret.name, source: "retainer" });
+    }
+  }
+
+  for (const lead of leads) {
+    const name = lead.firstName || lead.email;
+    const key = name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: lead.id, name, source: "lead" });
+    }
+  }
+
+  for (const contact of pipeline) {
+    const key = contact.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: contact.id, name: contact.name, source: "pipeline" });
+    }
+  }
+
+  res.json(Array.from(contactMap.values()));
+});
+
+adminRouter.post("/invoices", requireAuth, (req: Request, res: Response) => {
+  const { clientName, contactId, description, amount, currency, invoiceDate, dueDate, status } = req.body;
+  if (!clientName || !description || typeof amount !== "number" || !invoiceDate || !dueDate) {
+    res.status(400).json({ error: "clientName, description, amount, invoiceDate, and dueDate are required" });
+    return;
+  }
+  const invoiceStatus: InvoiceStatus = VALID_INVOICE_STATUSES.includes(status) ? status : "Draft";
+  const invoices = getInvoices();
+  const newInvoice: Invoice = {
+    id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    clientName,
+    contactId: contactId || undefined,
+    description,
+    amount,
+    currency: currency || "USD",
+    invoiceDate,
+    dueDate,
+    status: invoiceStatus,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  invoices.unshift(newInvoice);
+  saveInvoices(invoices);
+  res.json(newInvoice);
+});
+
+adminRouter.put("/invoices/:id", requireAuth, (req: Request, res: Response) => {
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  const { clientName, contactId, description, amount, currency, invoiceDate, dueDate, status } = req.body;
+  if (clientName !== undefined) invoices[idx].clientName = clientName;
+  if (contactId !== undefined) invoices[idx].contactId = contactId || undefined;
+  if (description !== undefined) invoices[idx].description = description;
+  if (amount !== undefined) invoices[idx].amount = amount;
+  if (currency !== undefined) invoices[idx].currency = currency;
+  if (invoiceDate !== undefined) invoices[idx].invoiceDate = invoiceDate;
+  if (dueDate !== undefined) invoices[idx].dueDate = dueDate;
+  if (status !== undefined && VALID_INVOICE_STATUSES.includes(status)) {
+    invoices[idx].status = status;
+  }
+  invoices[idx].updatedAt = new Date().toISOString();
+  saveInvoices(invoices);
+  res.json(invoices[idx]);
+});
+
+adminRouter.delete("/invoices/:id", requireAuth, (req: Request, res: Response) => {
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  invoices.splice(idx, 1);
+  saveInvoices(invoices);
+  res.json({ ok: true });
+});
+
+adminRouter.patch("/invoices/:id/status", requireAuth, (req: Request, res: Response) => {
+  const { status } = req.body;
+  if (!VALID_INVOICE_STATUSES.includes(status)) {
+    res.status(400).json({ error: "Invalid status. Must be one of: Draft, Sent, Paid, Overdue" });
+    return;
+  }
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  invoices[idx].status = status;
+  invoices[idx].updatedAt = new Date().toISOString();
+  saveInvoices(invoices);
+  res.json(invoices[idx]);
+});
+
+adminRouter.get("/notifications", requireAuth, (_req: Request, res: Response) => {
+  res.json(getNotifications());
+});
+
+adminRouter.post("/notifications/read-all", requireAuth, (_req: Request, res: Response) => {
+  markAllNotificationsRead();
+  res.json({ ok: true });
+});
+
+adminRouter.post("/notifications/:id/read", requireAuth, (req: Request, res: Response) => {
+  const success = markNotificationRead(req.params.id);
+  if (!success) {
+    res.status(404).json({ error: "Notification not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+adminRouter.get("/settings", requireAuth, (_req: Request, res: Response) => {
+  res.json(getAdminSettings());
+});
+
+adminRouter.put("/settings", requireAuth, (req: Request, res: Response) => {
+  const { emailNotificationsEnabled, adminEmail } = req.body;
+  if (typeof emailNotificationsEnabled !== "boolean") {
+    res.status(400).json({ error: "emailNotificationsEnabled must be a boolean" });
+    return;
+  }
+  if (typeof adminEmail !== "string") {
+    res.status(400).json({ error: "adminEmail must be a string" });
+    return;
+  }
+  const settings: AdminSettings = { emailNotificationsEnabled, adminEmail };
+  saveAdminSettings(settings);
+  res.json({ ok: true });
+=======
+adminRouter.get("/analytics/overview", requireAuth, (_req: Request, res: Response) => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+  const metrics = getMetrics();
+  const toolRuns = getToolRuns();
+  const pipeline = getPipelineContacts();
+  const retainers = getRetainerClients();
+  const leads = getEmailLeads();
+  const inquiries = getDiscoveryInquiries();
+
+  const openStages: string[] = ["New Lead", "Contacted", "Proposal Sent"];
+  const openDeals = pipeline.filter((c) => openStages.includes(c.stage));
+  const totalPipelineValue = openDeals.reduce((sum, c) => sum + c.estimatedValue, 0);
+
+  const stageDistribution: Record<string, { count: number; value: number }> = {};
+  for (const contact of pipeline) {
+    if (!stageDistribution[contact.stage]) {
+      stageDistribution[contact.stage] = { count: 0, value: 0 };
+    }
+    stageDistribution[contact.stage].count++;
+    stageDistribution[contact.stage].value += contact.estimatedValue;
+  }
+
+  const activeRetainers = retainers.length;
+  const retainerMRR = retainers.reduce((sum, r) => sum + r.monthlyRate, 0);
+
+  const recentLeads = leads.filter((l) => new Date(l.capturedAt) >= thirtyDaysAgo);
+  const recentInquiries = inquiries.filter((i) => new Date(i.createdAt) >= thirtyDaysAgo);
+
+  const toolRunsLast30 = toolRuns.filter((r) => new Date(r.timestamp) >= thirtyDaysAgo);
+  const toolRunsLast90 = toolRuns.filter((r) => new Date(r.timestamp) >= ninetyDaysAgo);
+
+  const dailyToolRuns: Record<string, number> = {};
+  for (let d = new Date(thirtyDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
+    dailyToolRuns[d.toISOString().slice(0, 10)] = 0;
+  }
+  for (const run of toolRunsLast30) {
+    const day = run.timestamp.slice(0, 10);
+    if (dailyToolRuns[day] !== undefined) dailyToolRuns[day]++;
+  }
+
+  const toolUsageTrend = Object.entries(dailyToolRuns)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  function getWeekStart(d: Date): string {
+    const copy = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    copy.setUTCDate(copy.getUTCDate() - copy.getUTCDay());
+    return copy.toISOString().slice(0, 10);
+  }
+
+  const weeklyLeads: Record<string, number> = {};
+  for (let d = new Date(ninetyDaysAgo); d <= now; d.setDate(d.getDate() + 7)) {
+    const key = getWeekStart(d);
+    weeklyLeads[key] = 0;
+  }
+  for (const lead of leads) {
+    const leadDate = new Date(lead.capturedAt);
+    if (leadDate >= ninetyDaysAgo) {
+      const key = getWeekStart(leadDate);
+      if (weeklyLeads[key] !== undefined) weeklyLeads[key]++;
+      else weeklyLeads[key] = 1;
+    }
+  }
+
+  const leadTrend = Object.entries(weeklyLeads)
+    .map(([week, count]) => ({ week, count }))
+    .sort((a, b) => a.week.localeCompare(b.week));
+
+  const toolBreakdown = metrics.tools.map((t) => ({
+    name: t.toolName,
+    slug: t.toolSlug,
+    totalRuns: t.totalRuns,
+    last30Days: t.last30DaysRuns,
+    emailCaptures: t.emailCaptures,
+  }));
+
+  res.json({
+    toolUsage: {
+      totalRuns: metrics.totalRuns,
+      last30Days: toolRunsLast30.length,
+      last90Days: toolRunsLast90.length,
+      totalEmailCaptures: metrics.totalEmails,
+      trend: toolUsageTrend,
+      breakdown: toolBreakdown,
+    },
+    pipeline: {
+      totalContacts: pipeline.length,
+      totalPipelineValue,
+      stageDistribution,
+      activeClients: pipeline.filter((c) => c.stage === "Active Client").length,
+    },
+    retainers: {
+      activeCount: activeRetainers,
+      mrr: retainerMRR,
+    },
+    leads: {
+      totalLeads: leads.length,
+      last30Days: recentLeads.length,
+      trend: leadTrend,
+    },
+    inquiries: {
+      total: inquiries.length,
+      last30Days: recentInquiries.length,
+    },
+  });
+>>>>>>> c32d2a7 (Task #26: Business analytics overview dashboard in admin)

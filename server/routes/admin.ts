@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -591,4 +591,114 @@ adminRouter.put("/settings", requireAuth, (req: Request, res: Response) => {
   const settings: AdminSettings = { emailNotificationsEnabled, adminEmail };
   saveAdminSettings(settings);
   res.json({ ok: true });
+});
+
+adminRouter.get("/analytics/overview", requireAuth, (_req: Request, res: Response) => {
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
+
+  const metrics = getMetrics();
+  const toolRuns = getToolRuns();
+  const pipeline = getPipelineContacts();
+  const retainers = getRetainerClients();
+  const leads = getEmailLeads();
+  const inquiries = getDiscoveryInquiries();
+
+  const openStages: string[] = ["New Lead", "Contacted", "Proposal Sent"];
+  const openDeals = pipeline.filter((c) => openStages.includes(c.stage));
+  const totalPipelineValue = openDeals.reduce((sum, c) => sum + c.estimatedValue, 0);
+
+  const stageDistribution: Record<string, { count: number; value: number }> = {};
+  for (const contact of pipeline) {
+    if (!stageDistribution[contact.stage]) {
+      stageDistribution[contact.stage] = { count: 0, value: 0 };
+    }
+    stageDistribution[contact.stage].count++;
+    stageDistribution[contact.stage].value += contact.estimatedValue;
+  }
+
+  const activeRetainers = retainers.length;
+  const retainerMRR = retainers.reduce((sum, r) => sum + r.monthlyRate, 0);
+
+  const recentLeads = leads.filter((l) => new Date(l.capturedAt) >= thirtyDaysAgo);
+  const recentInquiries = inquiries.filter((i) => new Date(i.createdAt) >= thirtyDaysAgo);
+
+  const toolRunsLast30 = toolRuns.filter((r) => new Date(r.timestamp) >= thirtyDaysAgo);
+  const toolRunsLast90 = toolRuns.filter((r) => new Date(r.timestamp) >= ninetyDaysAgo);
+
+  const dailyToolRuns: Record<string, number> = {};
+  for (let d = new Date(thirtyDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
+    dailyToolRuns[d.toISOString().slice(0, 10)] = 0;
+  }
+  for (const run of toolRunsLast30) {
+    const day = run.timestamp.slice(0, 10);
+    if (dailyToolRuns[day] !== undefined) dailyToolRuns[day]++;
+  }
+
+  const toolUsageTrend = Object.entries(dailyToolRuns)
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  function getWeekStart(d: Date): string {
+    const copy = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+    copy.setUTCDate(copy.getUTCDate() - copy.getUTCDay());
+    return copy.toISOString().slice(0, 10);
+  }
+
+  const weeklyLeads: Record<string, number> = {};
+  for (let d = new Date(ninetyDaysAgo); d <= now; d.setDate(d.getDate() + 7)) {
+    const key = getWeekStart(d);
+    weeklyLeads[key] = 0;
+  }
+  for (const lead of leads) {
+    const leadDate = new Date(lead.capturedAt);
+    if (leadDate >= ninetyDaysAgo) {
+      const key = getWeekStart(leadDate);
+      if (weeklyLeads[key] !== undefined) weeklyLeads[key]++;
+      else weeklyLeads[key] = 1;
+    }
+  }
+
+  const leadTrend = Object.entries(weeklyLeads)
+    .map(([week, count]) => ({ week, count }))
+    .sort((a, b) => a.week.localeCompare(b.week));
+
+  const toolBreakdown = metrics.tools.map((t) => ({
+    name: t.toolName,
+    slug: t.toolSlug,
+    totalRuns: t.totalRuns,
+    last30Days: t.last30DaysRuns,
+    emailCaptures: t.emailCaptures,
+  }));
+
+  res.json({
+    toolUsage: {
+      totalRuns: metrics.totalRuns,
+      last30Days: toolRunsLast30.length,
+      last90Days: toolRunsLast90.length,
+      totalEmailCaptures: metrics.totalEmails,
+      trend: toolUsageTrend,
+      breakdown: toolBreakdown,
+    },
+    pipeline: {
+      totalContacts: pipeline.length,
+      totalPipelineValue,
+      stageDistribution,
+      activeClients: pipeline.filter((c) => c.stage === "Active Client").length,
+    },
+    retainers: {
+      activeCount: activeRetainers,
+      mrr: retainerMRR,
+    },
+    leads: {
+      totalLeads: leads.length,
+      last30Days: recentLeads.length,
+      trend: leadTrend,
+    },
+    inquiries: {
+      total: inquiries.length,
+      last30Days: recentInquiries.length,
+    },
+  });
 });

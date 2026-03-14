@@ -7,12 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
 import InvoiceManager from "./InvoiceManager";
 import NotificationBell from "@/components/NotificationBell";
+import AnalyticsOverview from "./AnalyticsOverview";
 
 interface DiscoveryInquiry {
   id: string;
@@ -110,6 +111,7 @@ export default function AdminDashboard() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "" });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
 
   const checkAuth = useCallback(async () => {
     try {
@@ -410,8 +412,12 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <Tabs defaultValue="packages">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="bg-neutral-900 border border-neutral-800">
+            <TabsTrigger value="overview" className="data-[state=active]:bg-neutral-800 gap-2">
+              <LayoutDashboard className="w-4 h-4" />
+              Overview
+            </TabsTrigger>
             <TabsTrigger value="packages" className="data-[state=active]:bg-neutral-800 gap-2">
               <Package className="w-4 h-4" />
               Packages
@@ -468,6 +474,10 @@ export default function AdminDashboard() {
               Settings
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="overview" className="mt-6">
+            <AnalyticsOverview onNavigate={setActiveTab} />
+          </TabsContent>
 
           <TabsContent value="packages" className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
