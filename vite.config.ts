@@ -19,6 +19,9 @@ import { defineConfig } from "vite";
       },
       dedupe: ["react", "react-dom"],
     },
+    optimizeDeps: {
+      include: ["react", "react-dom", "react/jsx-runtime"],
+    },
     root: path.resolve(import.meta.dirname),
     build: {
       outDir: path.resolve(import.meta.dirname, "dist"),
