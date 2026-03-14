@@ -44,6 +44,12 @@ function Router() {
       <Route path="/docforge">
         <ExternalRedirect url="https://docforge-pdf.replit.app/" />
       </Route>
+      <Route path="/difflens">
+        <ExternalRedirect url="https://diff-lens.replit.app/" />
+      </Route>
+      <Route path="/docscope">
+        <ExternalRedirect url="https://intel-engine-scope.replit.app/" />
+      </Route>
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/ka-sprint" component={KASprint} />
       <Route path="/admin/rag-pipeline" component={RAGPipeline} />
