@@ -7,8 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity } from "lucide-react";
 import BlogManager from "./BlogManager";
+import MetricsPanel from "./MetricsPanel";
 
 interface DiscoveryInquiry {
   id: string;
@@ -430,6 +431,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
               <Hammer className="w-4 h-4" />
               Tools
+            </TabsTrigger>
+            <TabsTrigger value="metrics" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Activity className="w-4 h-4" />
+              Metrics
             </TabsTrigger>
             <TabsTrigger value="sessions" className="data-[state=active]:bg-neutral-800 gap-2" onClick={() => { if (sessions.length === 0) loadSessions(); }}>
               <FolderOpen className="w-4 h-4" />
@@ -1084,6 +1089,10 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+          </TabsContent>
+
+          <TabsContent value="metrics" className="mt-6">
+            <MetricsPanel />
           </TabsContent>
 
           <TabsContent value="sessions" className="mt-6 space-y-4">

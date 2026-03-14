@@ -572,3 +572,132 @@ export function saveEmailLead(lead: EmailLead) {
 export function saveEmailLeads(leads: EmailLead[]) {
   writeJson(LEADS_FILE, leads);
 }
+
+export interface ToolRunEvent {
+  id: string;
+  toolName: string;
+  toolSlug: string;
+  timestamp: string;
+  inputType?: string;
+  emailCaptured: boolean;
+  documentSizeCategory?: string;
+  gapCategories?: string[];
+}
+
+const TOOL_RUNS_FILE = path.join(DATA_DIR, "tool-runs.json");
+
+export function getToolRuns(): ToolRunEvent[] {
+  return readJson(TOOL_RUNS_FILE, []);
+}
+
+export function logToolRun(event: Omit<ToolRunEvent, "id" | "timestamp">): ToolRunEvent {
+  const runs = getToolRuns();
+  const entry: ToolRunEvent = {
+    id: `tr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    timestamp: new Date().toISOString(),
+    ...event,
+  };
+  runs.push(entry);
+  writeJson(TOOL_RUNS_FILE, runs);
+  return entry;
+}
+
+export interface ToolMetricsSummary {
+  toolName: string;
+  toolSlug: string;
+  totalRuns: number;
+  last30DaysRuns: number;
+  emailCaptures: number;
+  inputTypeBreakdown?: Record<string, number>;
+  documentSizeBreakdown?: Record<string, number>;
+  topGapCategories?: { category: string; count: number }[];
+}
+
+export interface DailyCount {
+  date: string;
+  count: number;
+}
+
+export interface MetricsResponse {
+  tools: ToolMetricsSummary[];
+  dailyCounts: DailyCount[];
+  totalRuns: number;
+  totalEmails: number;
+}
+
+export function getMetrics(): MetricsResponse {
+  const runs = getToolRuns();
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  const toolMap = new Map<string, ToolRunEvent[]>();
+  for (const run of runs) {
+    const key = run.toolSlug;
+    if (!toolMap.has(key)) toolMap.set(key, []);
+    toolMap.get(key)!.push(run);
+  }
+
+  const tools: ToolMetricsSummary[] = [];
+  for (const [slug, toolRuns] of toolMap) {
+    const recentRuns = toolRuns.filter((r) => new Date(r.timestamp) >= thirtyDaysAgo);
+    const summary: ToolMetricsSummary = {
+      toolName: toolRuns[0].toolName,
+      toolSlug: slug,
+      totalRuns: toolRuns.length,
+      last30DaysRuns: recentRuns.length,
+      emailCaptures: toolRuns.filter((r) => r.emailCaptured).length,
+    };
+
+    if (slug === "docaudit") {
+      const inputBreakdown: Record<string, number> = {};
+      const sizeBreakdown: Record<string, number> = {};
+      const gapCounts: Record<string, number> = {};
+
+      for (const run of toolRuns) {
+        if (run.inputType) {
+          inputBreakdown[run.inputType] = (inputBreakdown[run.inputType] || 0) + 1;
+        }
+        if (run.documentSizeCategory) {
+          sizeBreakdown[run.documentSizeCategory] = (sizeBreakdown[run.documentSizeCategory] || 0) + 1;
+        }
+        if (run.gapCategories) {
+          for (const cat of run.gapCategories) {
+            gapCounts[cat] = (gapCounts[cat] || 0) + 1;
+          }
+        }
+      }
+
+      summary.inputTypeBreakdown = inputBreakdown;
+      summary.documentSizeBreakdown = sizeBreakdown;
+      summary.topGapCategories = Object.entries(gapCounts)
+        .map(([category, count]) => ({ category, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+    }
+
+    tools.push(summary);
+  }
+
+  const dailyMap = new Map<string, number>();
+  const last30Runs = runs.filter((r) => new Date(r.timestamp) >= thirtyDaysAgo);
+  for (const run of last30Runs) {
+    const day = run.timestamp.slice(0, 10);
+    dailyMap.set(day, (dailyMap.get(day) || 0) + 1);
+  }
+
+  for (let d = new Date(thirtyDaysAgo); d <= now; d.setDate(d.getDate() + 1)) {
+    const key = d.toISOString().slice(0, 10);
+    if (!dailyMap.has(key)) dailyMap.set(key, 0);
+  }
+
+  const dailyCounts: DailyCount[] = [...dailyMap.entries()]
+    .map(([date, count]) => ({ date, count }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    tools,
+    dailyCounts,
+    totalRuns: runs.length,
+    totalEmails: runs.filter((r) => r.emailCaptured).length,
+  };
+}

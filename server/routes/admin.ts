@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -353,4 +353,13 @@ adminRouter.get("/leads/export", requireAuth, (_req: Request, res: Response) => 
   res.setHeader("Content-Type", "text/csv");
   res.setHeader("Content-Disposition", "attachment; filename=email-leads.csv");
   res.send(csv);
+});
+
+adminRouter.get("/metrics", requireAuth, (_req: Request, res: Response) => {
+  try {
+    res.json(getMetrics());
+  } catch (error: unknown) {
+    console.error("Metrics error:", error);
+    res.status(500).json({ error: "Failed to load metrics" });
+  }
 });

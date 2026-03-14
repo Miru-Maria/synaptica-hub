@@ -3,7 +3,7 @@ import multer from "multer";
 import { parsePDF, parseDOCX, parseMarkdown, chunkText } from "../services/parser.js";
 import { scrapeUrl } from "../services/scraper.js";
 import { analyzeDocumentation, AuditResult } from "../services/analyzer.js";
-import { getTools } from "../data/store.js";
+import { getTools, logToolRun } from "../data/store.js";
 
 function requireToolEnabled(req: Request, res: Response, next: NextFunction) {
   const tools = getTools();
@@ -100,7 +100,7 @@ auditRouter.post("/parse-files", upload.array("files", 20), async (req: Request,
     }
 
     const chunks = allText.flatMap((t) => chunkText(t));
-    res.json({ chunks, fileCount: files.length, totalChunks: chunks.length });
+    res.json({ chunks, fileCount: files.length, totalChunks: chunks.length, _inputType: "file-upload" });
   } catch (error: unknown) {
     console.error("File parse error:", error);
     res.status(500).json({ error: getErrorMessage(error) || "Failed to parse files" });
@@ -116,7 +116,7 @@ auditRouter.post("/parse-text", async (req: Request, res: Response) => {
     }
 
     const chunks = chunkText(text);
-    res.json({ chunks, totalChunks: chunks.length });
+    res.json({ chunks, totalChunks: chunks.length, _inputType: "paste" });
   } catch (error: unknown) {
     console.error("Text parse error:", error);
     res.status(500).json({ error: getErrorMessage(error) || "Failed to parse text" });
@@ -151,7 +151,7 @@ auditRouter.post("/parse-url", async (req: Request, res: Response) => {
     }
 
     const chunks = allText.flatMap((t) => chunkText(t));
-    res.json({ chunks, totalChunks: chunks.length, urlsProcessed: urls.length - errors.length, errors });
+    res.json({ chunks, totalChunks: chunks.length, urlsProcessed: urls.length - errors.length, errors, _inputType: "url" });
   } catch (error: unknown) {
     console.error("URL parse error:", error);
     res.status(500).json({ error: getErrorMessage(error) || "Failed to parse URLs" });
@@ -298,7 +298,7 @@ auditRouter.post("/parse-notion", async (req: Request, res: Response) => {
     }
 
     const chunks = allText.flatMap((t) => chunkText(t));
-    res.json({ chunks, totalChunks: chunks.length, pagesProcessed: notionItems.length - errors.length, errors });
+    res.json({ chunks, totalChunks: chunks.length, pagesProcessed: notionItems.length - errors.length, errors, _inputType: "notion" });
   } catch (error: unknown) {
     console.error("Notion parse error:", error);
     res.status(500).json({ error: getErrorMessage(error) || "Failed to parse Notion content" });
@@ -489,6 +489,30 @@ auditRouter.post("/analyze", async (req: Request, res: Response) => {
     const safeTopics = topics.filter((t: string) => typeof t === "string" && t.trim()).slice(0, MAX_TOPICS);
 
     const result: AuditResult = await analyzeDocumentation(safeChunks, safeTopics, kbName || "Untitled Knowledge Base");
+
+    const totalChars = safeChunks.reduce((sum, c) => sum + c.length, 0);
+    let documentSizeCategory = "small";
+    if (totalChars > 50000) documentSizeCategory = "large";
+    else if (totalChars > 10000) documentSizeCategory = "medium";
+
+    const gapCategories = result.topicCoverages
+      ?.filter((t) => t.severity === "critical" || t.severity === "high")
+      .map((t) => t.topic)
+      .slice(0, 10) || [];
+
+    try {
+      logToolRun({
+        toolName: "DocAudit",
+        toolSlug: "docaudit",
+        inputType: (req.body._inputType as string) || "unknown",
+        emailCaptured: false,
+        documentSizeCategory,
+        gapCategories,
+      });
+    } catch (logErr) {
+      console.error("Failed to log tool run:", logErr);
+    }
+
     res.json(result);
   } catch (error: unknown) {
     console.error("Analysis error:", error);

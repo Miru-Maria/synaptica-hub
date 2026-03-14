@@ -55,9 +55,11 @@ export default function DocAudit() {
   const [error, setError] = useState<string | null>(null);
   const [showGate, setShowGate] = useState(false);
   const [gateUnlocked, setGateUnlocked] = useState(false);
+  const [inputType, setInputType] = useState<string>("unknown");
 
-  const handleChunksReady = (newChunks: string[]) => {
+  const handleChunksReady = (newChunks: string[], detectedInputType: string) => {
     setChunks(newChunks);
+    setInputType(detectedInputType);
     setStep("configure");
   };
 
@@ -69,7 +71,7 @@ export default function DocAudit() {
       const res = await fetch("/api/audit/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chunks, topics, kbName }),
+        body: JSON.stringify({ chunks, topics, kbName, _inputType: inputType }),
       });
 
       const data = await safeJsonParse(res);

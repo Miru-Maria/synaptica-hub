@@ -10,7 +10,7 @@ interface NotionPage {
 }
 
 interface InputPanelProps {
-  onChunksReady: (chunks: string[]) => void;
+  onChunksReady: (chunks: string[], inputType: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
 }
@@ -153,7 +153,13 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
 
       if (chunks.length === 0) throw new Error("No content could be extracted from the provided source");
 
-      onChunksReady(chunks);
+      const inputTypeMap: Record<TabId, string> = {
+        upload: "file-upload",
+        paste: "paste",
+        url: "url",
+        notion: "notion",
+      };
+      onChunksReady(chunks, inputTypeMap[activeTab]);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
