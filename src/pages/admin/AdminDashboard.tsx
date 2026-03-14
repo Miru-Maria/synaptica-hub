@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText } from "lucide-react";
 
 interface ServicePackage {
   id: string;
@@ -532,6 +532,28 @@ export default function AdminDashboard() {
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800 border-amber-500/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-amber-400" />
+                  Platform Audit Report
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Full platform audit covering competitive assessment, prioritized improvement roadmap, and strategic recommendations. Prepared March 14, 2026.
+                </p>
+                <a
+                  href="/synaptica-audit-report.md"
+                  download="synaptica-audit-report.md"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Audit Report
                 </a>
               </CardContent>
             </Card>
