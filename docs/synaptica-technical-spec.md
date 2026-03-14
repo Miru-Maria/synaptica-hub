@@ -25,6 +25,8 @@
    - 7.5 [Analytics Dashboard](#75-analytics-dashboard)
    - 7.6 [Blog & Content Management](#76-blog--content-management)
    - 7.7 [Notification System](#77-notification-system)
+   - 7.8 [Autonomous AI UX Testing Agent](#78-autonomous-ai-ux-testing-agent)
+   - 7.9 [Project Management](#79-project-management)
 8. [Security Considerations](#8-security-considerations)
 9. [Deployment Model](#9-deployment-model)
 10. [Email Notifications](#10-email-notifications)
@@ -53,14 +55,14 @@ Synaptica Knowledge Systems is a full-stack monorepo application combining a Rea
 ┌─────────────────────────────────────────────────────────┐
 │  Express Server (Node.js, port 3001 dev / 5000 prod)    │
 │  Routes: audit · admin · public · blog · chat ·         │
-│          ka-sprint · rag · prompt-workshop               │
+│          ka-sprint · rag · prompt-workshop · ux-agent    │
 │  Middleware: JWT auth · CORS · cookie-parser · multer    │
 └───────────┬──────────────┬──────────────────────────────┘
             │              │
             ▼              ▼
      ┌────────────┐  ┌──────────────┐
      │ PostgreSQL  │  │  OpenAI API  │
-     │  (16 tables)│  │  GPT-4o      │
+     │  (20 tables)│  │  GPT-4o      │
      │  via pg Pool│  │  text-emb-   │
      │             │  │  3-small     │
      └────────────┘  └──────────────┘
@@ -143,7 +145,9 @@ The project follows a monorepo layout with clear separation between frontend and
 │   │       ├── RAGPipeline.tsx
 │   │       ├── PromptWorkshop.tsx
 │   │       ├── MonthlyRetainer.tsx
-│   │       └── ChatSessionsViewer.tsx
+│   │       ├── ChatSessionsViewer.tsx
+│   │       ├── UXTester.tsx
+│   │       └── ProjectManager.tsx
 │   ├── components/               # Reusable UI components
 │   │   ├── Navbar.tsx            # Fixed top nav with scroll-spy
 │   │   ├── Hero.tsx              # Hero section
@@ -168,17 +172,21 @@ The project follows a monorepo layout with clear separation between frontend and
 │   │   ├── chat.ts               # AI Sales Assistant
 │   │   ├── ka-sprint.ts          # KA Sprint tool
 │   │   ├── rag.ts                # RAG Pipeline tool
-│   │   └── prompt-workshop.ts    # Prompt Workshop tool
+│   │   ├── prompt-workshop.ts    # Prompt Workshop tool
+│   │   └── ux-agent.ts           # UX Testing Agent
 │   ├── data/
 │   │   ├── db.ts                 # PostgreSQL pool + schema init
 │   │   ├── store.ts              # PostgreSQL-backed data store
 │   │   ├── prompt-workshop-store.ts  # JSON-persisted prompt store
 │   │   ├── sessions-store.ts     # JSON-persisted session store
+│   │   ├── ux-test-store.ts      # UX test runs and findings data access
 │   │   └── persist/              # JSON file storage directory
 │   └── services/
 │       ├── parser.ts             # PDF, DOCX, Markdown text extraction
 │       ├── scraper.ts            # URL scraping with SSRF protection
-│       └── analyzer.ts           # OpenAI embeddings + GPT-4o analysis
+│       ├── analyzer.ts           # OpenAI embeddings + GPT-4o analysis
+│       ├── ux-agent.ts           # UX test suite orchestration service
+│       └── ux-personas.ts        # Persona definitions and test scenarios
 │
 ├── public/                       # Static assets
 ├── vite.config.ts                # Vite configuration
@@ -199,6 +207,8 @@ The project follows a monorepo layout with clear separation between frontend and
 | `/api/admin/ka-sprint/*` | `kaSprintRouter` | JWT required | KA Sprint sessions |
 | `/api/admin/rag/*` | `ragRouter` | JWT required | RAG Pipeline ingestion and chat |
 | `/api/admin/prompt-workshop/*` | `promptWorkshopRouter` | JWT required | Prompt template management |
+| `/api/admin/ux-agent/*` | `uxAgentRouter` | JWT required | UX test suite runs and findings |
+| `/api/admin/projects/*` | `adminRouter` | JWT required | Project and task management |
 | `/api/blog/*` | `blogRouter` | Mixed | Public listing + admin CRUD |
 | `/api/chat/*` | `chatRouter` | None (rate-limited) | AI Sales Assistant |
 | `/api/public/*` | `publicRouter` | None | Public data reads, discovery forms |
@@ -232,7 +242,7 @@ The application uses a single-admin authentication model. There is one admin use
 
 ## 5. Database Schema
 
-The application uses a single PostgreSQL database initialized on server startup via `initDb()` in `server/data/db.ts`. The original schema comprised 14 tables; subsequent feature additions (the AI Sales Assistant chat widget) added `chat_sessions` and `chat_messages`, bringing the current total to 16 tables. The schema uses `CREATE TABLE IF NOT EXISTS` statements, making initialization idempotent. A `seedDefaults()` function populates initial data for packages, tools, blog articles, and admin settings on first run.
+The application uses a single PostgreSQL database initialized on server startup via `initDb()` in `server/data/db.ts`. The original schema comprised 14 tables; subsequent feature additions (the AI Sales Assistant chat widget, UX Testing Agent, and Project Management) added `chat_sessions`, `chat_messages`, `ux_test_runs`, `ux_test_findings`, `projects`, and `project_tasks`, bringing the current total to 20 tables. The schema uses `CREATE TABLE IF NOT EXISTS` statements, making initialization idempotent. A `seedDefaults()` function populates initial data for packages, tools, blog articles, and admin settings on first run.
 
 ### Table Overview
 
@@ -254,6 +264,10 @@ The application uses a single PostgreSQL database initialized on server startup 
 | `pipeline_contacts` | CRM contacts | `id` (PK), name, email, company, source, service interest, stage (New Lead → Closed), estimated value, next action, notes, timestamps |
 | `chat_sessions` | AI chat conversations | `id` (PK), visitor name/email, lead captured flag, pipeline contact ID, timestamps |
 | `chat_messages` | Individual chat messages | `id` (PK), session_id (FK, cascading delete), role (user/assistant), content, created_at |
+| `ux_test_runs` | UX test suite executions | `id` (PK), triggered_at, status (running/completed/failed), persona_ids (JSONB), total_scenarios, completed_scenarios, summary |
+| `ux_test_findings` | Individual UX test findings | `id` (PK), run_id (FK to ux_test_runs), persona, area, scenario, severity (`good` / `needs_attention` / `issue`), summary, raw_input, raw_output, evaluated_at |
+| `projects` | Client and internal projects | `id` (PK), name, description, status (active/on-hold/complete), start_date, due_date, archived flag, timestamps |
+| `project_tasks` | Tasks within projects | `id` (PK), project_id (FK to projects, cascading delete), title, description, status (todo/in-progress/done), owner, priority (low/medium/high), due_date, timestamps |
 
 ### Data Storage Notes
 
@@ -456,6 +470,103 @@ A metrics and analytics tab in the admin dashboard, powered by Recharts visualiz
 - **Automatic triggers:** Discovery call form submissions, email captures, and AI chat lead captures generate notifications. Retainer check-in proximity alerts run every 6 hours and notify 3 days before a monthly check-in is due.
 - **Read state management:** Individual mark-read and "Mark all read" operations.
 - **Storage cap:** 200 notification entries maximum, persisted to the `notifications` table.
+
+### 7.8 Autonomous AI UX Testing Agent
+
+An admin-only tool at `/admin/ux-tester` that replaces manual test checklists with a fully autonomous AI agent. When triggered, the agent inhabits user personas, exercises the platform's tools and public-facing features, evaluates every response, and produces a structured findings report — all without human interaction.
+
+#### Personas and Scenarios
+
+The agent ships with 5 predefined personas, each defined as a structured TypeScript constant in `server/services/ux-personas.ts`. Each persona has a name, background, intent, and tone descriptor, along with 6–10 scenario definitions. Scenarios specify the area under test (Chat Assistant, Lab Tools, Navigation, Lead Capture), the action type (chat message, tool input, route check), sample inputs appropriate for that persona's background, and the criteria for a passing evaluation.
+
+Example personas include a skeptical Technical Director evaluating AI vendors, a Content Strategist comparing tools, and a first-time visitor unfamiliar with knowledge architecture concepts.
+
+#### Agent Orchestration Service (`server/services/ux-agent.ts`)
+
+When a test run is triggered via `POST /api/admin/ux-agent/run`, the server-side `UXAgentService` executes the following flow:
+
+1. **Create a run record** in the `ux_test_runs` table with status `running`.
+2. **Iterate through all personas and their scenarios** sequentially. A run lock prevents concurrent test runs.
+3. **For each scenario**, the agent calls the relevant internal endpoint as that persona's inputs:
+   - **Chat scenarios:** Sends multi-turn messages to `POST /api/chat` from the persona's viewpoint (curious questions, buying intent, confusion, off-topic requests, edge cases like short or empty inputs).
+   - **DocAudit scenarios:** Submits persona-appropriate document samples and topic lists to the DocAudit analysis endpoint and evaluates the returned analysis.
+   - **KA Sprint scenarios:** Sends inputs to the KA Sprint taxonomy endpoint and evaluates output quality.
+   - **Prompt Workshop scenarios:** Sends test prompts to the Prompt Workshop test endpoint and evaluates response quality.
+   - **Route checks:** Verifies that all major public routes return correct HTTP responses with non-empty content.
+   - **Email gate scenarios:** Tests email capture gate behavior and form validation.
+4. **After each test**, a second GPT-4o call acts as an evaluator — judging the interaction from the persona's perspective for coherence, helpfulness, accuracy, and persona-appropriateness. The evaluation produces a severity tag: `good`, `needs_attention`, or `issue`.
+5. **Write a finding record** to the `ux_test_findings` table with the persona, area, scenario name, severity, summary, raw input/output, and evaluation timestamp.
+6. **Update run progress** (completed scenario count) after each scenario, enabling live progress reporting.
+7. **On completion**, update the run status to `completed` with a summary. Errors and timeouts for individual scenarios are handled gracefully — the scenario is marked as failed without stopping the entire run.
+
+#### API Endpoints
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/ux-agent/personas` | GET | Returns available personas and their scenario definitions |
+| `/api/admin/ux-agent/run` | POST | Starts a new test suite run (locked to prevent concurrent runs) |
+| `/api/admin/ux-agent/runs` | GET | Lists all historical test runs |
+| `/api/admin/ux-agent/runs/:id` | GET | Returns detailed findings for a specific run |
+| `/api/admin/ux-agent/runs/:id/export` | GET | Generates a Markdown export of the findings report |
+
+#### Database Tables
+
+- **`ux_test_runs`:** Stores run metadata — ID, trigger timestamp, status (running/completed/failed), persona IDs (JSONB), total and completed scenario counts, and a summary string.
+- **`ux_test_findings`:** Stores individual findings — ID, run ID (FK), persona name, area, scenario name, severity, plain-English summary, raw input, raw output, and evaluation timestamp.
+
+Table initialization is handled by `initUXTestTables()` in `server/data/ux-test-store.ts`.
+
+#### Frontend (`UXTester.tsx`)
+
+The admin page provides:
+
+- A persona overview grid showing each persona's name, background, and scenario count.
+- A "Run Test Suite" button that triggers a run and polls for progress.
+- A live feed of findings as they arrive, color-coded by severity (green for `good`, amber for `needs_attention`, red for `issue`).
+- Area-based filtering (Chat Assistant, Lab Tools, Navigation, Lead Capture).
+- A final summary section once the run completes.
+- A run history list for revisiting past reports.
+- A Markdown export button for the full findings report.
+
+### 7.9 Project Management
+
+A project and task management system embedded in the admin dashboard, accessible via a "Projects" tab alongside Pipeline and Invoicing. Designed for tracking client engagements and internal projects with progress visibility and deadline management.
+
+#### Data Model
+
+Two PostgreSQL tables, defined in `server/data/db.ts`:
+
+- **`projects`:** `id` (PK), name, description, status (`active` / `on-hold` / `complete`), start_date, due_date, archived flag, created_at, updated_at.
+- **`project_tasks`:** `id` (PK), project_id (FK to projects, cascading delete), title, description, status (`todo` / `in-progress` / `done`), owner, priority (`low` / `medium` / `high`), due_date, created_at, updated_at.
+
+Data access functions follow the existing pattern in `server/data/store.ts`: `getProjects()`, `getProject()`, `createProject()`, `updateProject()`, `deleteProject()`, `getProjectTasks()`, `createProjectTask()`, `updateProjectTask()`, `deleteProjectTask()`.
+
+#### API Endpoints
+
+All endpoints are nested under `/api/admin/projects` and protected by `requireAuth` middleware, defined in `server/routes/admin.ts`:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/admin/projects` | GET | List all projects with computed progress (completed tasks / total tasks) |
+| `/api/admin/projects/:id` | GET | Get a single project with full details |
+| `/api/admin/projects` | POST | Create a new project |
+| `/api/admin/projects/:id` | PUT | Update a project (including archiving) |
+| `/api/admin/projects/:id` | DELETE | Delete a project and all its tasks (cascade) |
+| `/api/admin/projects/:id/tasks` | GET | List all tasks for a project |
+| `/api/admin/projects/:id/tasks` | POST | Create a task within a project |
+| `/api/admin/projects/:projectId/tasks/:taskId` | PUT | Update a task |
+| `/api/admin/projects/:projectId/tasks/:taskId` | DELETE | Delete a task |
+
+#### Frontend (`ProjectManager.tsx`)
+
+The projects UI provides:
+
+- **Projects list view:** Displays each project's name, status, deadline, and a progress bar computed from task completion ratio. Overdue projects are visually flagged.
+- **Project creation and editing:** Form with name, description, status, start date, and due date fields.
+- **Project detail view:** Shows project metadata and a full task list grouped by status (To Do, In Progress, Done). Includes an overall completion progress bar.
+- **Task management:** Inline creation, editing, and deletion of tasks. Each task has a title, description, owner, priority, due date, and status.
+- **Overdue flagging:** Tasks and projects past their due date are visually highlighted.
+- **Archiving:** Projects can be archived to remove them from the active view without deletion.
 
 ---
 
