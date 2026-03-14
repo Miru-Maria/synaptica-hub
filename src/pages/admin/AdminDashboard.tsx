@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
 import InvoiceManager from "./InvoiceManager";
+import NotificationBell from "@/components/NotificationBell";
 
 interface DiscoveryInquiry {
   id: string;
@@ -107,6 +108,8 @@ export default function AdminDashboard() {
   const [status, setStatus] = useState("");
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "" });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -140,7 +143,7 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const [pkgRes, inqRes, toolsRes, testRes, csRes, statRes, leadsRes] = await Promise.all([
+      const [pkgRes, inqRes, toolsRes, testRes, csRes, statRes, leadsRes, settingsRes] = await Promise.all([
         fetch("/api/admin/packages", { headers: authHeaders() }),
         fetch("/api/admin/discovery-inquiries", { headers: authHeaders() }),
         fetch("/api/admin/tools", { headers: authHeaders() }),
@@ -148,6 +151,7 @@ export default function AdminDashboard() {
         fetch("/api/admin/case-studies", { headers: authHeaders() }),
         fetch("/api/admin/outcome-stats", { headers: authHeaders() }),
         fetch("/api/admin/leads", { headers: authHeaders() }),
+        fetch("/api/admin/settings", { headers: authHeaders() }),
       ]);
       if (pkgRes.ok) setPackages(await pkgRes.json());
       if (inqRes.ok) setInquiries(await inqRes.json());
@@ -156,6 +160,7 @@ export default function AdminDashboard() {
       if (csRes.ok) setCaseStudies(await csRes.json());
       if (statRes.ok) setOutcomeStats(await statRes.json());
       if (leadsRes.ok) setLeads(await leadsRes.json());
+      if (settingsRes.ok) setAdminSettings(await settingsRes.json());
       setLoading(false);
     }
     load();
@@ -395,6 +400,7 @@ export default function AdminDashboard() {
             {status && (
               <span className="text-sm text-emerald-400">{status}</span>
             )}
+            <NotificationBell />
             <Button variant="ghost" size="sm" onClick={handleLogout} className="text-neutral-400 hover:text-neutral-100">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
@@ -456,6 +462,10 @@ export default function AdminDashboard() {
               {leads.length > 0 && (
                 <span className="ml-1 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">{leads.length}</span>
               )}
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Settings className="w-4 h-4" />
+              Settings
             </TabsTrigger>
           </TabsList>
 
@@ -1251,6 +1261,71 @@ export default function AdminDashboard() {
 
           <TabsContent value="invoicing" className="mt-6">
             <InvoiceManager />
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6 space-y-4">
+            <p className="text-sm text-neutral-400">
+              Configure notification preferences and admin settings.
+            </p>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader>
+                <CardTitle className="text-base text-neutral-100">Email Notifications</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <Label className="text-neutral-200">Enable email notifications</Label>
+                    <p className="text-xs text-neutral-500 mt-0.5">
+                      Receive email alerts for high-priority events (new discovery calls, new subscribers).
+                    </p>
+                  </div>
+                  <Switch
+                    checked={adminSettings.emailNotificationsEnabled}
+                    onCheckedChange={(checked) =>
+                      setAdminSettings((prev) => ({ ...prev, emailNotificationsEnabled: checked }))
+                    }
+                  />
+                </div>
+                {adminSettings.emailNotificationsEnabled && (
+                  <div className="space-y-2">
+                    <Label className="text-neutral-400 text-xs">Admin Email Address</Label>
+                    <Input
+                      type="email"
+                      value={adminSettings.adminEmail}
+                      onChange={(e) =>
+                        setAdminSettings((prev) => ({ ...prev, adminEmail: e.target.value }))
+                      }
+                      placeholder="admin@example.com"
+                      className="bg-neutral-800 border-neutral-700 text-neutral-100 max-w-md"
+                    />
+                  </div>
+                )}
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    setSavingSettings(true);
+                    setStatus("");
+                    try {
+                      const res = await fetch("/api/admin/settings", {
+                        method: "PUT",
+                        headers: { "Content-Type": "application/json", ...authHeaders() },
+                        body: JSON.stringify(adminSettings),
+                      });
+                      if (res.ok) setStatus("Settings saved");
+                      else setStatus("Failed to save settings");
+                    } catch {
+                      setStatus("Network error");
+                    }
+                    setSavingSettings(false);
+                    setTimeout(() => setStatus(""), 3000);
+                  }}
+                  disabled={savingSettings}
+                >
+                  <Save className="w-4 h-4 mr-1" />
+                  Save Settings
+                </Button>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </main>

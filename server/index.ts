@@ -12,6 +12,7 @@ import { kaSprintRouter } from "./routes/ka-sprint.js";
 import { ragRouter } from "./routes/rag.js";
 import { promptWorkshopRouter } from "./routes/prompt-workshop.js";
 import { blogRouter } from "./routes/blog.js";
+import { checkRetainerCheckins } from "./data/store.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === "production";
@@ -54,4 +55,6 @@ if (isProd) {
 
 createServer(app).listen(PORT, "0.0.0.0", () => {
   console.log(`Server running on port ${PORT}`);
+  checkRetainerCheckins();
+  setInterval(checkRetainerCheckins, 6 * 60 * 60 * 1000);
 });

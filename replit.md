@@ -47,13 +47,13 @@ server/
     auth.ts            # JWT auth middleware (requireAuth, signToken, verifyToken)
   routes/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
-    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics, pipeline CRM CRUD)
-    public.ts          # Public read-only routes (packages, tools)
+    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics, pipeline CRM CRUD, notifications CRUD, admin settings)
+    public.ts          # Public read-only routes (packages, tools, discovery call + email capture with notification triggers)
     blog.ts            # Blog article CRUD (admin) + public listing/detail routes
     ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export
     prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide + session CRUD + export routes
   data/
-    store.ts           # JSON file-persisted data store for packages, tools, blog articles, tool usage metrics, and pipeline contacts
+    store.ts           # JSON file-persisted data store for packages, tools, blog articles, tool usage metrics, pipeline contacts, notifications, and admin settings
     prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
     sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
     persist/           # Auto-created directory for JSON data files
@@ -99,6 +99,13 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - Metrics tab with tool usage analytics: total runs, 30-day trends (bar chart via recharts), per-tool breakdowns, email captures, and DocAudit-specific details (input type breakdown, document size distribution, top gap categories)
 - Pipeline CRM tab: track leads through stages (New Lead to Closed), view pipeline value, service interest filtering, and automatic lead creation from discovery call forms
 - Invoicing tab: full invoice CRUD with financial summary header (total invoiced, collected, outstanding, overdue count), status management (Draft/Sent/Paid/Overdue), CRM contact linking from inquiries/retainers/leads, filtering by status/date/search, and client-side PDF export via jsPDF with Synaptica branding
+- Notification bell icon in header with unread count badge; popover panel showing recent events in reverse chronological order
+- Notification types: discovery_call, email_capture, new_subscriber, cancellation, retainer_checkin
+- Each notification has timestamp, description, and link to relevant admin section
+- Read/unread state management with individual mark-read and "Mark all read"
+- Settings tab with email notification toggle for high-priority events (discovery calls, new subscribers) and admin email configuration
+- Retainer check-in proximity alerts: automatically checks every 6 hours for upcoming monthly check-ins (3 days before due date)
+- Notifications capped at 200 entries, persisted to JSON
 
 ## Prompt Engineering Workshop
 

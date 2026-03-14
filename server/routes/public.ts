@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact } from "../data/store.js";
+import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact, addNotification } from "../data/store.js";
 import type { DiscoveryInquiry, EmailLead, PipelineContact } from "../data/store.js";
 
 export const publicRouter = Router();
@@ -45,6 +45,12 @@ publicRouter.post("/discovery", (req: Request, res: Response) => {
   };
   addPipelineContact(pipelineContact);
 
+  addNotification(
+    "discovery_call",
+    "New Discovery Call Request",
+    `${inquiry.name} from ${inquiry.company} submitted a discovery call request.`,
+    "/admin?tab=inquiries"
+  );
   res.json({ ok: true, id: inquiry.id });
 });
 
@@ -86,5 +92,11 @@ publicRouter.post("/capture-email", (req: Request, res: Response) => {
   };
 
   saveEmailLead(lead);
+  addNotification(
+    "email_capture",
+    "New Email Capture",
+    `${lead.firstName} (${lead.email}) captured from ${lead.toolSource}.`,
+    "/admin?tab=leads"
+  );
   res.json({ ok: true });
 });

@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices } from "../data/store.js";
-import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
 
@@ -554,4 +554,41 @@ adminRouter.patch("/invoices/:id/status", requireAuth, (req: Request, res: Respo
   invoices[idx].updatedAt = new Date().toISOString();
   saveInvoices(invoices);
   res.json(invoices[idx]);
+});
+
+adminRouter.get("/notifications", requireAuth, (_req: Request, res: Response) => {
+  res.json(getNotifications());
+});
+
+adminRouter.post("/notifications/read-all", requireAuth, (_req: Request, res: Response) => {
+  markAllNotificationsRead();
+  res.json({ ok: true });
+});
+
+adminRouter.post("/notifications/:id/read", requireAuth, (req: Request, res: Response) => {
+  const success = markNotificationRead(req.params.id);
+  if (!success) {
+    res.status(404).json({ error: "Notification not found" });
+    return;
+  }
+  res.json({ ok: true });
+});
+
+adminRouter.get("/settings", requireAuth, (_req: Request, res: Response) => {
+  res.json(getAdminSettings());
+});
+
+adminRouter.put("/settings", requireAuth, (req: Request, res: Response) => {
+  const { emailNotificationsEnabled, adminEmail } = req.body;
+  if (typeof emailNotificationsEnabled !== "boolean") {
+    res.status(400).json({ error: "emailNotificationsEnabled must be a boolean" });
+    return;
+  }
+  if (typeof adminEmail !== "string") {
+    res.status(400).json({ error: "adminEmail must be a string" });
+    return;
+  }
+  const settings: AdminSettings = { emailNotificationsEnabled, adminEmail };
+  saveAdminSettings(settings);
+  res.json({ ok: true });
 });

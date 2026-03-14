@@ -574,6 +574,124 @@ export function saveInvoices(invoices: Invoice[]) {
   writeJson(INVOICES_FILE, invoices);
 }
 
+export type NotificationType =
+  | "discovery_call"
+  | "email_capture"
+  | "new_subscriber"
+  | "cancellation"
+  | "retainer_checkin";
+
+export interface Notification {
+  id: string;
+  type: NotificationType;
+  title: string;
+  description: string;
+  link?: string;
+  read: boolean;
+  createdAt: string;
+}
+
+export interface AdminSettings {
+  emailNotificationsEnabled: boolean;
+  adminEmail: string;
+}
+
+const NOTIFICATIONS_FILE = path.join(DATA_DIR, "notifications.json");
+const ADMIN_SETTINGS_FILE = path.join(DATA_DIR, "admin-settings.json");
+
+const HIGH_PRIORITY_TYPES: NotificationType[] = ["discovery_call", "new_subscriber"];
+
+export function getNotifications(): Notification[] {
+  return readJson(NOTIFICATIONS_FILE, []);
+}
+
+export function addNotification(
+  type: NotificationType,
+  title: string,
+  description: string,
+  link?: string
+): Notification {
+  const notifications = getNotifications();
+  const notification: Notification = {
+    id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    type,
+    title,
+    description,
+    link,
+    read: false,
+    createdAt: new Date().toISOString(),
+  };
+  notifications.unshift(notification);
+  if (notifications.length > 200) {
+    notifications.length = 200;
+  }
+  writeJson(NOTIFICATIONS_FILE, notifications);
+  return notification;
+}
+
+export function markNotificationRead(id: string): boolean {
+  const notifications = getNotifications();
+  const notif = notifications.find((n) => n.id === id);
+  if (!notif) return false;
+  notif.read = true;
+  writeJson(NOTIFICATIONS_FILE, notifications);
+  return true;
+}
+
+export function markAllNotificationsRead(): void {
+  const notifications = getNotifications();
+  for (const n of notifications) {
+    n.read = true;
+  }
+  writeJson(NOTIFICATIONS_FILE, notifications);
+}
+
+export function getAdminSettings(): AdminSettings {
+  return readJson(ADMIN_SETTINGS_FILE, {
+    emailNotificationsEnabled: false,
+    adminEmail: "",
+  });
+}
+
+export function saveAdminSettings(settings: AdminSettings): void {
+  writeJson(ADMIN_SETTINGS_FILE, settings);
+}
+
+export function isHighPriority(type: NotificationType): boolean {
+  return HIGH_PRIORITY_TYPES.includes(type);
+}
+
+export function checkRetainerCheckins(): void {
+  const clients = getRetainerClients();
+  const notifications = getNotifications();
+  const now = new Date();
+  const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
+  for (const client of clients) {
+    if (client.healthChecks.length === 0) continue;
+    const sorted = [...client.healthChecks].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    const lastCheck = new Date(sorted[0].date);
+    const nextCheckDue = new Date(lastCheck.getTime() + 30 * 24 * 60 * 60 * 1000);
+
+    if (nextCheckDue <= threeDaysFromNow && nextCheckDue >= now) {
+      const dueDateKey = nextCheckDue.toISOString().slice(0, 10);
+      const dedupTag = `[ref:${client.id}:${dueDateKey}]`;
+      const alreadyNotified = notifications.some(
+        (n) => n.type === "retainer_checkin" && n.description.includes(dedupTag)
+      );
+      if (!alreadyNotified) {
+        addNotification(
+          "retainer_checkin",
+          "Upcoming Retainer Check-in",
+          `Monthly check-in for ${client.name} is due on ${dueDateKey}. ${dedupTag}`,
+          `/admin?tab=retainers&id=${client.id}`
+        );
+      }
+    }
+  }
+}
 
 export interface EmailLead {
   id: string;
