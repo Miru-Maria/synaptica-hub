@@ -8,6 +8,8 @@ export interface UXTestRun {
   totalScenarios: number;
   completedScenarios: number;
   summary?: string;
+  testChatSessionIds: string[];
+  cleanedUp: boolean;
 }
 
 export type FindingSeverity = "good" | "needs_attention" | "issue";
@@ -24,6 +26,13 @@ export interface UXTestFinding {
   rawInput: string;
   rawOutput: string;
   evaluatedAt: string;
+}
+
+export interface CleanupResult {
+  deletedChatSessions: number;
+  deletedContacts: number;
+  deletedLeads: number;
+  deletedNotifications: number;
 }
 
 export async function initUXTestTables(): Promise<void> {
@@ -51,13 +60,28 @@ export async function initUXTestTables(): Promise<void> {
       evaluated_at TEXT NOT NULL
     );
   `);
+
+  await pool.query(`
+    ALTER TABLE ux_test_runs ADD COLUMN IF NOT EXISTS test_chat_session_ids JSONB NOT NULL DEFAULT '[]';
+    ALTER TABLE ux_test_runs ADD COLUMN IF NOT EXISTS cleaned_up BOOLEAN NOT NULL DEFAULT FALSE;
+  `);
 }
 
 export async function createUXTestRun(run: UXTestRun): Promise<UXTestRun> {
   await pool.query(
-    `INSERT INTO ux_test_runs (id, triggered_at, status, persona_ids, total_scenarios, completed_scenarios, summary)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [run.id, run.triggeredAt, run.status, JSON.stringify(run.personaIds), run.totalScenarios, run.completedScenarios, run.summary || null]
+    `INSERT INTO ux_test_runs (id, triggered_at, status, persona_ids, total_scenarios, completed_scenarios, summary, test_chat_session_ids, cleaned_up)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+    [
+      run.id,
+      run.triggeredAt,
+      run.status,
+      JSON.stringify(run.personaIds),
+      run.totalScenarios,
+      run.completedScenarios,
+      run.summary || null,
+      JSON.stringify(run.testChatSessionIds),
+      run.cleanedUp,
+    ]
   );
   return run;
 }
@@ -68,8 +92,17 @@ export async function updateUXTestRun(id: string, updates: Partial<UXTestRun>): 
 
   const merged = { ...run, ...updates };
   await pool.query(
-    `UPDATE ux_test_runs SET status = $2, completed_scenarios = $3, summary = $4 WHERE id = $1`,
-    [id, merged.status, merged.completedScenarios, merged.summary || null]
+    `UPDATE ux_test_runs
+     SET status = $2, completed_scenarios = $3, summary = $4, test_chat_session_ids = $5, cleaned_up = $6
+     WHERE id = $1`,
+    [
+      id,
+      merged.status,
+      merged.completedScenarios,
+      merged.summary || null,
+      JSON.stringify(merged.testChatSessionIds),
+      merged.cleanedUp,
+    ]
   );
   return merged;
 }
@@ -102,6 +135,45 @@ export async function getUXTestFindings(runId: string): Promise<UXTestFinding[]>
   return rows.map(mapFindingRow);
 }
 
+export async function cleanupUXTestData(runId: string): Promise<CleanupResult> {
+  const run = await getUXTestRunById(runId);
+  if (!run) throw new Error("Run not found");
+
+  let deletedChatSessions = 0;
+  let deletedContacts = 0;
+  let deletedLeads = 0;
+  let deletedNotifications = 0;
+
+  const sessionIds = run.testChatSessionIds;
+  if (sessionIds.length > 0) {
+    const placeholders = sessionIds.map((_, i) => `$${i + 1}`).join(", ");
+    const result = await pool.query(
+      `DELETE FROM chat_sessions WHERE id IN (${placeholders})`,
+      sessionIds
+    );
+    deletedChatSessions = result.rowCount || 0;
+  }
+
+  const contactResult = await pool.query(
+    `DELETE FROM pipeline_contacts WHERE email ILIKE '%@synaptica-ux-test.example.com'`
+  );
+  deletedContacts = contactResult.rowCount || 0;
+
+  const leadResult = await pool.query(
+    `DELETE FROM email_leads WHERE email ILIKE '%@synaptica-ux-test.example.com' OR tool_source = 'ux-test'`
+  );
+  deletedLeads = leadResult.rowCount || 0;
+
+  const notifResult = await pool.query(
+    `DELETE FROM notifications WHERE message ILIKE '%@synaptica-ux-test.example.com%' OR message ILIKE '%ux-test%'`
+  );
+  deletedNotifications = notifResult.rowCount || 0;
+
+  await pool.query(`UPDATE ux_test_runs SET cleaned_up = TRUE WHERE id = $1`, [runId]);
+
+  return { deletedChatSessions, deletedContacts, deletedLeads, deletedNotifications };
+}
+
 function mapRunRow(row: Record<string, unknown>): UXTestRun {
   return {
     id: row.id as string,
@@ -111,6 +183,10 @@ function mapRunRow(row: Record<string, unknown>): UXTestRun {
     totalScenarios: Number(row.total_scenarios),
     completedScenarios: Number(row.completed_scenarios),
     summary: (row.summary as string) || undefined,
+    testChatSessionIds: (typeof row.test_chat_session_ids === "string"
+      ? JSON.parse(row.test_chat_session_ids)
+      : (row.test_chat_session_ids || [])) as string[],
+    cleanedUp: Boolean(row.cleaned_up),
   };
 }
 

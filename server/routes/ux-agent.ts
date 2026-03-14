@@ -1,6 +1,6 @@
 import { Router, Response } from "express";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getUXTestRuns, getUXTestRunById, getUXTestFindings } from "../data/ux-test-store.js";
+import { getUXTestRuns, getUXTestRunById, getUXTestFindings, cleanupUXTestData } from "../data/ux-test-store.js";
 import { runUXTestSuite } from "../services/ux-agent.js";
 import { PERSONAS, countAllScenarios } from "../services/ux-personas.js";
 
@@ -167,5 +167,24 @@ uxAgentRouter.get("/runs/:id/export", async (req: AuthenticatedRequest, res: Res
   } catch (err) {
     console.error("UX Agent export error:", err);
     res.status(500).json({ error: "Failed to export report" });
+  }
+});
+
+uxAgentRouter.post("/runs/:id/cleanup", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const run = await getUXTestRunById(req.params.id);
+    if (!run) {
+      res.status(404).json({ error: "Test run not found" });
+      return;
+    }
+    if (run.status === "running") {
+      res.status(409).json({ error: "Cannot clean up a run that is still in progress" });
+      return;
+    }
+    const result = await cleanupUXTestData(req.params.id);
+    res.json({ ok: true, ...result });
+  } catch (err) {
+    console.error("UX Agent cleanup error:", err);
+    res.status(500).json({ error: "Failed to clean up test data" });
   }
 });

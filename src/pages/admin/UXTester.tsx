@@ -20,6 +20,8 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronRight,
+  Trash2,
+  ShieldCheck,
 } from "lucide-react";
 
 interface PersonaScenario {
@@ -61,6 +63,8 @@ interface TestRun {
   completedScenarios: number;
   summary?: string;
   findings?: Finding[];
+  cleanedUp: boolean;
+  testChatSessionIds: string[];
 }
 
 function authHeaders(): Record<string, string> {
@@ -159,6 +163,8 @@ export default function UXTester() {
   const [activeRun, setActiveRun] = useState<TestRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [starting, setStarting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [cleaningUp, setCleaningUp] = useState(false);
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedRun, setSelectedRun] = useState<TestRun | null>(null);
   const [areaFilter, setAreaFilter] = useState<string>("all");
@@ -270,6 +276,33 @@ export default function UXTester() {
     setStarting(false);
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadRuns();
+      if (selectedRunId) await loadRunDetail(selectedRunId);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleCleanup = async (runId: string) => {
+    setCleaningUp(true);
+    try {
+      const res = await fetch(`/api/admin/ux-agent/runs/${runId}/cleanup`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        await loadRunDetail(runId);
+        await loadRuns();
+      }
+    } catch (err) {
+      console.error("Cleanup failed:", err);
+    }
+    setCleaningUp(false);
+  };
+
   const exportReport = async (runId: string) => {
     try {
       const res = await fetch(`/api/admin/ux-agent/runs/${runId}/export`, { headers: authHeaders() });
@@ -324,10 +357,12 @@ export default function UXTester() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => { loadRuns(); if (selectedRunId) loadRunDetail(selectedRunId); }}
+              onClick={handleRefresh}
+              disabled={refreshing}
               className="border-neutral-700 text-neutral-300"
             >
-              <RefreshCw className="w-4 h-4 mr-1" /> Refresh
+              <RefreshCw className={cn("w-4 h-4 mr-1", refreshing && "animate-spin")} />
+              {refreshing ? "Refreshing..." : "Refresh"}
             </Button>
             <Button
               size="sm"
@@ -444,14 +479,36 @@ export default function UXTester() {
                     )}
                   </div>
                   {displayRun.status === "completed" && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => exportReport(displayRun.id)}
-                      className="border-neutral-700 text-neutral-300"
-                    >
-                      <Download className="w-4 h-4 mr-1" /> Export Markdown
-                    </Button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {displayRun.cleanedUp ? (
+                        <span className="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 rounded border bg-emerald-500/10 text-emerald-400 border-emerald-500/25">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Test data cleaned up
+                        </span>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCleanup(displayRun.id)}
+                          disabled={cleaningUp}
+                          className="border-amber-700/50 text-amber-400 hover:text-amber-300 hover:border-amber-600"
+                        >
+                          {cleaningUp ? (
+                            <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Cleaning up...</>
+                          ) : (
+                            <><Trash2 className="w-3.5 h-3.5 mr-1" /> Clean Up Test Data</>
+                          )}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => exportReport(displayRun.id)}
+                        className="border-neutral-700 text-neutral-300"
+                      >
+                        <Download className="w-4 h-4 mr-1" /> Export Markdown
+                      </Button>
+                    </div>
                   )}
                 </div>
 

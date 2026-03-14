@@ -4,6 +4,7 @@ import {
   createUXTestRun,
   updateUXTestRun,
   addUXTestFinding,
+  cleanupUXTestData,
   type UXTestRun,
   type UXTestFinding,
   type FindingSeverity,
@@ -244,6 +245,8 @@ export async function runUXTestSuite(runId: string): Promise<void> {
     personaIds,
     totalScenarios,
     completedScenarios: 0,
+    testChatSessionIds: [],
+    cleanedUp: false,
   };
 
   await createUXTestRun(run);
@@ -251,6 +254,7 @@ export async function runUXTestSuite(runId: string): Promise<void> {
   try {
     let completedCount = 0;
     const allFindings: UXTestFinding[] = [];
+    const testChatSessionIds = new Set<string>();
 
     for (const persona of PERSONAS) {
       let chatSessionId: string | null = null;
@@ -267,6 +271,7 @@ export async function runUXTestSuite(runId: string): Promise<void> {
               const result = await runChatScenario(persona, scenario, chatSessionId);
               output = result.output;
               chatSessionId = result.sessionId;
+              if (chatSessionId) testChatSessionIds.add(chatSessionId);
               break;
             }
             case "docaudit":
@@ -345,7 +350,16 @@ export async function runUXTestSuite(runId: string): Promise<void> {
       status: "completed",
       completedScenarios: totalScenarios,
       summary,
+      testChatSessionIds: Array.from(testChatSessionIds),
     });
+
+    cleanupUXTestData(runId)
+      .then((result) => {
+        console.log(`[UX Test] Auto-cleanup for run ${runId}: removed ${result.deletedChatSessions} chat sessions, ${result.deletedContacts} contacts, ${result.deletedLeads} leads, ${result.deletedNotifications} notifications.`);
+      })
+      .catch((err) => {
+        console.error(`[UX Test] Auto-cleanup failed for run ${runId}:`, err);
+      });
   } catch (fatalErr) {
     console.error("UX test suite fatal error:", fatalErr);
     const errorMsg = fatalErr instanceof Error ? fatalErr.message : String(fatalErr);
