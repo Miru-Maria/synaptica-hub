@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
 import { ArrowRight, Sparkles } from "lucide-react";
+import { useLocation } from "wouter";
 import { PhoenixLogo } from "./PhoenixLogo";
 
 export function Hero() {
+  const [, setLocation] = useLocation();
   const scrollTo = (id: string) => {
     const element = document.getElementById(id);
     if (element) {
@@ -75,7 +77,7 @@ export function Hero() {
           </button>
           
           <button 
-            onClick={() => scrollTo("contact")}
+            onClick={() => setLocation("/work-with-me")}
             className="btn-secondary"
           >
             Get In Touch

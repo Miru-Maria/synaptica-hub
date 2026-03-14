@@ -6,7 +6,16 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox } from "lucide-react";
+
+interface DiscoveryInquiry {
+  id: string;
+  name: string;
+  company: string;
+  challenge: string;
+  timeline: string;
+  createdAt: string;
+}
 
 interface ServicePackage {
   id: string;
@@ -30,6 +39,7 @@ function authHeaders(): Record<string, string> {
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
+  const [inquiries, setInquiries] = useState<DiscoveryInquiry[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
@@ -55,8 +65,12 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const pkgRes = await fetch("/api/admin/packages", { headers: authHeaders() });
+      const [pkgRes, inqRes] = await Promise.all([
+        fetch("/api/admin/packages", { headers: authHeaders() }),
+        fetch("/api/admin/discovery-inquiries", { headers: authHeaders() }),
+      ]);
       if (pkgRes.ok) setPackages(await pkgRes.json());
+      if (inqRes.ok) setInquiries(await inqRes.json());
       setLoading(false);
     }
     load();
@@ -173,6 +187,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="packages" className="data-[state=active]:bg-neutral-800 gap-2">
               <Package className="w-4 h-4" />
               Packages
+            </TabsTrigger>
+            <TabsTrigger value="inquiries" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Inbox className="w-4 h-4" />
+              Inquiries{inquiries.length > 0 && ` (${inquiries.length})`}
             </TabsTrigger>
             <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
               <Hammer className="w-4 h-4" />
@@ -316,6 +334,45 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </TabsContent>
+
+          <TabsContent value="inquiries" className="mt-6 space-y-4">
+            <p className="text-sm text-neutral-400">
+              Discovery call inquiries submitted through the Work With Me page.
+            </p>
+            {inquiries.length === 0 ? (
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardContent className="py-12 text-center">
+                  <Inbox className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
+                  <p className="text-neutral-500">No inquiries yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              inquiries.map((inq) => (
+                <Card key={inq.id} className="bg-neutral-900 border-neutral-800">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-base text-neutral-100">
+                        {inq.name} <span className="text-neutral-500 font-normal">— {inq.company}</span>
+                      </CardTitle>
+                      <span className="text-xs text-neutral-500">
+                        {new Date(inq.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div>
+                      <span className="text-xs text-neutral-500 uppercase tracking-wider">Challenge / Goal</span>
+                      <p className="text-sm text-neutral-300 mt-1 whitespace-pre-wrap">{inq.challenge}</p>
+                    </div>
+                    <div>
+                      <span className="text-xs text-neutral-500 uppercase tracking-wider">Timeline</span>
+                      <p className="text-sm text-neutral-300 mt-1">{inq.timeline}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </TabsContent>
 
           <TabsContent value="internal" className="mt-6 space-y-4">

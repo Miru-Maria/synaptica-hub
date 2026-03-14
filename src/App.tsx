@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "@/pages/Home";
 import Legal from "@/pages/Legal";
 import DocAudit from "@/pages/DocAudit";
+import WorkWithMe from "@/pages/WorkWithMe";
 import NotFound from "@/pages/not-found";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -29,6 +30,7 @@ function Router() {
       <Route path="/terms" component={Legal} />
       <Route path="/privacy" component={Legal} />
       <Route path="/refund" component={Legal} />
+      <Route path="/work-with-me" component={WorkWithMe} />
       <Route path="/docaudit" component={DocAudit} />
       <Route path="/synaptica-ka">
         <ExternalRedirect url="https://synaptica-knowledge-architecture-mcp.replit.app/search" />

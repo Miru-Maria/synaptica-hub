@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 import { PhoenixLogo } from "./PhoenixLogo";
 
 export function Navbar() {
+  const [, setLocation] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -64,7 +66,7 @@ export function Navbar() {
             </button>
           ))}
           <button
-            onClick={() => scrollTo("contact")}
+            onClick={() => { setMobileMenuOpen(false); setLocation("/work-with-me"); }}
             className="btn-primary py-2 px-5 text-sm"
           >
             Work With Me
@@ -100,7 +102,7 @@ export function Navbar() {
                 </button>
               ))}
               <button
-                onClick={() => scrollTo("contact")}
+                onClick={() => { setMobileMenuOpen(false); setLocation("/work-with-me"); }}
                 className="btn-primary mt-4 py-3"
               >
                 Work With Me

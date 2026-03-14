@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient } from "../data/store.js";
 
 export const adminRouter = Router();
@@ -222,4 +222,8 @@ adminRouter.put("/retainers/:id/priority-requests/:requestId", requireAuth, (req
   if (req.body.description !== undefined) request.description = req.body.description;
   saveRetainerClients(clients);
   res.json(request);
+});
+
+adminRouter.get("/discovery-inquiries", requireAuth, (_req: Request, res: Response) => {
+  res.json(getDiscoveryInquiries());
 });

@@ -202,3 +202,24 @@ export function getRetainerClients(): RetainerClient[] {
 export function saveRetainerClients(clients: RetainerClient[]) {
   writeJson(RETAINERS_FILE, clients);
 }
+
+export interface DiscoveryInquiry {
+  id: string;
+  name: string;
+  company: string;
+  challenge: string;
+  timeline: string;
+  createdAt: string;
+}
+
+const INQUIRIES_FILE = path.join(DATA_DIR, "discovery-inquiries.json");
+
+export function getDiscoveryInquiries(): DiscoveryInquiry[] {
+  return readJson(INQUIRIES_FILE, []);
+}
+
+export function saveDiscoveryInquiry(inquiry: DiscoveryInquiry) {
+  const inquiries = getDiscoveryInquiries();
+  inquiries.unshift(inquiry);
+  writeJson(INQUIRIES_FILE, inquiries);
+}
