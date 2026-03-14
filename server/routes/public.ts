@@ -96,16 +96,19 @@ publicRouter.get("/outcome-stats", async (_req: Request, res: Response) => {
 
 publicRouter.post("/capture-email", async (req: Request, res: Response) => {
   const { email, firstName, toolSource, documentType } = req.body;
-  if (!email || !firstName || !toolSource) {
+  const emailStr = typeof email === "string" ? email.trim() : "";
+  const firstNameStr = typeof firstName === "string" ? firstName.trim() : "";
+  const toolSourceStr = typeof toolSource === "string" ? toolSource.trim() : "";
+  if (!emailStr || !firstNameStr || !toolSourceStr) {
     res.status(400).json({ error: "email, firstName, and toolSource are required" });
     return;
   }
   const lead: EmailLead = {
     id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    email: String(email).slice(0, 200),
-    firstName: String(firstName).slice(0, 200),
-    toolSource: String(toolSource).slice(0, 100),
-    documentType: documentType ? String(documentType).slice(0, 100) : undefined,
+    email: emailStr.slice(0, 200),
+    firstName: firstNameStr.slice(0, 200),
+    toolSource: toolSourceStr.slice(0, 100),
+    documentType: documentType ? String(documentType).trim().slice(0, 100) : undefined,
     capturedAt: new Date().toISOString(),
   };
   try {

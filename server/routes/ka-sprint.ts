@@ -74,6 +74,7 @@ Provide a comprehensive taxonomy with categories, subcategories, tagging convent
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
+      max_tokens: 4096,
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
@@ -142,6 +143,7 @@ Generate retrieval patterns and a metadata schema that align with the taxonomy a
       ],
       response_format: { type: "json_object" },
       temperature: 0.7,
+      max_tokens: 4096,
     });
 
     const result = JSON.parse(response.choices[0].message.content || "{}");
