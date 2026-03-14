@@ -49,10 +49,11 @@ server/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
     admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list)
     public.ts          # Public read-only routes (packages, tools)
+    blog.ts            # Blog article CRUD (admin) + public listing/detail routes
     ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export
     prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide + session CRUD + export routes
   data/
-    store.ts           # JSON file-persisted data store for packages and tools
+    store.ts           # JSON file-persisted data store for packages, tools, and blog articles
     prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
     sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
     persist/           # Auto-created directory for JSON data files
@@ -117,6 +118,19 @@ The KA Sprint Tool at `/admin/ka-sprint` supports session persistence:
 - Export completed sessions as structured Markdown "Knowledge Architecture Deliverable" documents
 - Sessions visible in admin dashboard Sessions tab with client name association
 - API routes at `/api/admin/ka-sprint/sessions/*` (CRUD + export)
+
+## Blog & Thought Leadership
+
+A public blog section accessible at `/blog` for publishing articles on knowledge architecture, RAG, and document strategy. Features:
+- Blog listing page with article cards (title, date, reading time, category, excerpt) and category filtering
+- Individual article pages with full Markdown rendering (react-markdown + remark-gfm), proper heading hierarchy, code blocks, and tables
+- SEO meta tags (title, description, Open Graph) per article via custom Helmet component
+- Admin blog management tab in dashboard: create, edit, publish/unpublish, delete articles
+- Markdown editor with slug auto-generation, category, featured image, and publish date fields
+- 3 pre-loaded placeholder articles (2 published, 1 draft) demonstrating the format
+- Public API: `GET /api/blog/public` (listing), `GET /api/blog/public/:slug` (detail)
+- Admin API: `GET/POST /api/blog`, `PUT/DELETE /api/blog/:id` (auth-protected)
+- Blog link in main site navigation (desktop + mobile)
 
 ## DocAudit Feature
 

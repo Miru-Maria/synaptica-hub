@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 import { PhoenixLogo } from "./PhoenixLogo";
@@ -74,6 +74,9 @@ export function Navbar() {
               {link.name}
             </button>
           ))}
+          <Link href="/blog">
+            <span className="nav-link text-sm font-medium cursor-pointer">Blog</span>
+          </Link>
           <button
             onClick={() => { setMobileMenuOpen(false); navigate("/work-with-me"); }}
             className="btn-primary py-2 px-5 text-sm"
@@ -118,6 +121,14 @@ export function Navbar() {
                   {link.name}
                 </button>
               ))}
+              <Link href="/blog">
+                <span
+                  className="block text-left text-lg font-medium text-foreground py-2 border-b border-white/5 cursor-pointer"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Blog
+                </span>
+              </Link>
               <button
                 onClick={() => { setMobileMenuOpen(false); navigate("/work-with-me"); }}
                 className="btn-primary mt-4 min-h-[44px] py-3"

@@ -6,6 +6,8 @@ import LearningOSPage from "@/pages/LearningOS";
 import Legal from "@/pages/Legal";
 import DocAudit from "@/pages/DocAudit";
 import WorkWithMe from "@/pages/WorkWithMe";
+import Blog from "@/pages/Blog";
+import BlogArticle from "@/pages/BlogArticle";
 import NotFound from "@/pages/not-found";
 import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
@@ -33,6 +35,8 @@ function Router() {
       <Route path="/privacy" component={Legal} />
       <Route path="/refund" component={Legal} />
       <Route path="/work-with-me" component={WorkWithMe} />
+      <Route path="/blog/:slug" component={BlogArticle} />
+      <Route path="/blog" component={Blog} />
       <Route path="/docaudit" component={DocAudit} />
       <Route path="/synaptica-ka">
         <ExternalRedirect url="https://synaptica-knowledge-architecture-mcp.replit.app/search" />

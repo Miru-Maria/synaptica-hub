@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3 } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine } from "lucide-react";
+import BlogManager from "./BlogManager";
 
 interface DiscoveryInquiry {
   id: string;
@@ -398,6 +399,10 @@ export default function AdminDashboard() {
               <Inbox className="w-4 h-4" />
               Inquiries{inquiries.length > 0 && ` (${inquiries.length})`}
             </TabsTrigger>
+            <TabsTrigger value="blog" className="data-[state=active]:bg-neutral-800 gap-2">
+              <PenLine className="w-4 h-4" />
+              Blog
+            </TabsTrigger>
             <TabsTrigger value="testimonials" className="data-[state=active]:bg-neutral-800 gap-2">
               <MessageSquare className="w-4 h-4" />
               Testimonials
@@ -597,6 +602,10 @@ export default function AdminDashboard() {
             )}
           </TabsContent>
 
+          <TabsContent value="blog" className="mt-6">
+            <BlogManager />
+          </TabsContent>
+
           <TabsContent value="testimonials" className="mt-6 space-y-4">
             <div className="flex items-center justify-between">
               <p className="text-sm text-neutral-400">
@@ -762,6 +771,10 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </TabsContent>
+
+          <TabsContent value="blog" className="mt-6">
+            <BlogManager />
           </TabsContent>
 
           <TabsContent value="internal" className="mt-6 space-y-4">

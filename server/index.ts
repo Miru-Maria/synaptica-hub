@@ -11,6 +11,7 @@ import { publicRouter } from "./routes/public.js";
 import { kaSprintRouter } from "./routes/ka-sprint.js";
 import { ragRouter } from "./routes/rag.js";
 import { promptWorkshopRouter } from "./routes/prompt-workshop.js";
+import { blogRouter } from "./routes/blog.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === "production";
@@ -29,6 +30,7 @@ app.use("/api/audit", auditRouter);
 app.use("/api/admin/ka-sprint", kaSprintRouter);
 app.use("/api/admin/rag", ragRouter);
 app.use("/api/admin/prompt-workshop", promptWorkshopRouter);
+app.use("/api/blog", blogRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/public", publicRouter);
 
