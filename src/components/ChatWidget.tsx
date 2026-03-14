@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useLocation } from "wouter";
 import { MessageSquare, X, Send, Loader2, Minimize2 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -156,13 +158,29 @@ export default function ChatWidget() {
             className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
             <div
-              className={`max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed whitespace-pre-wrap ${
+              className={`max-w-[85%] px-3 py-2 rounded-xl text-sm leading-relaxed ${
                 msg.role === "user"
-                  ? "bg-emerald-600 text-white rounded-br-md"
+                  ? "bg-emerald-600 text-white rounded-br-md whitespace-pre-wrap"
                   : "bg-neutral-800 text-neutral-200 rounded-bl-md"
               }`}
             >
-              {msg.content}
+              {msg.role === "user" ? msg.content : (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                    strong: ({ children }) => <strong className="font-semibold text-neutral-100">{children}</strong>,
+                    em: ({ children }) => <em className="italic">{children}</em>,
+                    ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 mb-2 last:mb-0">{children}</ul>,
+                    ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 mb-2 last:mb-0">{children}</ol>,
+                    li: ({ children }) => <li className="text-neutral-200">{children}</li>,
+                    a: ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 underline underline-offset-2">{children}</a>,
+                    code: ({ children }) => <code className="bg-neutral-700 px-1 py-0.5 rounded text-xs font-mono text-emerald-300">{children}</code>,
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              )}
             </div>
           </div>
         ))}
