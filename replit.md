@@ -53,10 +53,11 @@ server/
     ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export
     prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide + session CRUD + export routes
   data/
-    store.ts           # JSON file-persisted data store for packages, tools, blog articles, tool usage metrics, pipeline contacts, notifications, and admin settings
+    db.ts              # PostgreSQL pool (pg), initDb() — creates 14 tables and seeds defaults on first run
+    store.ts           # Async PostgreSQL-backed data store for packages, tools, blog articles, tool usage metrics, pipeline contacts, notifications, and admin settings
     prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
     sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
-    persist/           # Auto-created directory for JSON data files
+    persist/           # Legacy JSON files (superseded by PostgreSQL; still used by sessions-store and prompt-workshop-store)
   services/
     parser.ts          # PDF, DOCX, Markdown, text parsing + chunking
     scraper.ts         # URL scraping with SSRF protection
@@ -77,6 +78,7 @@ Workflow: **Start application** → `npm run dev` on port 5000 (webview)
 - `ADMIN_USERNAME` — Username for admin dashboard login
 - `ADMIN_PASSWORD` — Password for admin dashboard login
 - `JWT_SECRET` — Secret key for JWT token signing (required, server fails to start without it)
+- `DATABASE_URL` — PostgreSQL connection string (Replit-managed, required for all store functions)
 
 ### Vite Configuration Notes
 

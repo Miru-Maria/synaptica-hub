@@ -13,6 +13,7 @@ import { ragRouter } from "./routes/rag.js";
 import { promptWorkshopRouter } from "./routes/prompt-workshop.js";
 import { blogRouter } from "./routes/blog.js";
 import { checkRetainerCheckins } from "./data/store.js";
+import { initDb } from "./data/db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === "production";
@@ -53,8 +54,22 @@ if (isProd) {
   }
 }
 
-createServer(app).listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-  checkRetainerCheckins();
-  setInterval(checkRetainerCheckins, 6 * 60 * 60 * 1000);
-});
+async function start() {
+  try {
+    await initDb();
+    console.log("Database initialized");
+  } catch (err) {
+    console.error("Failed to initialize database:", err);
+    process.exit(1);
+  }
+
+  createServer(app).listen(PORT, "0.0.0.0", () => {
+    console.log(`Server running on port ${PORT}`);
+    checkRetainerCheckins().catch((err) => console.error("checkRetainerCheckins error:", err));
+    setInterval(() => {
+      checkRetainerCheckins().catch((err) => console.error("checkRetainerCheckins error:", err));
+    }, 6 * 60 * 60 * 1000);
+  });
+}
+
+start();

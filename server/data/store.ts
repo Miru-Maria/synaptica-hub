@@ -1,11 +1,4 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, "persist");
-const PACKAGES_FILE = path.join(DATA_DIR, "packages.json");
-const TOOLS_FILE = path.join(DATA_DIR, "tools.json");
+import { pool, withTransaction } from "./db.js";
 
 export interface ServicePackage {
   id: string;
@@ -28,163 +21,62 @@ export interface ClientTool {
   onboardingCopy?: string;
 }
 
-const defaultPackages: ServicePackage[] = [
-  {
-    id: "audit",
-    name: "Documentation Audit",
-    tagline: "We don't know what our knowledge base is missing.",
-    priceLow: 1500,
-    priceHigh: 2000,
-    duration: "1 week",
-    type: "Fixed price",
-    features: [
-      "Gap analysis across existing documentation",
-      "Semantic search audit of coverage holes",
-      "Prioritized gap report with action recommendations",
-    ],
-    ideal: "Teams preparing for an AI initiative or post-merger knowledge consolidation.",
-    highlighted: false,
-  },
-  {
-    id: "sprint",
-    name: "Knowledge Architecture Sprint",
-    tagline: "Our AI can't find anything useful in our docs.",
-    priceLow: 2500,
-    priceHigh: 4000,
-    duration: "1–2 weeks",
-    type: "Fixed price",
-    features: [
-      "Taxonomy and knowledge structure design",
-      "Retrieval logic mapping and metadata schema",
-      "Content hierarchy design",
-      "Structured knowledge architecture document",
-    ],
-    ideal: "SaaS companies preparing for a RAG build, or teams rebuilding a knowledge base from scratch.",
-    highlighted: false,
-  },
-  {
-    id: "workshop",
-    name: "Prompt Engineering Workshop",
-    tagline: "Our team wastes hours writing the same kinds of content.",
-    priceLow: 2000,
-    priceHigh: 3000,
-    duration: "1–2 weeks",
-    type: "Fixed price",
-    features: [
-      "Prompt library design, testing, and documentation",
-      "Variable-template system for consistent team output",
-      "Style-guide enforcement prompts",
-      "Full team handover with usage documentation",
-    ],
-    ideal: "Marketing, support, and content teams with repetitive writing workflows.",
-    highlighted: false,
-  },
-  {
-    id: "rag",
-    name: "RAG Pipeline Design & Build",
-    tagline: "We need a chatbot trained on our internal documentation.",
-    priceLow: 0,
-    priceHigh: 0,
-    priceLabel: "Custom — quoted on scope",
-    duration: "4–8 weeks",
-    type: "Project-based",
-    features: [
-      "End-to-end retrieval-augmented generation pipeline",
-      "Document ingestion and chunking strategy",
-      "Embedding and vector store setup",
-      "Conversational interface grounded in your documentation",
-    ],
-    ideal: "For companies with existing documentation ready for AI-powered retrieval.",
-    highlighted: false,
-  },
-  {
-    id: "retainer",
-    name: "Monthly Retainer",
-    tagline: "We need ongoing knowledge architecture support as we scale.",
-    priceLow: 800,
-    priceHigh: 1200,
-    duration: "Monthly",
-    type: "Ongoing",
-    features: [
-      "Dedicated async support and review cycles",
-      "Monthly knowledge health check and recommendations",
-      "Priority access for new requests and scope expansions",
-      "Continuity across documentation, prompts, and architecture",
-    ],
-    ideal: "Minimum 3-month commitment. Ideal for teams in active knowledge build-out.",
-    highlighted: true,
-  },
-];
-
-const defaultTools: ClientTool[] = [
-  {
-    name: "DocAudit",
-    slug: "docaudit",
-    enabled: true,
-    onboardingCopy: "Find out what's missing from your documentation before your users do. Upload or paste your content and get a clear, prioritized report showing exactly which topics need attention — perfect for teams preparing to improve their knowledge base or launch an AI assistant.",
-  },
-  {
-    name: "Synaptica Knowledge Architecture",
-    slug: "synaptica-ka",
-    enabled: true,
-    onboardingCopy: "See how AI-powered search actually works on real documentation. Type a question in plain English and explore how semantic search finds relevant answers across a knowledge base — a hands-on preview of what structured knowledge architecture can do for your team.",
-  },
-  {
-    name: "DiffLens",
-    slug: "difflens",
-    enabled: true,
-    onboardingCopy: "Quickly spot every change between two versions of a document. Upload your files — PDFs, Word docs, code, or plain text — and get a clear side-by-side comparison with every addition, deletion, and edit highlighted for you.",
-  },
-  {
-    name: "DocForge PDF",
-    slug: "docforge",
-    enabled: true,
-    onboardingCopy: "Turn rough documents into polished, professional PDFs in seconds. Upload a Word doc, text file, or Markdown, and the AI automatically detects your document's structure and applies clean formatting, headers, and branding.",
-  },
-  {
-    name: "DocScope Intel Engine",
-    slug: "docscope",
-    enabled: true,
-    onboardingCopy: "Paste any content — emails, Slack threads, meeting notes, or documents — and get an instant AI analysis of what's covered, what's missing, and where the inconsistencies are. Great for auditing work-in-progress content before it ships.",
-  },
-];
-
-function ensureDir() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
+export async function getPackages(): Promise<ServicePackage[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM service_packages ORDER BY sort_order"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    tagline: r.tagline,
+    priceLow: Number(r.price_low),
+    priceHigh: Number(r.price_high),
+    priceLabel: r.price_label ?? undefined,
+    duration: r.duration,
+    type: r.type,
+    features: r.features,
+    ideal: r.ideal,
+    highlighted: r.highlighted,
+  }));
 }
 
-function readJson<T>(filePath: string, fallback: T): T {
-  try {
-    if (fs.existsSync(filePath)) {
-      return JSON.parse(fs.readFileSync(filePath, "utf-8")) as T;
+export async function savePackages(packages: ServicePackage[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM service_packages");
+    for (let i = 0; i < packages.length; i++) {
+      const p = packages[i];
+      await client.query(
+        `INSERT INTO service_packages (id, name, tagline, price_low, price_high, price_label, duration, type, features, ideal, highlighted, sort_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [p.id, p.name, p.tagline, p.priceLow, p.priceHigh, p.priceLabel ?? null, p.duration, p.type, JSON.stringify(p.features), p.ideal, p.highlighted, i]
+      );
     }
-  } catch {
-    // fall through
-  }
-  return fallback;
+  });
 }
 
-function writeJson<T>(filePath: string, data: T) {
-  ensureDir();
-  fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+export async function getTools(): Promise<ClientTool[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM client_tools ORDER BY sort_order"
+  );
+  return rows.map((r) => ({
+    name: r.name,
+    slug: r.slug,
+    enabled: r.enabled,
+    onboardingCopy: r.onboarding_copy ?? undefined,
+  }));
 }
 
-export function getPackages(): ServicePackage[] {
-  return readJson(PACKAGES_FILE, defaultPackages);
-}
-
-export function savePackages(packages: ServicePackage[]) {
-  writeJson(PACKAGES_FILE, packages);
-}
-
-export function getTools(): ClientTool[] {
-  return readJson(TOOLS_FILE, defaultTools);
-}
-
-export function saveTools(tools: ClientTool[]) {
-  writeJson(TOOLS_FILE, tools);
+export async function saveTools(tools: ClientTool[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM client_tools");
+    for (let i = 0; i < tools.length; i++) {
+      const t = tools[i];
+      await client.query(
+        `INSERT INTO client_tools (slug, name, enabled, onboarding_copy, sort_order) VALUES ($1,$2,$3,$4,$5)`,
+        [t.slug, t.name, t.enabled, t.onboardingCopy ?? null, i]
+      );
+    }
+  });
 }
 
 export interface HealthCheckEntry {
@@ -219,14 +111,31 @@ export interface RetainerClient {
   priorityRequests: PriorityRequest[];
 }
 
-const RETAINERS_FILE = path.join(DATA_DIR, "retainers.json");
-
-export function getRetainerClients(): RetainerClient[] {
-  return readJson(RETAINERS_FILE, []);
+export async function getRetainerClients(): Promise<RetainerClient[]> {
+  const { rows } = await pool.query("SELECT * FROM retainer_clients");
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    startDate: r.start_date,
+    monthlyRate: Number(r.monthly_rate),
+    notes: r.notes,
+    healthChecks: r.health_checks,
+    supportSessions: r.support_sessions,
+    priorityRequests: r.priority_requests,
+  }));
 }
 
-export function saveRetainerClients(clients: RetainerClient[]) {
-  writeJson(RETAINERS_FILE, clients);
+export async function saveRetainerClients(clients: RetainerClient[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM retainer_clients");
+    for (const c of clients) {
+      await client.query(
+        `INSERT INTO retainer_clients (id, name, start_date, monthly_rate, notes, health_checks, support_sessions, priority_requests)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+        [c.id, c.name, c.startDate, c.monthlyRate, c.notes, JSON.stringify(c.healthChecks), JSON.stringify(c.supportSessions), JSON.stringify(c.priorityRequests)]
+      );
+    }
+  });
 }
 
 export interface DiscoveryInquiry {
@@ -238,16 +147,25 @@ export interface DiscoveryInquiry {
   createdAt: string;
 }
 
-const INQUIRIES_FILE = path.join(DATA_DIR, "discovery-inquiries.json");
-
-export function getDiscoveryInquiries(): DiscoveryInquiry[] {
-  return readJson(INQUIRIES_FILE, []);
+export async function getDiscoveryInquiries(): Promise<DiscoveryInquiry[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM discovery_inquiries ORDER BY created_at DESC"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    company: r.company,
+    challenge: r.challenge,
+    timeline: r.timeline,
+    createdAt: r.created_at,
+  }));
 }
 
-export function saveDiscoveryInquiry(inquiry: DiscoveryInquiry) {
-  const inquiries = getDiscoveryInquiries();
-  inquiries.unshift(inquiry);
-  writeJson(INQUIRIES_FILE, inquiries);
+export async function saveDiscoveryInquiry(inquiry: DiscoveryInquiry): Promise<void> {
+  await pool.query(
+    `INSERT INTO discovery_inquiries (id, name, company, challenge, timeline, created_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [inquiry.id, inquiry.name, inquiry.company, inquiry.challenge, inquiry.timeline, inquiry.createdAt]
+  );
 }
 
 export interface Testimonial {
@@ -273,32 +191,68 @@ export interface OutcomeStat {
   value: string;
 }
 
-const TESTIMONIALS_FILE = path.join(DATA_DIR, "testimonials.json");
-const CASE_STUDIES_FILE = path.join(DATA_DIR, "case-studies.json");
-const OUTCOME_STATS_FILE = path.join(DATA_DIR, "outcome-stats.json");
-
-export function getTestimonials(): Testimonial[] {
-  return readJson(TESTIMONIALS_FILE, []);
+export async function getTestimonials(): Promise<Testimonial[]> {
+  const { rows } = await pool.query("SELECT * FROM testimonials");
+  return rows.map((r) => ({
+    id: r.id,
+    name: r.name,
+    role: r.role,
+    company: r.company,
+    quote: r.quote,
+    photo: r.photo,
+  }));
 }
 
-export function saveTestimonials(testimonials: Testimonial[]) {
-  writeJson(TESTIMONIALS_FILE, testimonials);
+export async function saveTestimonials(testimonials: Testimonial[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM testimonials");
+    for (const t of testimonials) {
+      await client.query(
+        `INSERT INTO testimonials (id, name, role, company, quote, photo) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [t.id, t.name, t.role, t.company, t.quote, t.photo || ""]
+      );
+    }
+  });
 }
 
-export function getCaseStudies(): CaseStudy[] {
-  return readJson(CASE_STUDIES_FILE, []);
+export async function getCaseStudies(): Promise<CaseStudy[]> {
+  const { rows } = await pool.query("SELECT * FROM case_studies");
+  return rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    industry: r.industry,
+    challenge: r.challenge,
+    outcome: r.outcome,
+  }));
 }
 
-export function saveCaseStudies(studies: CaseStudy[]) {
-  writeJson(CASE_STUDIES_FILE, studies);
+export async function saveCaseStudies(studies: CaseStudy[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM case_studies");
+    for (const s of studies) {
+      await client.query(
+        `INSERT INTO case_studies (id, title, industry, challenge, outcome) VALUES ($1,$2,$3,$4,$5)`,
+        [s.id, s.title, s.industry, s.challenge, s.outcome]
+      );
+    }
+  });
 }
 
-export function getOutcomeStats(): OutcomeStat[] {
-  return readJson(OUTCOME_STATS_FILE, []);
+export async function getOutcomeStats(): Promise<OutcomeStat[]> {
+  const { rows } = await pool.query("SELECT * FROM outcome_stats");
+  return rows.map((r) => ({ id: r.id, label: r.label, value: r.value }));
 }
 
-export function saveOutcomeStats(stats: OutcomeStat[]) {
-  writeJson(OUTCOME_STATS_FILE, stats);
+export async function saveOutcomeStats(stats: OutcomeStat[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM outcome_stats");
+    for (const s of stats) {
+      await client.query(
+        `INSERT INTO outcome_stats (id, label, value) VALUES ($1,$2,$3)`,
+        [s.id, s.label, s.value]
+      );
+    }
+  });
 }
 
 export interface BlogArticle {
@@ -316,237 +270,57 @@ export interface BlogArticle {
   updatedAt: string;
 }
 
-const ARTICLES_FILE = path.join(DATA_DIR, "articles.json");
+function rowToArticle(r: Record<string, unknown>): BlogArticle {
+  return {
+    id: r.id as string,
+    title: r.title as string,
+    slug: r.slug as string,
+    excerpt: r.excerpt as string,
+    body: r.body as string,
+    category: r.category as string,
+    featuredImage: (r.featured_image as string | null) ?? undefined,
+    publishDate: r.publish_date as string,
+    published: r.published as boolean,
+    readingTime: Number(r.reading_time),
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
 
-function estimateReadingTime(text: string): number {
+export function estimateReadingTime(text: string): number {
   const words = text.trim().split(/\s+/).length;
   return Math.max(1, Math.ceil(words / 200));
 }
 
-const defaultArticles: BlogArticle[] = [
-  {
-    id: "art-1",
-    title: "How to Structure Your Documents Before Building a RAG Pipeline",
-    slug: "structure-documents-before-rag-pipeline",
-    excerpt: "Most RAG failures start long before the first embedding is generated. Learn the document structure principles that make retrieval-augmented generation actually work.",
-    body: `# How to Structure Your Documents Before Building a RAG Pipeline
-
-Building a RAG (Retrieval-Augmented Generation) pipeline is exciting — but most teams rush straight into embeddings and vector stores without thinking about the most critical factor: **document structure**.
-
-## Why Structure Matters More Than Models
-
-The quality of a RAG system is bounded by the quality of its source documents. No amount of prompt engineering or model fine-tuning can compensate for poorly structured content. When your documents are messy, your chunks are messy, and your retrieval is unreliable.
-
-## The Three Pillars of RAG-Ready Documents
-
-### 1. Clear Heading Hierarchy
-
-Every document should have a logical heading hierarchy (H1 → H2 → H3). This isn't just for human readability — it's how chunking strategies determine context boundaries.
-
-\`\`\`markdown
-# Product Overview          ← H1: Top-level topic
-## Key Features             ← H2: Sub-topic
-### Authentication          ← H3: Specific feature
-\`\`\`
-
-### 2. Self-Contained Sections
-
-Each section should make sense on its own. When a chunk is retrieved, the user won't see the surrounding context. If your section starts with "As mentioned above..." — it's not RAG-ready.
-
-### 3. Consistent Metadata
-
-Add frontmatter or structured metadata to every document:
-- **Title** and **description**
-- **Last updated** date
-- **Category** or **domain** tags
-- **Audience** or **access level**
-
-## Common Anti-Patterns
-
-| Anti-Pattern | Why It Fails |
-|---|---|
-| Giant monolithic documents | Chunks cross topic boundaries |
-| Heavy cross-referencing | Retrieved chunks lack context |
-| Embedded tables without context | Table data loses meaning when chunked |
-| Acronyms without definitions | Retrieved chunks are ambiguous |
-
-## A Practical Checklist
-
-Before feeding any document into a RAG pipeline, verify:
-
-1. Every section has a descriptive heading
-2. No section exceeds 500 words
-3. Acronyms are defined on first use in each section
-4. Tables have descriptive captions
-5. Code blocks include language identifiers
-6. Links use descriptive text, not "click here"
-
-## What Comes Next
-
-Once your documents are structured, the chunking strategy becomes straightforward. Heading-based chunking with overlap windows works for most use cases. But that's a topic for another post.
-
-The takeaway: **invest in document structure before you invest in infrastructure**. Your future RAG pipeline will thank you.`,
-    category: "RAG & Retrieval",
-    publishDate: "2026-03-10",
-    published: true,
-    readingTime: 4,
-    createdAt: "2026-03-10T09:00:00.000Z",
-    updatedAt: "2026-03-10T09:00:00.000Z",
-  },
-  {
-    id: "art-2",
-    title: "Why Most RAG Systems Fail (And It's Not the Model)",
-    slug: "why-most-rag-systems-fail",
-    excerpt: "Everyone blames the LLM when RAG quality is poor. But the real culprits are upstream: bad chunking, missing metadata, and documents that were never designed for retrieval.",
-    body: `# Why Most RAG Systems Fail (And It's Not the Model)
-
-When a RAG system gives bad answers, the first instinct is to swap the model. GPT-4 not working? Try Claude. Claude hallucinating? Fine-tune something. But in nearly every engagement we've run, **the model wasn't the problem**.
-
-## The Real Failure Points
-
-### 1. The Documents Were Never Designed for Retrieval
-
-Most enterprise documentation was written for humans reading linearly — not for machines retrieving fragments. The assumption that "we'll just point the AI at our docs" ignores a fundamental mismatch between how documents are written and how RAG systems consume them.
-
-### 2. Chunking Strategy Is an Afterthought
-
-Default chunk sizes (512 tokens, 1000 characters) are arbitrary. The right chunking strategy depends on:
-
-- **Document type**: API docs chunk differently than policy manuals
-- **Query patterns**: What questions will users actually ask?
-- **Content density**: Dense technical content needs smaller chunks
-
-\`\`\`
-Bad:  "Split everything into 500-token chunks"
-Good: "Split API docs by endpoint, policy docs by section heading,
-       FAQs by question-answer pair"
-\`\`\`
-
-### 3. No Metadata Layer
-
-Without metadata, retrieval is purely semantic — and semantic similarity alone isn't enough. A chunk about "Python authentication" and a chunk about "Python snake care" might have similar embeddings for the query "Python security."
-
-Effective metadata includes:
-- **Source document** and section
-- **Content type** (tutorial, reference, FAQ, policy)
-- **Domain tags** (engineering, HR, legal)
-- **Freshness** (last updated date)
-
-### 4. No Retrieval Testing Framework
-
-Teams deploy RAG systems without a way to measure retrieval quality. You need:
-
-- A set of test queries with known correct source documents
-- Retrieval precision and recall metrics
-- Regular regression testing as documents change
-
-## The 80/20 Fix
-
-If your RAG system is underperforming, don't touch the model. Instead:
-
-1. **Audit your documents** for RAG readiness
-2. **Redesign your chunking** around content types and query patterns
-3. **Add a metadata layer** for hybrid search
-4. **Build a retrieval test suite** before optimizing anything else
-
-## The Bottom Line
-
-RAG is a **systems problem**, not a model problem. The teams that succeed treat their knowledge base as a product — with its own architecture, quality standards, and maintenance processes.
-
-That's exactly what knowledge architecture is for.`,
-    category: "RAG & Retrieval",
-    publishDate: "2026-03-07",
-    published: true,
-    readingTime: 4,
-    createdAt: "2026-03-07T09:00:00.000Z",
-    updatedAt: "2026-03-07T09:00:00.000Z",
-  },
-  {
-    id: "art-3",
-    title: "The Knowledge Architecture Checklist for AI-Ready Organizations",
-    slug: "knowledge-architecture-checklist-ai-ready",
-    excerpt: "A practical checklist for evaluating whether your organization's knowledge base is ready to power AI applications — from taxonomy to metadata to governance.",
-    body: `# The Knowledge Architecture Checklist for AI-Ready Organizations
-
-Before your organization can effectively deploy AI tools — chatbots, copilots, search, or automation — you need a solid knowledge architecture. This checklist covers the foundational elements.
-
-## Taxonomy & Classification
-
-- [ ] Content is organized into a clear, consistent taxonomy
-- [ ] Categories are mutually exclusive and collectively exhaustive
-- [ ] Taxonomy depth doesn't exceed 3–4 levels
-- [ ] Category names are intuitive to the target audience
-- [ ] There's a documented process for adding new categories
-
-## Metadata Standards
-
-- [ ] Every document has a title, description, and owner
-- [ ] Documents are tagged with content type (guide, reference, policy, FAQ)
-- [ ] Last-updated dates are accurate and maintained
-- [ ] Audience or access level is specified
-- [ domain or department tags are applied consistently
-
-## Content Quality
-
-- [ ] Documents follow a consistent style guide
-- [ ] Sections are self-contained and don't rely on surrounding context
-- [ ] Acronyms and jargon are defined
-- [ ] Outdated content is archived, not just abandoned
-- [ ] There's a review cycle for high-traffic documents
-
-## Retrieval Readiness
-
-- [ ] Documents have clear heading hierarchies
-- [ ] Long documents are broken into logical, retrievable sections
-- [ ] Tables and images have descriptive context
-- [ ] Code examples include language identifiers and comments
-- [ ] Cross-references use descriptive anchor text
-
-## Governance
-
-- [ ] There's a designated knowledge owner or team
-- [ ] Content creation follows a defined workflow
-- [ ] There's a deprecation process for outdated content
-- [ ] Analytics track which content is accessed and which is stale
-- [ ] There's a feedback mechanism for content quality issues
-
-## How to Use This Checklist
-
-Score each item as **Met**, **Partially Met**, or **Not Met**. Any organization scoring below 70% across these categories should prioritize knowledge architecture work before investing in AI tooling.
-
-The most common gap we see? **Metadata standards.** Organizations have content, but it's untagged, uncategorized, and impossible to retrieve reliably.
-
-## What Comes Next
-
-If your checklist reveals gaps, a Knowledge Architecture Sprint can address them in 1–2 weeks. The output is a structured architecture document covering taxonomy, metadata schemas, retrieval logic, and a governance framework — ready for implementation.`,
-    category: "Knowledge Architecture",
-    publishDate: "2026-03-03",
-    published: false,
-    readingTime: 3,
-    createdAt: "2026-03-03T09:00:00.000Z",
-    updatedAt: "2026-03-03T09:00:00.000Z",
-  },
-];
-
-export function getArticles(): BlogArticle[] {
-  return readJson(ARTICLES_FILE, defaultArticles);
+export async function getArticles(): Promise<BlogArticle[]> {
+  const { rows } = await pool.query("SELECT * FROM blog_articles");
+  return rows.map(rowToArticle);
 }
 
-export function saveArticles(articles: BlogArticle[]) {
-  writeJson(ARTICLES_FILE, articles);
+export async function saveArticles(articles: BlogArticle[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM blog_articles");
+    for (const a of articles) {
+      await client.query(
+        `INSERT INTO blog_articles (id, title, slug, excerpt, body, category, featured_image, publish_date, published, reading_time, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+        [a.id, a.title, a.slug, a.excerpt, a.body, a.category, a.featuredImage ?? null, a.publishDate, a.published, a.readingTime, a.createdAt, a.updatedAt]
+      );
+    }
+  });
 }
 
-export function getArticleBySlug(slug: string): BlogArticle | undefined {
-  return getArticles().find((a) => a.slug === slug);
+export async function getArticleBySlug(slug: string): Promise<BlogArticle | undefined> {
+  const { rows } = await pool.query("SELECT * FROM blog_articles WHERE slug = $1", [slug]);
+  return rows.length > 0 ? rowToArticle(rows[0]) : undefined;
 }
 
-export function getPublishedArticles(): BlogArticle[] {
-  return getArticles()
-    .filter((a) => a.published)
-    .sort((a, b) => new Date(b.publishDate).getTime() - new Date(a.publishDate).getTime());
+export async function getPublishedArticles(): Promise<BlogArticle[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM blog_articles WHERE published = true ORDER BY publish_date DESC"
+  );
+  return rows.map(rowToArticle);
 }
-
-export { estimateReadingTime };
 
 export type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue";
 
@@ -564,14 +338,40 @@ export interface Invoice {
   updatedAt: string;
 }
 
-const INVOICES_FILE = path.join(DATA_DIR, "invoices.json");
-
-export function getInvoices(): Invoice[] {
-  return readJson(INVOICES_FILE, []);
+function rowToInvoice(r: Record<string, unknown>): Invoice {
+  return {
+    id: r.id as string,
+    clientName: r.client_name as string,
+    contactId: (r.contact_id as string | null) ?? undefined,
+    description: r.description as string,
+    amount: Number(r.amount),
+    currency: r.currency as string,
+    invoiceDate: r.invoice_date as string,
+    dueDate: r.due_date as string,
+    status: r.status as InvoiceStatus,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
 }
 
-export function saveInvoices(invoices: Invoice[]) {
-  writeJson(INVOICES_FILE, invoices);
+export async function getInvoices(): Promise<Invoice[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM invoices ORDER BY created_at DESC"
+  );
+  return rows.map(rowToInvoice);
+}
+
+export async function saveInvoices(invoices: Invoice[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM invoices");
+    for (const inv of invoices) {
+      await client.query(
+        `INSERT INTO invoices (id, client_name, contact_id, description, amount, currency, invoice_date, due_date, status, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,
+        [inv.id, inv.clientName, inv.contactId ?? null, inv.description, inv.amount, inv.currency, inv.invoiceDate, inv.dueDate, inv.status, inv.createdAt, inv.updatedAt]
+      );
+    }
+  });
 }
 
 export type NotificationType =
@@ -597,22 +397,29 @@ export interface AdminSettings {
   calendlyUrl?: string;
 }
 
-const NOTIFICATIONS_FILE = path.join(DATA_DIR, "notifications.json");
-const ADMIN_SETTINGS_FILE = path.join(DATA_DIR, "admin-settings.json");
-
 const HIGH_PRIORITY_TYPES: NotificationType[] = ["discovery_call", "new_subscriber"];
 
-export function getNotifications(): Notification[] {
-  return readJson(NOTIFICATIONS_FILE, []);
+export async function getNotifications(): Promise<Notification[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM notifications ORDER BY created_at DESC LIMIT 200"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    type: r.type as NotificationType,
+    title: r.title,
+    description: r.description,
+    link: r.link ?? undefined,
+    read: r.read,
+    createdAt: r.created_at,
+  }));
 }
 
-export function addNotification(
+export async function addNotification(
   type: NotificationType,
   title: string,
   description: string,
   link?: string
-): Notification {
-  const notifications = getNotifications();
+): Promise<Notification> {
   const notification: Notification = {
     id: `notif-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     type,
@@ -622,49 +429,60 @@ export function addNotification(
     read: false,
     createdAt: new Date().toISOString(),
   };
-  notifications.unshift(notification);
-  if (notifications.length > 200) {
-    notifications.length = 200;
-  }
-  writeJson(NOTIFICATIONS_FILE, notifications);
+  await pool.query(
+    `INSERT INTO notifications (id, type, title, description, link, read, created_at) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [notification.id, notification.type, notification.title, notification.description, notification.link ?? null, notification.read, notification.createdAt]
+  );
+  await pool.query(
+    `DELETE FROM notifications WHERE id NOT IN (SELECT id FROM notifications ORDER BY created_at DESC LIMIT 200)`
+  );
   return notification;
 }
 
-export function markNotificationRead(id: string): boolean {
-  const notifications = getNotifications();
-  const notif = notifications.find((n) => n.id === id);
-  if (!notif) return false;
-  notif.read = true;
-  writeJson(NOTIFICATIONS_FILE, notifications);
-  return true;
+export async function markNotificationRead(id: string): Promise<boolean> {
+  const result = await pool.query(
+    "UPDATE notifications SET read = true WHERE id = $1",
+    [id]
+  );
+  return (result.rowCount ?? 0) > 0;
 }
 
-export function markAllNotificationsRead(): void {
-  const notifications = getNotifications();
-  for (const n of notifications) {
-    n.read = true;
+export async function markAllNotificationsRead(): Promise<void> {
+  await pool.query("UPDATE notifications SET read = true");
+}
+
+export async function getAdminSettings(): Promise<AdminSettings> {
+  const { rows } = await pool.query("SELECT * FROM admin_settings WHERE id = 1");
+  if (rows.length === 0) {
+    return { emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: undefined };
   }
-  writeJson(NOTIFICATIONS_FILE, notifications);
+  const r = rows[0];
+  return {
+    emailNotificationsEnabled: r.email_notifications_enabled,
+    adminEmail: r.admin_email,
+    calendlyUrl: r.calendly_url ?? undefined,
+  };
 }
 
-export function getAdminSettings(): AdminSettings {
-  return readJson(ADMIN_SETTINGS_FILE, {
-    emailNotificationsEnabled: false,
-    adminEmail: "",
-  });
-}
-
-export function saveAdminSettings(settings: AdminSettings): void {
-  writeJson(ADMIN_SETTINGS_FILE, settings);
+export async function saveAdminSettings(settings: AdminSettings): Promise<void> {
+  await pool.query(
+    `INSERT INTO admin_settings (id, email_notifications_enabled, admin_email, calendly_url)
+     VALUES (1, $1, $2, $3)
+     ON CONFLICT (id) DO UPDATE SET
+       email_notifications_enabled = EXCLUDED.email_notifications_enabled,
+       admin_email = EXCLUDED.admin_email,
+       calendly_url = EXCLUDED.calendly_url`,
+    [settings.emailNotificationsEnabled, settings.adminEmail, settings.calendlyUrl ?? null]
+  );
 }
 
 export function isHighPriority(type: NotificationType): boolean {
   return HIGH_PRIORITY_TYPES.includes(type);
 }
 
-export function checkRetainerCheckins(): void {
-  const clients = getRetainerClients();
-  const notifications = getNotifications();
+export async function checkRetainerCheckins(): Promise<void> {
+  const clients = await getRetainerClients();
+  const notifications = await getNotifications();
   const now = new Date();
   const threeDaysFromNow = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
 
@@ -683,7 +501,7 @@ export function checkRetainerCheckins(): void {
         (n) => n.type === "retainer_checkin" && n.description.includes(dedupTag)
       );
       if (!alreadyNotified) {
-        addNotification(
+        await addNotification(
           "retainer_checkin",
           "Upcoming Retainer Check-in",
           `Monthly check-in for ${client.name} is due on ${dueDateKey}. ${dedupTag}`,
@@ -703,20 +521,37 @@ export interface EmailLead {
   capturedAt: string;
 }
 
-const LEADS_FILE = path.join(DATA_DIR, "email-leads.json");
-
-export function getEmailLeads(): EmailLead[] {
-  return readJson(LEADS_FILE, []);
+export async function getEmailLeads(): Promise<EmailLead[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM email_leads ORDER BY captured_at DESC"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    email: r.email,
+    firstName: r.first_name,
+    toolSource: r.tool_source,
+    documentType: r.document_type ?? undefined,
+    capturedAt: r.captured_at,
+  }));
 }
 
-export function saveEmailLead(lead: EmailLead) {
-  const leads = getEmailLeads();
-  leads.push(lead);
-  writeJson(LEADS_FILE, leads);
+export async function saveEmailLead(lead: EmailLead): Promise<void> {
+  await pool.query(
+    `INSERT INTO email_leads (id, email, first_name, tool_source, document_type, captured_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+    [lead.id, lead.email, lead.firstName, lead.toolSource, lead.documentType ?? null, lead.capturedAt]
+  );
 }
 
-export function saveEmailLeads(leads: EmailLead[]) {
-  writeJson(LEADS_FILE, leads);
+export async function saveEmailLeads(leads: EmailLead[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM email_leads");
+    for (const l of leads) {
+      await client.query(
+        `INSERT INTO email_leads (id, email, first_name, tool_source, document_type, captured_at) VALUES ($1,$2,$3,$4,$5,$6)`,
+        [l.id, l.email, l.firstName, l.toolSource, l.documentType ?? null, l.capturedAt]
+      );
+    }
+  });
 }
 
 export interface ToolRunEvent {
@@ -730,21 +565,33 @@ export interface ToolRunEvent {
   gapCategories?: string[];
 }
 
-const TOOL_RUNS_FILE = path.join(DATA_DIR, "tool-runs.json");
-
-export function getToolRuns(): ToolRunEvent[] {
-  return readJson(TOOL_RUNS_FILE, []);
+export async function getToolRuns(): Promise<ToolRunEvent[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM tool_runs ORDER BY timestamp"
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    toolName: r.tool_name,
+    toolSlug: r.tool_slug,
+    timestamp: r.timestamp,
+    inputType: r.input_type ?? undefined,
+    emailCaptured: r.email_captured,
+    documentSizeCategory: r.document_size_category ?? undefined,
+    gapCategories: r.gap_categories ?? undefined,
+  }));
 }
 
-export function logToolRun(event: Omit<ToolRunEvent, "id" | "timestamp">): ToolRunEvent {
-  const runs = getToolRuns();
+export async function logToolRun(event: Omit<ToolRunEvent, "id" | "timestamp">): Promise<ToolRunEvent> {
   const entry: ToolRunEvent = {
     id: `tr-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     timestamp: new Date().toISOString(),
     ...event,
   };
-  runs.push(entry);
-  writeJson(TOOL_RUNS_FILE, runs);
+  await pool.query(
+    `INSERT INTO tool_runs (id, tool_name, tool_slug, timestamp, input_type, email_captured, document_size_category, gap_categories)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+    [entry.id, entry.toolName, entry.toolSlug, entry.timestamp, entry.inputType ?? null, entry.emailCaptured, entry.documentSizeCategory ?? null, entry.gapCategories ? JSON.stringify(entry.gapCategories) : null]
+  );
   return entry;
 }
 
@@ -771,8 +618,8 @@ export interface MetricsResponse {
   totalEmails: number;
 }
 
-export function getMetrics(): MetricsResponse {
-  const runs = getToolRuns();
+export async function getMetrics(): Promise<MetricsResponse> {
+  const runs = await getToolRuns();
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -867,36 +714,67 @@ export interface PipelineContact {
   updatedAt: string;
 }
 
-const CONTACTS_FILE = path.join(DATA_DIR, "pipeline-contacts.json");
-
-export function getPipelineContacts(): PipelineContact[] {
-  return readJson(CONTACTS_FILE, []);
+function rowToContact(r: Record<string, unknown>): PipelineContact {
+  return {
+    id: r.id as string,
+    name: r.name as string,
+    email: r.email as string,
+    company: r.company as string,
+    source: r.source as ContactSource,
+    serviceInterest: r.service_interest as string,
+    stage: r.stage as PipelineStage,
+    lastTouchDate: r.last_touch_date as string,
+    nextAction: r.next_action as string,
+    notes: r.notes as string,
+    estimatedValue: Number(r.estimated_value),
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
 }
 
-export function savePipelineContacts(contacts: PipelineContact[]) {
-  writeJson(CONTACTS_FILE, contacts);
+export async function getPipelineContacts(): Promise<PipelineContact[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM pipeline_contacts ORDER BY created_at DESC"
+  );
+  return rows.map(rowToContact);
 }
 
-export function addPipelineContact(contact: PipelineContact) {
-  const contacts = getPipelineContacts();
-  contacts.unshift(contact);
-  writeJson(CONTACTS_FILE, contacts);
+export async function savePipelineContacts(contacts: PipelineContact[]): Promise<void> {
+  await withTransaction(async (client) => {
+    await client.query("DELETE FROM pipeline_contacts");
+    for (const c of contacts) {
+      await client.query(
+        `INSERT INTO pipeline_contacts (id, name, email, company, source, service_interest, stage, last_touch_date, next_action, notes, estimated_value, created_at, updated_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+        [c.id, c.name, c.email, c.company, c.source, c.serviceInterest, c.stage, c.lastTouchDate, c.nextAction, c.notes, c.estimatedValue, c.createdAt, c.updatedAt]
+      );
+    }
+  });
 }
 
-export function updatePipelineContact(id: string, updates: Partial<PipelineContact>): PipelineContact | null {
-  const contacts = getPipelineContacts();
-  const idx = contacts.findIndex((c) => c.id === id);
-  if (idx === -1) return null;
-  contacts[idx] = { ...contacts[idx], ...updates, updatedAt: new Date().toISOString() };
-  writeJson(CONTACTS_FILE, contacts);
-  return contacts[idx];
+export async function addPipelineContact(contact: PipelineContact): Promise<void> {
+  await pool.query(
+    `INSERT INTO pipeline_contacts (id, name, email, company, source, service_interest, stage, last_touch_date, next_action, notes, estimated_value, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,
+    [contact.id, contact.name, contact.email, contact.company, contact.source, contact.serviceInterest, contact.stage, contact.lastTouchDate, contact.nextAction, contact.notes, contact.estimatedValue, contact.createdAt, contact.updatedAt]
+  );
 }
 
-export function deletePipelineContact(id: string): boolean {
-  const contacts = getPipelineContacts();
-  const idx = contacts.findIndex((c) => c.id === id);
-  if (idx === -1) return false;
-  contacts.splice(idx, 1);
-  writeJson(CONTACTS_FILE, contacts);
-  return true;
+export async function updatePipelineContact(id: string, updates: Partial<PipelineContact>): Promise<PipelineContact | null> {
+  const { rows } = await pool.query("SELECT * FROM pipeline_contacts WHERE id = $1", [id]);
+  if (rows.length === 0) return null;
+
+  const current = rowToContact(rows[0]);
+  const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
+
+  await pool.query(
+    `UPDATE pipeline_contacts SET name=$1, email=$2, company=$3, source=$4, service_interest=$5, stage=$6, last_touch_date=$7, next_action=$8, notes=$9, estimated_value=$10, updated_at=$11 WHERE id=$12`,
+    [updated.name, updated.email, updated.company, updated.source, updated.serviceInterest, updated.stage, updated.lastTouchDate, updated.nextAction, updated.notes, updated.estimatedValue, updated.updatedAt, id]
+  );
+  return updated;
+}
+
+export async function deletePipelineContact(id: string): Promise<boolean> {
+  const result = await pool.query("DELETE FROM pipeline_contacts WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
 }

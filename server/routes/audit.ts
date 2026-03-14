@@ -5,14 +5,18 @@ import { scrapeUrl } from "../services/scraper.js";
 import { analyzeDocumentation, AuditResult } from "../services/analyzer.js";
 import { getTools, logToolRun } from "../data/store.js";
 
-function requireToolEnabled(req: Request, res: Response, next: NextFunction) {
-  const tools = getTools();
-  const docaudit = tools.find((t) => t.slug === "docaudit");
-  if (docaudit && !docaudit.enabled) {
-    res.status(503).json({ error: "DocAudit is currently disabled" });
-    return;
+async function requireToolEnabled(req: Request, res: Response, next: NextFunction) {
+  try {
+    const tools = await getTools();
+    const docaudit = tools.find((t) => t.slug === "docaudit");
+    if (docaudit && !docaudit.enabled) {
+      res.status(503).json({ error: "DocAudit is currently disabled" });
+      return;
+    }
+    next();
+  } catch {
+    next();
   }
-  next();
 }
 
 const upload = multer({
@@ -501,7 +505,7 @@ auditRouter.post("/analyze", async (req: Request, res: Response) => {
       .slice(0, 10) || [];
 
     try {
-      logToolRun({
+      await logToolRun({
         toolName: "DocAudit",
         toolSlug: "docaudit",
         inputType: (req.body._inputType as string) || "unknown",

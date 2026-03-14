@@ -4,104 +4,131 @@ import type { DiscoveryInquiry, EmailLead, PipelineContact } from "../data/store
 
 export const publicRouter = Router();
 
-publicRouter.get("/packages", (_req: Request, res: Response) => {
-  res.json(getPackages());
+publicRouter.get("/packages", async (_req: Request, res: Response) => {
+  try {
+    res.json(await getPackages());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load packages" });
+  }
 });
 
-publicRouter.get("/tools", (_req: Request, res: Response) => {
-  res.json(getTools());
+publicRouter.get("/tools", async (_req: Request, res: Response) => {
+  try {
+    res.json(await getTools());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load tools" });
+  }
 });
 
-publicRouter.post("/discovery", (req: Request, res: Response) => {
+publicRouter.post("/discovery", async (req: Request, res: Response) => {
   const { name, company, challenge, timeline } = req.body;
   if (!name || !company || !challenge || !timeline) {
     res.status(400).json({ error: "name, company, challenge, and timeline are required" });
     return;
   }
   const inquiry: DiscoveryInquiry = {
-    id: `inq-${Date.now()}`,
+    id: `inq-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     name: String(name).slice(0, 200),
     company: String(company).slice(0, 200),
-    challenge: String(challenge).slice(0, 2000),
+    challenge: String(challenge).slice(0, 5000),
     timeline: String(timeline).slice(0, 200),
     createdAt: new Date().toISOString(),
   };
-  saveDiscoveryInquiry(inquiry);
-
-  const pipelineContact: PipelineContact = {
-    id: `contact-${Date.now()}`,
-    name: inquiry.name,
-    email: "",
-    company: inquiry.company,
-    source: "discovery_call",
-    serviceInterest: "",
-    stage: "New Lead",
-    lastTouchDate: inquiry.createdAt,
-    nextAction: "Review discovery inquiry",
-    notes: `Discovery call inquiry:\nChallenge: ${inquiry.challenge}\nTimeline: ${inquiry.timeline}`,
-    estimatedValue: 0,
-    createdAt: inquiry.createdAt,
-    updatedAt: inquiry.createdAt,
-  };
-  addPipelineContact(pipelineContact);
-
-  addNotification(
-    "discovery_call",
-    "New Discovery Call Request",
-    `${inquiry.name} from ${inquiry.company} submitted a discovery call request.`,
-    "/admin?tab=inquiries"
-  );
-  res.json({ ok: true, id: inquiry.id });
+  try {
+    await saveDiscoveryInquiry(inquiry);
+    const contact: PipelineContact = {
+      id: `contact-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      name: inquiry.name,
+      email: "",
+      company: inquiry.company,
+      source: "discovery_call",
+      serviceInterest: inquiry.challenge.slice(0, 200),
+      stage: "New Lead",
+      lastTouchDate: inquiry.createdAt,
+      nextAction: "Follow up within 48 hours",
+      notes: `Timeline: ${inquiry.timeline}\n\nChallenge: ${inquiry.challenge}`,
+      estimatedValue: 0,
+      createdAt: inquiry.createdAt,
+      updatedAt: inquiry.createdAt,
+    };
+    await addPipelineContact(contact);
+    await addNotification(
+      "discovery_call",
+      "New Discovery Inquiry",
+      `${inquiry.name} from ${inquiry.company} submitted a discovery inquiry.`,
+      "/admin?tab=inquiries"
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to submit inquiry" });
+  }
 });
 
-publicRouter.get("/testimonials", (_req: Request, res: Response) => {
-  res.json(getTestimonials());
+publicRouter.get("/testimonials", async (_req: Request, res: Response) => {
+  try {
+    res.json(await getTestimonials());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load testimonials" });
+  }
 });
 
-publicRouter.get("/case-studies", (_req: Request, res: Response) => {
-  res.json(getCaseStudies());
+publicRouter.get("/case-studies", async (_req: Request, res: Response) => {
+  try {
+    res.json(await getCaseStudies());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load case studies" });
+  }
 });
 
-publicRouter.get("/outcome-stats", (_req: Request, res: Response) => {
-  res.json(getOutcomeStats());
+publicRouter.get("/outcome-stats", async (_req: Request, res: Response) => {
+  try {
+    res.json(await getOutcomeStats());
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load outcome stats" });
+  }
 });
 
-publicRouter.post("/capture-email", (req: Request, res: Response) => {
+publicRouter.post("/capture-email", async (req: Request, res: Response) => {
   const { email, firstName, toolSource, documentType } = req.body;
-
-  if (!email || typeof email !== "string" || !email.includes("@")) {
-    res.status(400).json({ error: "Valid email is required" });
+  if (!email || !firstName || !toolSource) {
+    res.status(400).json({ error: "email, firstName, and toolSource are required" });
     return;
   }
-  if (!firstName || typeof firstName !== "string") {
-    res.status(400).json({ error: "First name is required" });
-    return;
-  }
-  if (!toolSource || typeof toolSource !== "string") {
-    res.status(400).json({ error: "Tool source is required" });
-    return;
-  }
-
   const lead: EmailLead = {
-    id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-    email: email.trim(),
-    firstName: firstName.trim(),
-    toolSource,
-    documentType: documentType || undefined,
+    id: `lead-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    email: String(email).slice(0, 200),
+    firstName: String(firstName).slice(0, 200),
+    toolSource: String(toolSource).slice(0, 100),
+    documentType: documentType ? String(documentType).slice(0, 100) : undefined,
     capturedAt: new Date().toISOString(),
   };
-
-  saveEmailLead(lead);
-  addNotification(
-    "email_capture",
-    "New Email Capture",
-    `${lead.firstName} (${lead.email}) captured from ${lead.toolSource}.`,
-    "/admin?tab=leads"
-  );
-  res.json({ ok: true });
+  try {
+    await saveEmailLead(lead);
+    await addNotification(
+      "email_capture",
+      "New Email Capture",
+      `${lead.firstName} (${lead.email}) captured from ${lead.toolSource}.`,
+      "/admin?tab=leads"
+    );
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to capture email" });
+  }
 });
 
-publicRouter.get("/booking-url", (_req: Request, res: Response) => {
-  const settings = getAdminSettings();
-  res.json({ calendlyUrl: settings.calendlyUrl || null });
+publicRouter.get("/booking-url", async (_req: Request, res: Response) => {
+  try {
+    const settings = await getAdminSettings();
+    res.json({ calendlyUrl: settings.calendlyUrl || null });
+  } catch (err) {
+    console.error(err);
+    res.json({ calendlyUrl: null });
+  }
 });
