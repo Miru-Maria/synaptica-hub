@@ -27,7 +27,7 @@ export default function WorkWithMe() {
   useEffect(() => {
     fetch("/api/public/booking-url")
       .then((r) => (r.ok ? r.json() : {}))
-      .then((data) => {
+      .then((data: { calendlyUrl?: string }) => {
         if (data.calendlyUrl) setBookingUrl(data.calendlyUrl);
       })
       .catch(() => {});
