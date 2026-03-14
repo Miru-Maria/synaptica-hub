@@ -63,68 +63,231 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
 
   const gaps = result.topicCoverages.filter((tc) => tc.severity !== "low");
 
-  const exportPDF = () => {
+  const exportPDF = async () => {
     const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 20;
-    let y = margin;
+    const contentWidth = pageWidth - margin * 2;
 
-    doc.setFontSize(22);
-    doc.setTextColor(0, 200, 160);
-    doc.text("DocAudit Gap Report", margin, y);
-    y += 12;
+    let logoDataUrl: string | null = null;
+    try {
+      const resp = await fetch("/phoenix-logo.png");
+      const blob = await resp.blob();
+      logoDataUrl = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(blob);
+      });
+    } catch {
+      // continue without logo
+    }
 
-    doc.setFontSize(12);
-    doc.setTextColor(150, 150, 150);
-    doc.text(`Knowledge Base: ${kbName}`, margin, y);
-    y += 8;
-    doc.text(`Generated: ${new Date().toLocaleDateString()}`, margin, y);
-    y += 12;
+    const brandTeal: [number, number, number] = [0, 200, 160];
+    const darkBg: [number, number, number] = [15, 15, 20];
+    const white: [number, number, number] = [255, 255, 255];
+    const lightGray: [number, number, number] = [180, 180, 185];
+    const mutedGray: [number, number, number] = [120, 120, 130];
 
-    doc.setFontSize(16);
-    doc.setTextColor(255, 255, 255);
-    doc.text(`Overall Coverage Score: ${result.overallScore}%`, margin, y);
-    y += 10;
+    const addFooter = (pageNum: number, totalPages: number) => {
+      doc.setDrawColor(...brandTeal);
+      doc.setLineWidth(0.5);
+      doc.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+      doc.setFontSize(7);
+      doc.setTextColor(...mutedGray);
+      doc.text("Synaptica Knowledge Systems", margin, pageHeight - 10);
+      doc.text("docaudit.synaptica.dev", pageWidth / 2, pageHeight - 10, { align: "center" });
+      doc.text(`Page ${pageNum} of ${totalPages}`, pageWidth - margin, pageHeight - 10, { align: "right" });
+    };
+
+    const checkPageBreak = (needed: number, currentY: number): number => {
+      if (currentY + needed > pageHeight - 25) {
+        doc.addPage();
+        return margin + 5;
+      }
+      return currentY;
+    };
+
+    // --- Cover / Header ---
+    doc.setFillColor(...darkBg);
+    doc.rect(0, 0, pageWidth, 70, "F");
+    doc.setFillColor(...brandTeal);
+    doc.rect(0, 70, pageWidth, 1.5, "F");
+
+    if (logoDataUrl) {
+      try {
+        doc.addImage(logoDataUrl, "PNG", margin, 12, 20, 20);
+      } catch {
+        // skip logo on error
+      }
+    }
+
+    const titleX = logoDataUrl ? margin + 26 : margin;
+    doc.setFontSize(10);
+    doc.setTextColor(...brandTeal);
+    doc.text("SYNAPTICA", titleX, 22);
+    doc.setFontSize(7);
+    doc.setTextColor(...lightGray);
+    doc.text("Knowledge Systems", titleX, 27);
+
+    doc.setFontSize(24);
+    doc.setTextColor(...white);
+    doc.text("DocAudit Gap Report", margin, 48);
 
     doc.setFontSize(10);
-    doc.setTextColor(180, 180, 180);
-    const summaryLines = doc.splitTextToSize(result.summary, 170);
-    doc.text(summaryLines, margin, y);
-    y += summaryLines.length * 5 + 10;
+    doc.setTextColor(...lightGray);
+    doc.text(`Knowledge Base: ${kbName}`, margin, 58);
+    const reportDate = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
+    doc.text(`Report Date: ${reportDate}`, pageWidth - margin, 58, { align: "right" });
 
-    doc.setFontSize(14);
-    doc.setTextColor(255, 255, 255);
-    doc.text("Topic Coverage Details", margin, y);
+    let y = 82;
+
+    // --- Overall Score Section ---
+    doc.setFillColor(25, 25, 35);
+    doc.roundedRect(margin, y, contentWidth, 30, 3, 3, "F");
+    doc.setDrawColor(...brandTeal);
+    doc.setLineWidth(0.3);
+    doc.roundedRect(margin, y, contentWidth, 30, 3, 3, "S");
+
+    doc.setFontSize(11);
+    doc.setTextColor(...lightGray);
+    doc.text("OVERALL COVERAGE SCORE", margin + 8, y + 12);
+
+    const scoreColor: [number, number, number] = result.overallScore >= 70 ? [74, 222, 128] : result.overallScore >= 40 ? [250, 204, 21] : [239, 68, 68];
+    doc.setFontSize(28);
+    doc.setTextColor(...scoreColor);
+    doc.text(`${result.overallScore}%`, margin + 8, y + 25);
+
+    const severityCounts = {
+      critical: result.topicCoverages.filter((t) => t.severity === "critical").length,
+      high: result.topicCoverages.filter((t) => t.severity === "high").length,
+      medium: result.topicCoverages.filter((t) => t.severity === "medium").length,
+      low: result.topicCoverages.filter((t) => t.severity === "low").length,
+    };
+
+    const sevStartX = margin + 90;
+    const sevLabels = [
+      { label: "Critical", count: severityCounts.critical, color: [239, 68, 68] as [number, number, number] },
+      { label: "High", count: severityCounts.high, color: [251, 146, 60] as [number, number, number] },
+      { label: "Medium", count: severityCounts.medium, color: [250, 204, 21] as [number, number, number] },
+      { label: "Low", count: severityCounts.low, color: [74, 222, 128] as [number, number, number] },
+    ];
+    sevLabels.forEach((s, i) => {
+      const sx = sevStartX + i * 22;
+      doc.setFontSize(14);
+      doc.setTextColor(...s.color);
+      doc.text(String(s.count), sx + 6, y + 14, { align: "center" });
+      doc.setFontSize(6);
+      doc.setTextColor(...mutedGray);
+      doc.text(s.label, sx + 6, y + 19, { align: "center" });
+    });
+
+    y += 38;
+
+    // --- Executive Summary ---
+    doc.setFontSize(13);
+    doc.setTextColor(...brandTeal);
+    doc.text("Executive Summary", margin, y);
+    y += 7;
+    doc.setFontSize(9.5);
+    doc.setTextColor(...lightGray);
+    const summaryLines = doc.splitTextToSize(result.summary, contentWidth);
+    doc.text(summaryLines, margin, y);
+    y += summaryLines.length * 4.5 + 10;
+
+    // --- Section Divider ---
+    doc.setDrawColor(50, 50, 60);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    // --- Topic Coverage Details ---
+    doc.setFontSize(13);
+    doc.setTextColor(...brandTeal);
+    doc.text("Section-by-Section Findings", margin, y);
     y += 10;
 
     for (const tc of result.topicCoverages) {
-      if (y > 270) {
-        doc.addPage();
-        y = margin;
-      }
+      const recLines = doc.splitTextToSize(tc.recommendation, contentWidth - 12);
+      const blockHeight = 18 + recLines.length * 4;
+      y = checkPageBreak(blockHeight, y);
 
-      doc.setFontSize(11);
-      const sevColor =
+      doc.setFillColor(22, 22, 30);
+      doc.roundedRect(margin, y - 4, contentWidth, blockHeight, 2, 2, "F");
+
+      const sevColor: [number, number, number] =
         tc.severity === "critical" ? [239, 68, 68] :
         tc.severity === "high" ? [251, 146, 60] :
         tc.severity === "medium" ? [250, 204, 21] :
         [74, 222, 128];
-      doc.setTextColor(sevColor[0], sevColor[1], sevColor[2]);
-      doc.text(`[${tc.severity.toUpperCase()}]`, margin, y);
 
-      doc.setTextColor(255, 255, 255);
-      doc.text(`${tc.topic} — ${Math.round(tc.score * 100)}%`, margin + 25, y);
-      y += 6;
+      doc.setFillColor(...sevColor);
+      doc.roundedRect(margin, y - 4, 2, blockHeight, 1, 1, "F");
 
-      doc.setFontSize(9);
-      doc.setTextColor(160, 160, 160);
-      const recLines = doc.splitTextToSize(tc.recommendation, 155);
-      doc.text(recLines, margin + 5, y);
-      y += recLines.length * 4 + 6;
+      doc.setFontSize(10);
+      doc.setTextColor(...white);
+      doc.text(tc.topic, margin + 8, y + 3);
+
+      const scoreStr = `${Math.round(tc.score * 100)}%`;
+      doc.setFontSize(10);
+      doc.setTextColor(...sevColor);
+      doc.text(scoreStr, pageWidth - margin - 8, y + 3, { align: "right" });
+
+      doc.setFontSize(7);
+      doc.setTextColor(...sevColor);
+      doc.text(tc.severity.toUpperCase(), margin + 8, y + 9);
+
+      doc.setFontSize(8.5);
+      doc.setTextColor(...lightGray);
+      doc.text(recLines, margin + 8, y + 14);
+
+      y += blockHeight + 4;
     }
 
-    doc.setFontSize(8);
-    doc.setTextColor(100, 100, 100);
-    doc.text("Generated by DocAudit — Synaptica Knowledge Systems", margin, 285);
+    // --- Recommendations Summary ---
+    y = checkPageBreak(30, y);
+    y += 5;
+    doc.setDrawColor(50, 50, 60);
+    doc.setLineWidth(0.2);
+    doc.line(margin, y, pageWidth - margin, y);
+    y += 8;
+
+    doc.setFontSize(13);
+    doc.setTextColor(...brandTeal);
+    doc.text("Priority Recommendations", margin, y);
+    y += 8;
+
+    const prioritized = result.topicCoverages
+      .filter((tc) => tc.severity === "critical" || tc.severity === "high")
+      .sort((a, b) => a.score - b.score);
+
+    if (prioritized.length === 0) {
+      doc.setFontSize(9.5);
+      doc.setTextColor(...lightGray);
+      doc.text("No critical or high-severity gaps detected. Documentation coverage is strong.", margin, y);
+      y += 8;
+    } else {
+      for (let i = 0; i < prioritized.length; i++) {
+        const tc = prioritized[i];
+        y = checkPageBreak(12, y);
+        doc.setFontSize(9);
+        doc.setTextColor(...white);
+        doc.text(`${i + 1}.`, margin, y);
+        doc.text(tc.topic, margin + 8, y);
+        doc.setFontSize(8);
+        doc.setTextColor(...mutedGray);
+        const shortRec = doc.splitTextToSize(tc.recommendation, contentWidth - 12);
+        doc.text(shortRec, margin + 8, y + 5);
+        y += 5 + shortRec.length * 3.8 + 3;
+      }
+    }
+
+    // --- Add footers to all pages ---
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      addFooter(i, totalPages);
+    }
 
     doc.save(`docaudit-report-${kbName.replace(/\s+/g, "-").toLowerCase()}.pdf`);
   };
@@ -167,9 +330,9 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
             <RotateCcw className="w-4 h-4" />
             New Audit
           </button>
-          <button onClick={exportPDF} className="btn-primary flex items-center gap-2 text-sm !py-2 !px-4">
+          <button onClick={() => { exportPDF().catch(console.error); }} className="btn-primary flex items-center gap-2 text-sm !py-2 !px-4">
             <Download className="w-4 h-4" />
-            Export PDF
+            Download Report
           </button>
         </div>
       </div>

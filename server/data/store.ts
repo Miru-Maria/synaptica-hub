@@ -25,6 +25,7 @@ export interface ClientTool {
   name: string;
   slug: string;
   enabled: boolean;
+  onboardingCopy?: string;
 }
 
 const defaultPackages: ServicePackage[] = [
@@ -116,11 +117,36 @@ const defaultPackages: ServicePackage[] = [
 ];
 
 const defaultTools: ClientTool[] = [
-  { name: "DocAudit", slug: "docaudit", enabled: true },
-  { name: "Synaptica Knowledge Architecture", slug: "synaptica-ka", enabled: true },
-  { name: "DiffLens", slug: "difflens", enabled: true },
-  { name: "DocForge PDF", slug: "docforge", enabled: true },
-  { name: "DocScope Intel Engine", slug: "docscope", enabled: true },
+  {
+    name: "DocAudit",
+    slug: "docaudit",
+    enabled: true,
+    onboardingCopy: "Find out what's missing from your documentation before your users do. Upload or paste your content and get a clear, prioritized report showing exactly which topics need attention — perfect for teams preparing to improve their knowledge base or launch an AI assistant.",
+  },
+  {
+    name: "Synaptica Knowledge Architecture",
+    slug: "synaptica-ka",
+    enabled: true,
+    onboardingCopy: "See how AI-powered search actually works on real documentation. Type a question in plain English and explore how semantic search finds relevant answers across a knowledge base — a hands-on preview of what structured knowledge architecture can do for your team.",
+  },
+  {
+    name: "DiffLens",
+    slug: "difflens",
+    enabled: true,
+    onboardingCopy: "Quickly spot every change between two versions of a document. Upload your files — PDFs, Word docs, code, or plain text — and get a clear side-by-side comparison with every addition, deletion, and edit highlighted for you.",
+  },
+  {
+    name: "DocForge PDF",
+    slug: "docforge",
+    enabled: true,
+    onboardingCopy: "Turn rough documents into polished, professional PDFs in seconds. Upload a Word doc, text file, or Markdown, and the AI automatically detects your document's structure and applies clean formatting, headers, and branding.",
+  },
+  {
+    name: "DocScope Intel Engine",
+    slug: "docscope",
+    enabled: true,
+    onboardingCopy: "Paste any content — emails, Slack threads, meeting notes, or documents — and get an instant AI analysis of what's covered, what's missing, and where the inconsistencies are. Great for auditing work-in-progress content before it ships.",
+  },
 ];
 
 function ensureDir() {

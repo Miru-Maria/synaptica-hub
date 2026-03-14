@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2 } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare } from "lucide-react";
 
 interface DiscoveryInquiry {
   id: string;
@@ -43,6 +43,13 @@ interface SavedSession {
   updatedAt: string;
 }
 
+interface ClientTool {
+  name: string;
+  slug: string;
+  enabled: boolean;
+  onboardingCopy?: string;
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -52,8 +59,10 @@ export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [inquiries, setInquiries] = useState<DiscoveryInquiry[]>([]);
+  const [tools, setTools] = useState<ClientTool[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingTools, setSavingTools] = useState(false);
   const [status, setStatus] = useState("");
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
@@ -90,12 +99,14 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const [pkgRes, inqRes] = await Promise.all([
+      const [pkgRes, inqRes, toolsRes] = await Promise.all([
         fetch("/api/admin/packages", { headers: authHeaders() }),
         fetch("/api/admin/discovery-inquiries", { headers: authHeaders() }),
+        fetch("/api/admin/tools", { headers: authHeaders() }),
       ]);
       if (pkgRes.ok) setPackages(await pkgRes.json());
       if (inqRes.ok) setInquiries(await inqRes.json());
+      if (toolsRes.ok) setTools(await toolsRes.json());
       setLoading(false);
     }
     load();
@@ -122,6 +133,32 @@ export default function AdminDashboard() {
     }
     setSaving(false);
     setTimeout(() => setStatus(""), 3000);
+  };
+
+  const saveToolSettings = async () => {
+    setSavingTools(true);
+    setStatus("");
+    try {
+      const res = await fetch("/api/admin/tools", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(tools),
+      });
+      if (res.ok) setStatus("Tool settings saved");
+      else setStatus("Failed to save tool settings");
+    } catch {
+      setStatus("Network error");
+    }
+    setSavingTools(false);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  const updateTool = (index: number, field: keyof ClientTool, value: string | boolean) => {
+    setTools((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
   };
 
   const updatePackage = (index: number, field: keyof ServicePackage, value: ServicePackage[keyof ServicePackage]) => {
@@ -405,6 +442,54 @@ export default function AdminDashboard() {
           </TabsContent>
 
           <TabsContent value="internal" className="mt-6 space-y-4">
+
+            <Card className="bg-neutral-900 border-neutral-800 border-emerald-500/30">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-emerald-400" />
+                    Public Tool Onboarding Copy
+                  </CardTitle>
+                  <Button size="sm" onClick={saveToolSettings} disabled={savingTools}>
+                    <Save className="w-4 h-4 mr-1" />
+                    Save Copy
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-neutral-400">
+                  Edit the plain-English introduction shown on each public tool card and embedded tool page. This helps visitors understand what each tool does before they use it.
+                </p>
+                {tools.map((tool, idx) => (
+                  <div key={tool.slug} className="space-y-2 border border-neutral-800 rounded-lg p-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-neutral-300 text-sm font-medium">{tool.name}</Label>
+                      <div className="flex items-center gap-2">
+                        <Switch
+                          checked={tool.enabled}
+                          onCheckedChange={(val) => updateTool(idx, "enabled", val)}
+                        />
+                        <span className="text-xs text-neutral-500">{tool.enabled ? "Enabled" : "Disabled"}</span>
+                      </div>
+                    </div>
+                    <textarea
+                      value={tool.onboardingCopy || ""}
+                      onChange={(e) => updateTool(idx, "onboardingCopy", e.target.value)}
+                      placeholder="Write a 2-3 sentence plain-English introduction for this tool..."
+                      rows={3}
+                      className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
+                    />
+                    <p className="text-xs text-neutral-600">{(tool.onboardingCopy || "").length} characters</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            <div className="flex items-center gap-6 my-6">
+              <div className="flex-1 h-px bg-neutral-800" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-neutral-500 px-2">Tool Links</span>
+              <div className="flex-1 h-px bg-neutral-800" />
+            </div>
 
             <Card className="bg-neutral-900 border-neutral-800">
               <CardHeader className="pb-3">

@@ -89,9 +89,10 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - JWT-based authentication with httpOnly cookies
 - Login page at `/admin/login` (redirects unauthenticated users)
 - Package Manager: view and edit all service packages inline (name, price, features, etc.)
-- Tools Manager: toggle client-facing tools (e.g. DocAudit) on/off
+- Tools Manager: toggle client-facing tools (e.g. DocAudit) on/off, edit onboarding copy per tool
+- Onboarding Copy Editor: editable plain-English introduction text for each public tool, displayed on homepage cards and embedded tool pages
 - Changes persist to JSON files and are reflected live on the public site
-- Public site reads package data from `/api/public/packages` and tool status from `/api/public/tools`
+- Public site reads package data from `/api/public/packages` and tool status + onboarding copy from `/api/public/tools`
 - Internal Tools tab with KA Sprint and Prompt Engineering Workshop
 - Saved Sessions tab showing recent sessions across KA Sprint and Prompt Workshop tools
 
@@ -125,7 +126,7 @@ A documentation gap analysis tool accessible at `/docaudit`. Users submit knowle
 - URL scraping (with SSRF protection)
 - Notion API integration
 
-Content is chunked, embedded via OpenAI, and compared against user-selected topic taxonomies (4 presets + custom topics). Results show coverage scores, radar chart visualization, severity-ranked gaps, and actionable recommendations. Reports can be exported to PDF.
+Content is chunked, embedded via OpenAI, and compared against user-selected topic taxonomies (4 presets + custom topics). Results show coverage scores, radar chart visualization, severity-ranked gaps, and actionable recommendations. Reports can be exported as branded PDF with Synaptica logo, dark header, severity breakdown, section-by-section findings, priority recommendations, and paginated footer.
 
 ## RAG Pipeline Tool
 

@@ -30,14 +30,16 @@ interface AuditResult {
 export default function DocAudit() {
   const [toolEnabled, setToolEnabled] = useState(true);
   const [checkingTool, setCheckingTool] = useState(true);
+  const [onboardingCopy, setOnboardingCopy] = useState<string>("");
 
   useEffect(() => {
     fetch("/api/public/tools")
       .then((res) => (res.ok ? res.json() : null))
       .then((tools) => {
         if (Array.isArray(tools)) {
-          const docaudit = tools.find((t: { slug: string; enabled: boolean }) => t.slug === "docaudit");
+          const docaudit = tools.find((t: { slug: string; enabled: boolean; onboardingCopy?: string }) => t.slug === "docaudit");
           if (docaudit && !docaudit.enabled) setToolEnabled(false);
+          if (docaudit?.onboardingCopy) setOnboardingCopy(docaudit.onboardingCopy);
         }
       })
       .catch(() => {})
@@ -157,6 +159,11 @@ export default function DocAudit() {
                   Submit your knowledge base content and get an AI-powered audit of coverage gaps,
                   with prioritized recommendations for what to document next.
                 </p>
+                {onboardingCopy && (
+                  <p className="mt-4 text-sm text-primary/80 max-w-2xl mx-auto leading-relaxed">
+                    {onboardingCopy}
+                  </p>
+                )}
               </motion.div>
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">

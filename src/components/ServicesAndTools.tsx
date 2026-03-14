@@ -9,6 +9,7 @@ interface ToolStatus {
   name: string;
   slug: string;
   enabled: boolean;
+  onboardingCopy?: string;
 }
 
 export function ServicesAndTools() {
@@ -171,6 +172,12 @@ export function ServicesAndTools() {
 
             <div className="flex flex-col flex-grow">
               <h3 className="text-2xl font-semibold mb-3 pr-24">{featuredTool.title}</h3>
+              {(() => {
+                const copy = toolStatuses.find((ts) => ts.slug === "synaptica-ka")?.onboardingCopy;
+                return copy ? (
+                  <p className="text-sm text-primary/80 mb-3 leading-relaxed italic">{copy}</p>
+                ) : null;
+              })()}
               <p className="text-muted-foreground mb-6 flex-grow leading-relaxed">{featuredTool.description}</p>
 
               <div className="flex md:hidden flex-wrap gap-2 mb-6">
@@ -220,6 +227,12 @@ export function ServicesAndTools() {
               <h3 className="text-lg font-semibold mb-3 text-gray-200 group-hover:text-foreground transition-colors">
                 {tool.title}
               </h3>
+              {(() => {
+                const copy = toolStatuses.find((ts) => ts.slug === tool.id)?.onboardingCopy;
+                return copy ? (
+                  <p className="text-sm text-primary/70 leading-relaxed mb-3 italic">{copy}</p>
+                ) : null;
+              })()}
               <p className="text-sm text-muted-foreground leading-relaxed flex-grow mb-5">
                 {tool.description}
               </p>

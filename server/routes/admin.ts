@@ -63,7 +63,8 @@ function validateTool(tool: unknown): tool is ClientTool {
   return (
     typeof t.name === "string" &&
     typeof t.slug === "string" &&
-    typeof t.enabled === "boolean"
+    typeof t.enabled === "boolean" &&
+    (t.onboardingCopy === undefined || typeof t.onboardingCopy === "string")
   );
 }
 
@@ -92,7 +93,7 @@ adminRouter.put("/tools", requireAuth, (req: Request, res: Response) => {
     return;
   }
   if (!tools.every(validateTool)) {
-    res.status(400).json({ error: "Invalid tool data: each tool must have name, slug, and enabled" });
+    res.status(400).json({ error: "Invalid tool data: each tool must have name, slug, enabled, and optionally onboardingCopy" });
     return;
   }
   saveTools(tools);
