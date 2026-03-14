@@ -83,7 +83,6 @@ interface EmailLead {
   documentType?: string;
   capturedAt: string;
 }
-}
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");

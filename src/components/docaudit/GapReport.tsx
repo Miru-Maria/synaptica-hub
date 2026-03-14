@@ -492,7 +492,7 @@ export function GapReport({ result, kbName, onReset, gateUnlocked = false }: Gap
             </button>
           </div>
         </div>
-      )
+      )}
     </motion.div>
   );
 }
