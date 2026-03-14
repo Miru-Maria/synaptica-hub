@@ -118,13 +118,13 @@ export default function DocAudit() {
   }
 
   return (
-    <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white">
+    <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white overflow-x-hidden">
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <a
               href="/"
-              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
             >
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm hidden sm:inline">Synaptica</span>
@@ -166,7 +166,7 @@ export default function DocAudit() {
                 )}
               </motion.div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-10">
                 {features.map((f, i) => (
                   <motion.div
                     key={f.title}

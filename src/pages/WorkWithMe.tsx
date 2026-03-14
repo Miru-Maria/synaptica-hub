@@ -48,15 +48,16 @@ export default function WorkWithMe() {
   };
 
   return (
-    <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white">
+    <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white overflow-x-hidden">
       <div className="absolute top-1/4 -left-64 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-64 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
 
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-white/10 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-          <div
-            className="flex items-center gap-3 cursor-pointer group"
+          <button
+            className="flex items-center gap-3 cursor-pointer group min-h-[44px]"
             onClick={() => setLocation("/")}
+            aria-label="Go to homepage"
           >
             <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 transition-colors">
               <PhoenixLogo size={22} glowIntensity="medium" />
@@ -64,13 +65,14 @@ export default function WorkWithMe() {
             <span className="font-semibold tracking-wide text-sm md:text-base hidden sm:block">
               Synaptica <span className="text-muted-foreground font-normal">Knowledge Systems</span>
             </span>
-          </div>
+          </button>
           <button
             onClick={() => setLocation("/")}
-            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Home
+            <span className="hidden sm:inline">Back to Home</span>
+            <span className="sm:hidden">Back</span>
           </button>
         </div>
       </header>
@@ -163,13 +165,13 @@ export default function WorkWithMe() {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-300">Preferred Timeline</label>
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {TIMELINE_OPTIONS.map((option) => (
                     <button
                       key={option}
                       type="button"
                       onClick={() => setForm({ ...form, timeline: option })}
-                      className={`px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
+                      className={`min-h-[44px] px-4 py-3 rounded-xl text-sm font-medium border transition-all text-left ${
                         form.timeline === option
                           ? "bg-primary/20 border-primary/50 text-white"
                           : "bg-black/40 border-white/10 text-muted-foreground hover:border-white/20"
@@ -188,7 +190,7 @@ export default function WorkWithMe() {
               <button
                 type="submit"
                 disabled={!canSubmit || submitting}
-                className="btn-primary w-full py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full min-h-[44px] py-3 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {submitting ? "Submitting..." : "Send Inquiry"}
                 {!submitting && <Send className="w-4 h-4" />}

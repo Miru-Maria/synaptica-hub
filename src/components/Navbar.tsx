@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
+
 import { PhoenixLogo } from "./PhoenixLogo";
 
 export function Navbar() {
@@ -42,9 +43,10 @@ export function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
         {/* Logo */}
-        <div 
-          className="flex items-center gap-3 cursor-pointer group"
+        <button 
+          className="flex items-center gap-3 cursor-pointer group min-h-[44px]"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label="Scroll to top"
         >
           <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 transition-colors">
             <PhoenixLogo size={22} glowIntensity="medium" />
@@ -52,7 +54,7 @@ export function Navbar() {
           <span className="font-semibold tracking-wide text-sm md:text-base hidden sm:block">
             Synaptica <span className="text-muted-foreground font-normal">Knowledge Systems</span>
           </span>
-        </div>
+        </button>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
@@ -82,8 +84,9 @@ export function Navbar() {
 
         {/* Mobile Menu Toggle */}
         <button 
-          className="md:hidden p-2 text-foreground"
+          className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          aria-label="Toggle menu"
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -98,7 +101,7 @@ export function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden glass border-t border-white/10"
           >
-            <div className="flex flex-col px-4 py-6 gap-4">
+            <div className="flex flex-col px-4 py-6 gap-1">
               {navLinks.map((link) => (
                 <button
                   key={link.name}
@@ -110,14 +113,14 @@ export function Navbar() {
                       scrollTo(link.id);
                     }
                   }}
-                  className="text-left text-lg font-medium text-foreground py-2 border-b border-white/5"
+                  className="text-left text-lg font-medium text-foreground min-h-[44px] py-3 border-b border-white/5"
                 >
                   {link.name}
                 </button>
               ))}
               <button
                 onClick={() => { setMobileMenuOpen(false); navigate("/work-with-me"); }}
-                className="btn-primary mt-4 py-3"
+                className="btn-primary mt-4 min-h-[44px] py-3"
               >
                 Work With Me
               </button>

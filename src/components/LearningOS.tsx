@@ -119,7 +119,7 @@ export function LearningOS() {
   };
 
   return (
-    <section id="learning-os" className="py-24 relative z-10">
+    <section id="learning-os" className="py-16 sm:py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header row */}
@@ -183,7 +183,7 @@ export function LearningOS() {
             href={LEARNING_OS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
+            className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors min-h-[44px]"
           >
             Preview the Learning OS
             <ExternalLink className="w-3.5 h-3.5" />
@@ -244,7 +244,7 @@ export function LearningOS() {
               {tier.paddleId ? (
                 <button
                   onClick={() => openCheckout(tier.paddleId!)}
-                  className={`w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
+                  className={`w-full text-center min-h-[44px] py-2.5 px-4 rounded-xl text-sm font-medium transition-all ${
                     tier.highlighted
                       ? "bg-primary text-background hover:bg-primary/90"
                       : "border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
@@ -257,7 +257,7 @@ export function LearningOS() {
                   href={LEARNING_OS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full text-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
+                  className="w-full text-center min-h-[44px] flex items-center justify-center py-2.5 px-4 rounded-xl text-sm font-medium transition-all border border-white/10 text-foreground hover:border-primary/40 hover:text-primary hover:bg-primary/5"
                 >
                   {tier.cta}
                 </a>

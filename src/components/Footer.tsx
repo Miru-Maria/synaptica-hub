@@ -15,11 +15,11 @@ export function Footer() {
         </div>
 
         <div className="mt-10 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-muted-foreground/60">
-          <p>© 2026 Miruna Cristiana Paun · Synaptica Knowledge Systems · All rights reserved</p>
-          <div className="flex items-center gap-4">
-            <a href="/legal#terms" className="hover:text-primary transition-colors">Terms</a>
-            <a href="/legal#privacy" className="hover:text-primary transition-colors">Privacy</a>
-            <a href="/legal#refund" className="hover:text-primary transition-colors">Refunds</a>
+          <p className="text-center md:text-left">© 2026 Miruna Cristiana Paun · Synaptica Knowledge Systems · All rights reserved</p>
+          <div className="flex items-center gap-6 sm:gap-4">
+            <a href="/legal#terms" className="hover:text-primary transition-colors min-h-[44px] flex items-center">Terms</a>
+            <a href="/legal#privacy" className="hover:text-primary transition-colors min-h-[44px] flex items-center">Privacy</a>
+            <a href="/legal#refund" className="hover:text-primary transition-colors min-h-[44px] flex items-center">Refunds</a>
           </div>
         </div>
       </div>

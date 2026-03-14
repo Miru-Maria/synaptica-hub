@@ -124,7 +124,7 @@ export function ServicePackages() {
   const retainerPkg = packages.find((p) => p.highlighted || p.id === "retainer");
 
   return (
-    <section id="packages" className="py-24 relative z-10">
+    <section id="packages" className="py-16 sm:py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 mb-16">
@@ -299,7 +299,7 @@ export function ServicePackages() {
           className="flex items-center justify-center gap-3 mt-10 text-sm text-muted-foreground"
         >
           <MessageSquare className="w-4 h-4 text-primary shrink-0" />
-          All engagements begin with a free 30-minute scoping call. Prices shown are indicative ranges — final quotes depend on scope.
+          <span>All engagements begin with a free 30-minute scoping call. Prices shown are indicative ranges — final quotes depend on scope.</span>
         </motion.div>
 
       </div>

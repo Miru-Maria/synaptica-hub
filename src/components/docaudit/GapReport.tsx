@@ -326,11 +326,11 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
           <p className="text-muted-foreground">{kbName}</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={onReset} className="btn-secondary flex items-center gap-2 text-sm !py-2 !px-4">
+          <button onClick={onReset} className="btn-secondary flex items-center gap-2 text-sm min-h-[44px] !py-2 !px-4">
             <RotateCcw className="w-4 h-4" />
             New Audit
           </button>
-          <button onClick={() => { exportPDF().catch(console.error); }} className="btn-primary flex items-center gap-2 text-sm !py-2 !px-4">
+          <button onClick={() => { exportPDF().catch(console.error); }} className="btn-primary flex items-center gap-2 text-sm min-h-[44px] !py-2 !px-4">
             <Download className="w-4 h-4" />
             Download Report
           </button>
@@ -369,45 +369,47 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
 
       <div className="glass rounded-2xl p-6">
         <h3 className="text-lg font-semibold text-foreground mb-4">Coverage Map</h3>
-        {radarData.length <= 12 ? (
-          <ResponsiveContainer width="100%" height={350}>
-            <RadarChart data={radarData}>
-              <PolarGrid stroke="rgba(255,255,255,0.1)" />
-              <PolarAngleAxis dataKey="topic" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} />
-              <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Radar
-                name="Coverage"
-                dataKey="coverage"
-                stroke="hsl(165, 100%, 39%)"
-                fill="hsl(165, 100%, 39%)"
-                fillOpacity={0.2}
-                strokeWidth={2}
-              />
-            </RadarChart>
-          </ResponsiveContainer>
-        ) : (
-          <ResponsiveContainer width="100%" height={Math.max(350, radarData.length * 36)}>
-            <BarChart data={radarData} layout="vertical" margin={{ left: 20, right: 20 }}>
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} />
-              <YAxis type="category" dataKey="topic" width={160} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 11 }} />
-              <Tooltip content={<CustomTooltip />} />
-              <Bar dataKey="coverage" radius={[0, 4, 4, 0]}>
-                {radarData.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={
-                      entry.coverage >= 70 ? "rgb(74, 222, 128)" :
-                      entry.coverage >= 40 ? "rgb(250, 204, 21)" :
-                      "rgb(239, 68, 68)"
-                    }
-                    fillOpacity={0.7}
-                  />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        )}
+        <div className="overflow-x-auto -mx-2 px-2">
+          {radarData.length <= 12 ? (
+            <ResponsiveContainer width="100%" height={300} minWidth={300}>
+              <RadarChart data={radarData}>
+                <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                <PolarAngleAxis dataKey="topic" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
+                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 9 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Radar
+                  name="Coverage"
+                  dataKey="coverage"
+                  stroke="hsl(165, 100%, 39%)"
+                  fill="hsl(165, 100%, 39%)"
+                  fillOpacity={0.2}
+                  strokeWidth={2}
+                />
+              </RadarChart>
+            </ResponsiveContainer>
+          ) : (
+            <ResponsiveContainer width="100%" height={Math.max(300, radarData.length * 36)} minWidth={300}>
+              <BarChart data={radarData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                <XAxis type="number" domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} />
+                <YAxis type="category" dataKey="topic" width={120} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="coverage" radius={[0, 4, 4, 0]}>
+                  {radarData.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={
+                        entry.coverage >= 70 ? "rgb(74, 222, 128)" :
+                        entry.coverage >= 40 ? "rgb(250, 204, 21)" :
+                        "rgb(239, 68, 68)"
+                      }
+                      fillOpacity={0.7}
+                    />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -434,11 +436,11 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <h4 className="font-semibold text-foreground">{tc.topic}</h4>
+                    <h4 className="font-semibold text-foreground break-words min-w-0">{tc.topic}</h4>
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.bg} ${config.color} border ${config.border}`}>
                       {config.label}
                     </span>
-                    <span className="text-sm text-muted-foreground ml-auto">
+                    <span className="text-sm text-muted-foreground sm:ml-auto">
                       {Math.round(tc.score * 100)}%
                     </span>
                   </div>

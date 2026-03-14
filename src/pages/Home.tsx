@@ -14,7 +14,7 @@ import { CurrencyProvider } from "@/context/currency";
 export default function Home() {
   return (
     <CurrencyProvider>
-      <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white">
+      <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white overflow-x-hidden">
         <Navbar />
 
         <main>

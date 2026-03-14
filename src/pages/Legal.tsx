@@ -50,17 +50,17 @@ export default function Legal() {
   }, [location]);
 
   return (
-    <div className="bg-background min-h-screen text-foreground">
+    <div className="bg-background min-h-screen text-foreground overflow-x-hidden">
       {/* Minimal header */}
       <header className="border-b border-white/10 bg-background/80 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group min-h-[44px]">
             <PhoenixLogo size={28} glowIntensity="low" />
             <span className="font-semibold text-foreground tracking-wide group-hover:text-primary transition-colors">
               Synaptica <span className="font-normal text-muted-foreground">Knowledge Systems</span>
             </span>
           </Link>
-          <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+          <Link href="/" className="text-sm text-muted-foreground hover:text-primary transition-colors min-h-[44px] flex items-center">
             ← Back to site
           </Link>
         </div>
@@ -74,7 +74,7 @@ export default function Legal() {
           <p className="text-muted-foreground">Effective date: {EFFECTIVE}</p>
 
           {/* In-page navigation */}
-          <nav className="mt-8 flex flex-wrap gap-4 text-sm">
+          <nav className="mt-8 flex flex-wrap gap-3 sm:gap-4 text-sm">
             {[
               { label: "Terms of Service", id: "terms" },
               { label: "Privacy Policy", id: "privacy" },
@@ -83,7 +83,7 @@ export default function Legal() {
               <a
                 key={id}
                 href={`#${id}`}
-                className="px-4 py-2 rounded-lg border border-white/10 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
+                className="min-h-[44px] flex items-center px-4 py-2 rounded-lg border border-white/10 text-muted-foreground hover:text-primary hover:border-primary/40 transition-colors"
               >
                 {label}
               </a>

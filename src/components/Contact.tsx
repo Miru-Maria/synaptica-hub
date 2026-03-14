@@ -3,7 +3,7 @@ import { Mail } from "lucide-react";
 
 export function Contact() {
   return (
-    <section id="contact" className="py-24 relative z-10">
+    <section id="contact" className="py-16 sm:py-24 relative z-10">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
 
         <motion.div
@@ -41,7 +41,7 @@ export function Contact() {
 
           <a
             href="mailto:contact.synapticaks@pm.me"
-            className="flex items-center gap-4 group bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/50 transition-all rounded-2xl p-5 w-full text-left"
+            className="flex items-center gap-4 group bg-black/40 hover:bg-black/60 border border-white/10 hover:border-primary/50 transition-all rounded-2xl p-5 w-full text-left min-h-[44px]"
           >
             <div className="w-12 h-12 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform shrink-0">
               <Mail className="w-6 h-6" />

@@ -168,7 +168,7 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-all ${
+            className={`flex items-center gap-2 px-4 py-2.5 min-h-[44px] rounded-xl text-sm font-medium transition-all ${
               activeTab === tab.id
                 ? "bg-primary/15 text-primary border border-primary/30"
                 : "glass text-muted-foreground hover:text-foreground hover:border-white/10"
@@ -361,7 +361,7 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
       <button
         onClick={handleSubmit}
         disabled={isLoading}
-        className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isLoading ? (
           <>

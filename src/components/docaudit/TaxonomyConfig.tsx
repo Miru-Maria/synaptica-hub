@@ -186,7 +186,7 @@ export function TaxonomyConfig({
       <button
         onClick={() => onStartAnalysis(activeTopics)}
         disabled={isAnalyzing || activeTopics.length === 0 || !kbName.trim()}
-        className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+        className="btn-primary w-full min-h-[44px] flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isAnalyzing ? (
           <>

@@ -86,7 +86,7 @@ export function ServicesAndTools() {
   ];
 
   return (
-    <section id="services" className="py-24 relative z-10">
+    <section id="services" className="py-16 sm:py-24 relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* ── Services ── */}
@@ -126,9 +126,9 @@ export function ServicesAndTools() {
         </div>
 
         {/* ── Divider ── */}
-        <div className="flex items-center gap-6 mb-16">
+        <div className="flex items-center gap-3 sm:gap-6 mb-16">
           <div className="flex-1 h-px bg-white/10" />
-          <span className="text-xs font-semibold uppercase tracking-widest text-muted-foreground px-2">Free AI Tools — No Login Required</span>
+          <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-widest text-muted-foreground px-1 sm:px-2 text-center">Free AI Tools — No Login Required</span>
           <div className="flex-1 h-px bg-white/10" />
         </div>
 
@@ -171,7 +171,7 @@ export function ServicesAndTools() {
             </div>
 
             <div className="flex flex-col flex-grow">
-              <h3 className="text-2xl font-semibold mb-3 pr-24">{featuredTool.title}</h3>
+              <h3 className="text-xl sm:text-2xl font-semibold mb-3 pr-20 sm:pr-24">{featuredTool.title}</h3>
               {(() => {
                 const copy = toolStatuses.find((ts) => ts.slug === "synaptica-ka")?.onboardingCopy;
                 return copy ? (
@@ -192,7 +192,7 @@ export function ServicesAndTools() {
                 href={featuredTool.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="self-start inline-flex items-center gap-2 py-3 px-6 rounded-xl font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,200,160,0.3)]"
+                className="self-start inline-flex items-center gap-2 min-h-[44px] py-3 px-6 rounded-xl font-medium transition-all bg-primary text-primary-foreground hover:bg-primary/90 hover:shadow-[0_0_20px_rgba(0,200,160,0.3)]"
               >
                 {featuredTool.linkLabel}
                 <ExternalLink className="w-4 h-4" />
@@ -249,7 +249,7 @@ export function ServicesAndTools() {
                 href={tool.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-auto inline-flex items-center justify-center gap-2 py-2.5 px-5 rounded-xl text-sm font-medium transition-all border border-white/10 text-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5"
+                className="mt-auto inline-flex items-center justify-center gap-2 min-h-[44px] py-2.5 px-5 rounded-xl text-sm font-medium transition-all border border-white/10 text-foreground hover:border-primary/50 hover:text-primary hover:bg-primary/5"
               >
                 {tool.linkLabel}
                 <ExternalLink className="w-3.5 h-3.5" />
