@@ -6,7 +6,8 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3 } from "lucide-react";
 
 interface DiscoveryInquiry {
   id: string;
@@ -50,6 +51,29 @@ interface ClientTool {
   onboardingCopy?: string;
 }
 
+interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  quote: string;
+  photo: string;
+}
+
+interface CaseStudy {
+  id: string;
+  title: string;
+  industry: string;
+  challenge: string;
+  outcome: string;
+}
+
+interface OutcomeStat {
+  id: string;
+  label: string;
+  value: string;
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -60,6 +84,9 @@ export default function AdminDashboard() {
   const [packages, setPackages] = useState<ServicePackage[]>([]);
   const [inquiries, setInquiries] = useState<DiscoveryInquiry[]>([]);
   const [tools, setTools] = useState<ClientTool[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
+  const [outcomeStats, setOutcomeStats] = useState<OutcomeStat[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingTools, setSavingTools] = useState(false);
@@ -99,14 +126,20 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const [pkgRes, inqRes, toolsRes] = await Promise.all([
+      const [pkgRes, inqRes, toolsRes, testRes, csRes, statRes] = await Promise.all([
         fetch("/api/admin/packages", { headers: authHeaders() }),
         fetch("/api/admin/discovery-inquiries", { headers: authHeaders() }),
         fetch("/api/admin/tools", { headers: authHeaders() }),
+        fetch("/api/admin/testimonials", { headers: authHeaders() }),
+        fetch("/api/admin/case-studies", { headers: authHeaders() }),
+        fetch("/api/admin/outcome-stats", { headers: authHeaders() }),
       ]);
       if (pkgRes.ok) setPackages(await pkgRes.json());
       if (inqRes.ok) setInquiries(await inqRes.json());
       if (toolsRes.ok) setTools(await toolsRes.json());
+      if (testRes.ok) setTestimonials(await testRes.json());
+      if (csRes.ok) setCaseStudies(await csRes.json());
+      if (statRes.ok) setOutcomeStats(await statRes.json());
       setLoading(false);
     }
     load();
@@ -218,6 +251,117 @@ export default function AdminDashboard() {
     setPackages((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const saveTestimonialsData = async () => {
+    setSaving(true);
+    setStatus("");
+    try {
+      const res = await fetch("/api/admin/testimonials", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(testimonials),
+      });
+      if (res.ok) setStatus("Testimonials saved");
+      else setStatus("Failed to save testimonials");
+    } catch {
+      setStatus("Network error");
+    }
+    setSaving(false);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  const addTestimonial = () => {
+    setTestimonials((prev) => [
+      ...prev,
+      { id: `test-${Date.now()}`, name: "", role: "", company: "", quote: "", photo: "" },
+    ]);
+  };
+
+  const removeTestimonial = (index: number) => {
+    setTestimonials((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateTestimonial = (index: number, field: keyof Testimonial, value: string) => {
+    setTestimonials((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const saveCaseStudiesData = async () => {
+    setSaving(true);
+    setStatus("");
+    try {
+      const res = await fetch("/api/admin/case-studies", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(caseStudies),
+      });
+      if (res.ok) setStatus("Case studies saved");
+      else setStatus("Failed to save case studies");
+    } catch {
+      setStatus("Network error");
+    }
+    setSaving(false);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  const addCaseStudy = () => {
+    setCaseStudies((prev) => [
+      ...prev,
+      { id: `cs-${Date.now()}`, title: "", industry: "", challenge: "", outcome: "" },
+    ]);
+  };
+
+  const removeCaseStudy = (index: number) => {
+    setCaseStudies((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateCaseStudy = (index: number, field: keyof CaseStudy, value: string) => {
+    setCaseStudies((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
+  const saveOutcomeStatsData = async () => {
+    setSaving(true);
+    setStatus("");
+    try {
+      const res = await fetch("/api/admin/outcome-stats", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(outcomeStats),
+      });
+      if (res.ok) setStatus("Statistics saved");
+      else setStatus("Failed to save statistics");
+    } catch {
+      setStatus("Network error");
+    }
+    setSaving(false);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  const addOutcomeStat = () => {
+    setOutcomeStats((prev) => [
+      ...prev,
+      { id: `stat-${Date.now()}`, label: "", value: "" },
+    ]);
+  };
+
+  const removeOutcomeStat = (index: number) => {
+    setOutcomeStats((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateOutcomeStat = (index: number, field: keyof OutcomeStat, value: string) => {
+    setOutcomeStats((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], [field]: value };
+      return next;
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
@@ -253,6 +397,18 @@ export default function AdminDashboard() {
             <TabsTrigger value="inquiries" className="data-[state=active]:bg-neutral-800 gap-2">
               <Inbox className="w-4 h-4" />
               Inquiries{inquiries.length > 0 && ` (${inquiries.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="testimonials" className="data-[state=active]:bg-neutral-800 gap-2">
+              <MessageSquare className="w-4 h-4" />
+              Testimonials
+            </TabsTrigger>
+            <TabsTrigger value="case-studies" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Briefcase className="w-4 h-4" />
+              Case Studies
+            </TabsTrigger>
+            <TabsTrigger value="stats" className="data-[state=active]:bg-neutral-800 gap-2">
+              <BarChart3 className="w-4 h-4" />
+              Statistics
             </TabsTrigger>
             <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
               <Hammer className="w-4 h-4" />
@@ -439,6 +595,173 @@ export default function AdminDashboard() {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="testimonials" className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Manage testimonials shown on the public site.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={addTestimonial} className="border-neutral-700 text-neutral-300">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Testimonial
+                </Button>
+                <Button size="sm" onClick={saveTestimonialsData} disabled={saving}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+
+            {testimonials.length === 0 && (
+              <div className="text-center py-12 text-neutral-500">
+                <MessageSquare className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>No testimonials yet. Add one to get started.</p>
+              </div>
+            )}
+
+            {testimonials.map((t, idx) => (
+              <Card key={t.id} className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-neutral-100">{t.name || "Untitled testimonial"}</CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => removeTestimonial(idx)} className="text-neutral-500 hover:text-red-400">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Name</Label>
+                      <Input value={t.name} onChange={(e) => updateTestimonial(idx, "name", e.target.value)} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Role</Label>
+                      <Input value={t.role} onChange={(e) => updateTestimonial(idx, "role", e.target.value)} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Company</Label>
+                      <Input value={t.company} onChange={(e) => updateTestimonial(idx, "company", e.target.value)} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Photo URL</Label>
+                      <Input value={t.photo} onChange={(e) => updateTestimonial(idx, "photo", e.target.value)} placeholder="https://..." className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-neutral-400 text-xs">Quote</Label>
+                    <Textarea value={t.quote} onChange={(e) => updateTestimonial(idx, "quote", e.target.value)} rows={3} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="case-studies" className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Manage case studies shown on the public site.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={addCaseStudy} className="border-neutral-700 text-neutral-300">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Case Study
+                </Button>
+                <Button size="sm" onClick={saveCaseStudiesData} disabled={saving}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+
+            {caseStudies.length === 0 && (
+              <div className="text-center py-12 text-neutral-500">
+                <Briefcase className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>No case studies yet. Add one to get started.</p>
+              </div>
+            )}
+
+            {caseStudies.map((cs, idx) => (
+              <Card key={cs.id} className="bg-neutral-900 border-neutral-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <CardTitle className="text-base text-neutral-100">{cs.title || "Untitled case study"}</CardTitle>
+                    <Button variant="ghost" size="sm" onClick={() => removeCaseStudy(idx)} className="text-neutral-500 hover:text-red-400">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Title</Label>
+                      <Input value={cs.title} onChange={(e) => updateCaseStudy(idx, "title", e.target.value)} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Industry</Label>
+                      <Input value={cs.industry} onChange={(e) => updateCaseStudy(idx, "industry", e.target.value)} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-neutral-400 text-xs">Challenge</Label>
+                    <Textarea value={cs.challenge} onChange={(e) => updateCaseStudy(idx, "challenge", e.target.value)} rows={2} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-neutral-400 text-xs">Outcome</Label>
+                    <Textarea value={cs.outcome} onChange={(e) => updateCaseStudy(idx, "outcome", e.target.value)} rows={2} className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </TabsContent>
+
+          <TabsContent value="stats" className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Manage outcome statistics shown on the public site.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={addOutcomeStat} className="border-neutral-700 text-neutral-300">
+                  <Plus className="w-4 h-4 mr-1" />
+                  Add Statistic
+                </Button>
+                <Button size="sm" onClick={saveOutcomeStatsData} disabled={saving}>
+                  <Save className="w-4 h-4 mr-1" />
+                  Save Changes
+                </Button>
+              </div>
+            </div>
+
+            {outcomeStats.length === 0 && (
+              <div className="text-center py-12 text-neutral-500">
+                <BarChart3 className="w-8 h-8 mx-auto mb-3 opacity-50" />
+                <p>No statistics yet. Add one to get started.</p>
+              </div>
+            )}
+
+            {outcomeStats.map((stat, idx) => (
+              <Card key={stat.id} className="bg-neutral-900 border-neutral-800">
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1">
+                      <div className="space-y-2">
+                        <Label className="text-neutral-400 text-xs">Label</Label>
+                        <Input value={stat.label} onChange={(e) => updateOutcomeStat(idx, "label", e.target.value)} placeholder="e.g. Teams helped" className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-neutral-400 text-xs">Value</Label>
+                        <Input value={stat.value} onChange={(e) => updateOutcomeStat(idx, "value", e.target.value)} placeholder="e.g. 12 or 50+" className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+                      </div>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => removeOutcomeStat(idx)} className="text-neutral-500 hover:text-red-400 mt-6">
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </TabsContent>
 
           <TabsContent value="internal" className="mt-6 space-y-4">

@@ -3,6 +3,9 @@ import { Hero } from "@/components/Hero";
 import { About } from "@/components/About";
 import { ServicesAndTools } from "@/components/ServicesAndTools";
 import { ServicePackages } from "@/components/ServicePackages";
+import { Testimonials } from "@/components/Testimonials";
+import { CaseStudies } from "@/components/CaseStudies";
+import { OutcomeStats } from "@/components/OutcomeStats";
 import { LearningOS } from "@/components/LearningOS";
 import { Contact } from "@/components/Contact";
 import { Footer } from "@/components/Footer";
@@ -19,6 +22,9 @@ export default function Home() {
           <About />
           <ServicesAndTools />
           <ServicePackages />
+          <OutcomeStats />
+          <Testimonials />
+          <CaseStudies />
           <LearningOS />
           <Contact />
         </main>

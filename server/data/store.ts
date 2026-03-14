@@ -249,3 +249,54 @@ export function saveDiscoveryInquiry(inquiry: DiscoveryInquiry) {
   inquiries.unshift(inquiry);
   writeJson(INQUIRIES_FILE, inquiries);
 }
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  quote: string;
+  photo: string;
+}
+
+export interface CaseStudy {
+  id: string;
+  title: string;
+  industry: string;
+  challenge: string;
+  outcome: string;
+}
+
+export interface OutcomeStat {
+  id: string;
+  label: string;
+  value: string;
+}
+
+const TESTIMONIALS_FILE = path.join(DATA_DIR, "testimonials.json");
+const CASE_STUDIES_FILE = path.join(DATA_DIR, "case-studies.json");
+const OUTCOME_STATS_FILE = path.join(DATA_DIR, "outcome-stats.json");
+
+export function getTestimonials(): Testimonial[] {
+  return readJson(TESTIMONIALS_FILE, []);
+}
+
+export function saveTestimonials(testimonials: Testimonial[]) {
+  writeJson(TESTIMONIALS_FILE, testimonials);
+}
+
+export function getCaseStudies(): CaseStudy[] {
+  return readJson(CASE_STUDIES_FILE, []);
+}
+
+export function saveCaseStudies(studies: CaseStudy[]) {
+  writeJson(CASE_STUDIES_FILE, studies);
+}
+
+export function getOutcomeStats(): OutcomeStat[] {
+  return readJson(OUTCOME_STATS_FILE, []);
+}
+
+export function saveOutcomeStats(stats: OutcomeStat[]) {
+  writeJson(OUTCOME_STATS_FILE, stats);
+}

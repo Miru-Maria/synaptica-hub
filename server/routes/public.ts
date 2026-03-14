@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getPackages, getTools, saveDiscoveryInquiry } from "../data/store.js";
+import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats } from "../data/store.js";
 import type { DiscoveryInquiry } from "../data/store.js";
 
 export const publicRouter = Router();
@@ -28,4 +28,16 @@ publicRouter.post("/discovery", (req: Request, res: Response) => {
   };
   saveDiscoveryInquiry(inquiry);
   res.json({ ok: true, id: inquiry.id });
+});
+
+publicRouter.get("/testimonials", (_req: Request, res: Response) => {
+  res.json(getTestimonials());
+});
+
+publicRouter.get("/case-studies", (_req: Request, res: Response) => {
+  res.json(getCaseStudies());
+});
+
+publicRouter.get("/outcome-stats", (_req: Request, res: Response) => {
+  res.json(getOutcomeStats());
 });

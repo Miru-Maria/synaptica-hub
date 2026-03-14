@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries } from "../data/store.js";
-import type { ServicePackage, ClientTool, RetainerClient } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
 
@@ -260,4 +260,81 @@ adminRouter.get("/sessions", requireAuth, (_req: Request, res: Response) => {
     console.error("Admin sessions list error:", error);
     res.status(500).json({ error: "Failed to load sessions" });
   }
+});
+
+adminRouter.get("/testimonials", requireAuth, (_req: Request, res: Response) => {
+  res.json(getTestimonials());
+});
+
+adminRouter.put("/testimonials", requireAuth, (req: Request, res: Response) => {
+  const items = req.body;
+  if (!Array.isArray(items)) {
+    res.status(400).json({ error: "Expected an array of testimonials" });
+    return;
+  }
+  for (const item of items) {
+    if (
+      typeof item.id !== "string" ||
+      typeof item.name !== "string" ||
+      typeof item.role !== "string" ||
+      typeof item.company !== "string" ||
+      typeof item.quote !== "string"
+    ) {
+      res.status(400).json({ error: "Each testimonial must have id, name, role, company, and quote" });
+      return;
+    }
+  }
+  saveTestimonials(items);
+  res.json({ ok: true });
+});
+
+adminRouter.get("/case-studies", requireAuth, (_req: Request, res: Response) => {
+  res.json(getCaseStudies());
+});
+
+adminRouter.put("/case-studies", requireAuth, (req: Request, res: Response) => {
+  const items = req.body;
+  if (!Array.isArray(items)) {
+    res.status(400).json({ error: "Expected an array of case studies" });
+    return;
+  }
+  for (const item of items) {
+    if (
+      typeof item.id !== "string" ||
+      typeof item.title !== "string" ||
+      typeof item.industry !== "string" ||
+      typeof item.challenge !== "string" ||
+      typeof item.outcome !== "string"
+    ) {
+      res.status(400).json({ error: "Each case study must have id, title, industry, challenge, and outcome" });
+      return;
+    }
+  }
+  saveCaseStudies(items);
+  res.json({ ok: true });
+});
+
+adminRouter.get("/outcome-stats", requireAuth, (_req: Request, res: Response) => {
+  res.json(getOutcomeStats());
+});
+
+adminRouter.put("/outcome-stats", requireAuth, (req: Request, res: Response) => {
+  const items = req.body;
+  if (!Array.isArray(items)) {
+    res.status(400).json({ error: "Expected an array of stats" });
+    return;
+  }
+  for (const item of items) {
+    if (
+      typeof item.id !== "string" ||
+      typeof item.label !== "string" ||
+      typeof item.value !== "string"
+    ) {
+      res.status(400).json({ error: "Each stat must have id, label, and value" });
+      return;
+    }
+  }
+  saveOutcomeStats(items);
+  res.json({ ok: true });
+});
 });
