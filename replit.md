@@ -47,13 +47,13 @@ server/
     auth.ts            # JWT auth middleware (requireAuth, signToken, verifyToken)
   routes/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
-    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics)
+    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list, metrics, pipeline CRM CRUD)
     public.ts          # Public read-only routes (packages, tools)
     blog.ts            # Blog article CRUD (admin) + public listing/detail routes
     ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export
     prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide + session CRUD + export routes
   data/
-    store.ts           # JSON file-persisted data store for packages, tools, blog articles, and tool usage metrics
+    store.ts           # JSON file-persisted data store for packages, tools, blog articles, tool usage metrics, and pipeline contacts
     prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
     sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
     persist/           # Auto-created directory for JSON data files
@@ -97,6 +97,7 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - Internal Tools tab with KA Sprint and Prompt Engineering Workshop
 - Saved Sessions tab showing recent sessions across KA Sprint and Prompt Workshop tools
 - Metrics tab with tool usage analytics: total runs, 30-day trends (bar chart via recharts), per-tool breakdowns, email captures, and DocAudit-specific details (input type breakdown, document size distribution, top gap categories)
+- Pipeline CRM tab: track leads through stages (New Lead to Closed), view pipeline value, service interest filtering, and automatic lead creation from discovery call forms
 
 ## Prompt Engineering Workshop
 

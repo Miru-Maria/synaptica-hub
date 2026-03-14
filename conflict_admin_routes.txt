@@ -1,0 +1,70 @@
+    res.status(500).json({ error: "Failed to load metrics" });
+  }
+});
+
+const VALID_STAGES: PipelineStage[] = ["New Lead", "Contacted", "Proposal Sent", "Active Client", "Closed"];
+const VALID_SOURCES: ContactSource[] = ["discovery_call", "tool_email_capture", "manual"];
+
+adminRouter.get("/pipeline", requireAuth, (_req: Request, res: Response) => {
+  res.json(getPipelineContacts());
+});
+
+adminRouter.post("/pipeline", requireAuth, (req: Request, res: Response) => {
+  const { name, email, company, source, serviceInterest, stage, nextAction, notes, estimatedValue } = req.body;
+  if (!name) {
+    res.status(400).json({ error: "name is required" });
+    return;
+  }
+  const contactSource: ContactSource = VALID_SOURCES.includes(source) ? source : "manual";
+  const contactStage: PipelineStage = VALID_STAGES.includes(stage) ? stage : "New Lead";
+  const contact: PipelineContact = {
+    id: `contact-${Date.now()}`,
+    name: String(name).slice(0, 200),
+    email: String(email).slice(0, 200),
+    company: String(company || "").slice(0, 200),
+    source: contactSource,
+    serviceInterest: String(serviceInterest || "").slice(0, 200),
+    stage: contactStage,
+    lastTouchDate: new Date().toISOString(),
+    nextAction: String(nextAction || "").slice(0, 500),
+    notes: String(notes || "").slice(0, 2000),
+    estimatedValue: typeof estimatedValue === "number" && Number.isFinite(estimatedValue) ? estimatedValue : 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  addPipelineContact(contact);
+  res.json(contact);
+});
+
+adminRouter.put("/pipeline/:id", requireAuth, (req: Request, res: Response) => {
+  const updates: Partial<PipelineContact> = {};
+  const { name, email, company, source, serviceInterest, stage, lastTouchDate, nextAction, notes, estimatedValue } = req.body;
+  if (name !== undefined) updates.name = String(name).slice(0, 200);
+  if (email !== undefined) updates.email = String(email).slice(0, 200);
+  if (company !== undefined) updates.company = String(company).slice(0, 200);
+  if (source !== undefined && VALID_SOURCES.includes(source)) updates.source = source;
+  if (serviceInterest !== undefined) updates.serviceInterest = String(serviceInterest).slice(0, 200);
+  if (stage !== undefined && VALID_STAGES.includes(stage)) updates.stage = stage;
+  if (lastTouchDate !== undefined) updates.lastTouchDate = lastTouchDate;
+  if (nextAction !== undefined) updates.nextAction = String(nextAction).slice(0, 500);
+  if (notes !== undefined) updates.notes = String(notes).slice(0, 2000);
+  if (estimatedValue !== undefined) {
+    const val = Number(estimatedValue);
+    updates.estimatedValue = Number.isFinite(val) ? val : 0;
+  }
+
+  const updated = updatePipelineContact(req.params.id, updates);
+  if (!updated) {
+    res.status(404).json({ error: "Contact not found" });
+    return;
+  }
+  res.json(updated);
+});
+
+adminRouter.delete("/pipeline/:id", requireAuth, (req: Request, res: Response) => {
+  if (!deletePipelineContact(req.params.id)) {
+    res.status(404).json({ error: "Contact not found" });
+    return;
+  }
+  res.json({ ok: true });
+});

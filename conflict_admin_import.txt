@@ -1,0 +1,7 @@
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource } from "../data/store.js";
+import { getKASessions } from "../data/sessions-store.js";
+import { getPWSessions } from "../data/sessions-store.js";
+
+export const adminRouter = Router();
+

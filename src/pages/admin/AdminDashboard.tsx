@@ -7,9 +7,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
+import PipelineManager from "./PipelineManager";
 
 interface DiscoveryInquiry {
   id: string;
@@ -408,6 +409,10 @@ export default function AdminDashboard() {
               <Package className="w-4 h-4" />
               Packages
             </TabsTrigger>
+            <TabsTrigger value="pipeline" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Users className="w-4 h-4" />
+              Pipeline
+            </TabsTrigger>
             <TabsTrigger value="inquiries" className="data-[state=active]:bg-neutral-800 gap-2">
               <Inbox className="w-4 h-4" />
               Inquiries{inquiries.length > 0 && ` (${inquiries.length})`}
@@ -585,6 +590,10 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
+          </TabsContent>
+
+          <TabsContent value="pipeline" className="mt-6">
+            <PipelineManager />
           </TabsContent>
 
           <TabsContent value="inquiries" className="mt-6 space-y-4">
@@ -795,10 +804,6 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             ))}
-          </TabsContent>
-
-          <TabsContent value="blog" className="mt-6">
-            <BlogManager />
           </TabsContent>
 
           <TabsContent value="internal" className="mt-6 space-y-4">
@@ -1163,10 +1168,6 @@ export default function AdminDashboard() {
                 ))}
               </div>
             )}
-          </TabsContent>
-
-          <TabsContent value="blog" className="mt-6">
-            <BlogManager />
           </TabsContent>
 
           <TabsContent value="leads" className="mt-6 space-y-4">

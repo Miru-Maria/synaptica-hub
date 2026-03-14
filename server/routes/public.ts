@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
-import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead } from "../data/store.js";
-import type { DiscoveryInquiry, EmailLead } from "../data/store.js";
+import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact } from "../data/store.js";
+import type { DiscoveryInquiry, EmailLead, PipelineContact } from "../data/store.js";
 
 export const publicRouter = Router();
 
@@ -27,6 +27,24 @@ publicRouter.post("/discovery", (req: Request, res: Response) => {
     createdAt: new Date().toISOString(),
   };
   saveDiscoveryInquiry(inquiry);
+
+  const pipelineContact: PipelineContact = {
+    id: `contact-${Date.now()}`,
+    name: inquiry.name,
+    email: "",
+    company: inquiry.company,
+    source: "discovery_call",
+    serviceInterest: "",
+    stage: "New Lead",
+    lastTouchDate: inquiry.createdAt,
+    nextAction: "Review discovery inquiry",
+    notes: `Discovery call inquiry:\nChallenge: ${inquiry.challenge}\nTimeline: ${inquiry.timeline}`,
+    estimatedValue: 0,
+    createdAt: inquiry.createdAt,
+    updatedAt: inquiry.createdAt,
+  };
+  addPipelineContact(pipelineContact);
+
   res.json({ ok: true, id: inquiry.id });
 });
 

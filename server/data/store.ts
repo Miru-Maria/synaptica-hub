@@ -701,3 +701,56 @@ export function getMetrics(): MetricsResponse {
     totalEmails: runs.filter((r) => r.emailCaptured).length,
   };
 }
+
+export type PipelineStage = "New Lead" | "Contacted" | "Proposal Sent" | "Active Client" | "Closed";
+export type ContactSource = "discovery_call" | "tool_email_capture" | "manual";
+
+export interface PipelineContact {
+  id: string;
+  name: string;
+  email: string;
+  company: string;
+  source: ContactSource;
+  serviceInterest: string;
+  stage: PipelineStage;
+  lastTouchDate: string;
+  nextAction: string;
+  notes: string;
+  estimatedValue: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const CONTACTS_FILE = path.join(DATA_DIR, "pipeline-contacts.json");
+
+export function getPipelineContacts(): PipelineContact[] {
+  return readJson(CONTACTS_FILE, []);
+}
+
+export function savePipelineContacts(contacts: PipelineContact[]) {
+  writeJson(CONTACTS_FILE, contacts);
+}
+
+export function addPipelineContact(contact: PipelineContact) {
+  const contacts = getPipelineContacts();
+  contacts.unshift(contact);
+  writeJson(CONTACTS_FILE, contacts);
+}
+
+export function updatePipelineContact(id: string, updates: Partial<PipelineContact>): PipelineContact | null {
+  const contacts = getPipelineContacts();
+  const idx = contacts.findIndex((c) => c.id === id);
+  if (idx === -1) return null;
+  contacts[idx] = { ...contacts[idx], ...updates, updatedAt: new Date().toISOString() };
+  writeJson(CONTACTS_FILE, contacts);
+  return contacts[idx];
+}
+
+export function deletePipelineContact(id: string): boolean {
+  const contacts = getPipelineContacts();
+  const idx = contacts.findIndex((c) => c.id === id);
+  if (idx === -1) return false;
+  contacts.splice(idx, 1);
+  writeJson(CONTACTS_FILE, contacts);
+  return true;
+}
