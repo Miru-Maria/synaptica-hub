@@ -7,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
+import InvoiceManager from "./InvoiceManager";
 
 interface DiscoveryInquiry {
   id: string;
@@ -444,6 +445,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="sessions" className="data-[state=active]:bg-neutral-800 gap-2" onClick={() => { if (sessions.length === 0) loadSessions(); }}>
               <FolderOpen className="w-4 h-4" />
               Sessions
+            </TabsTrigger>
+            <TabsTrigger value="invoicing" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Receipt className="w-4 h-4" />
+              Invoicing
             </TabsTrigger>
             <TabsTrigger value="leads" className="data-[state=active]:bg-neutral-800 gap-2">
               <Mail className="w-4 h-4" />
@@ -1242,6 +1247,10 @@ export default function AdminDashboard() {
                 </CardContent>
               </Card>
             )}
+          </TabsContent>
+
+          <TabsContent value="invoicing" className="mt-6">
+            <InvoiceManager />
           </TabsContent>
         </Tabs>
       </main>

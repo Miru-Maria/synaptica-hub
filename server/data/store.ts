@@ -548,6 +548,33 @@ export function getPublishedArticles(): BlogArticle[] {
 
 export { estimateReadingTime };
 
+export type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue";
+
+export interface Invoice {
+  id: string;
+  clientName: string;
+  contactId?: string;
+  description: string;
+  amount: number;
+  currency: string;
+  invoiceDate: string;
+  dueDate: string;
+  status: InvoiceStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const INVOICES_FILE = path.join(DATA_DIR, "invoices.json");
+
+export function getInvoices(): Invoice[] {
+  return readJson(INVOICES_FILE, []);
+}
+
+export function saveInvoices(invoices: Invoice[]) {
+  writeJson(INVOICES_FILE, invoices);
+}
+
+
 export interface EmailLead {
   id: string;
   email: string;

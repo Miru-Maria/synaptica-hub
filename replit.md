@@ -98,6 +98,7 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - Saved Sessions tab showing recent sessions across KA Sprint and Prompt Workshop tools
 - Metrics tab with tool usage analytics: total runs, 30-day trends (bar chart via recharts), per-tool breakdowns, email captures, and DocAudit-specific details (input type breakdown, document size distribution, top gap categories)
 - Pipeline CRM tab: track leads through stages (New Lead to Closed), view pipeline value, service interest filtering, and automatic lead creation from discovery call forms
+- Invoicing tab: full invoice CRUD with financial summary header (total invoiced, collected, outstanding, overdue count), status management (Draft/Sent/Paid/Overdue), CRM contact linking from inquiries/retainers/leads, filtering by status/date/search, and client-side PDF export via jsPDF with Synaptica branding
 
 ## Prompt Engineering Workshop
 

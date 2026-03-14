@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact } from "../data/store.js";
-import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices } from "../data/store.js";
+import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
 
@@ -429,4 +429,129 @@ adminRouter.delete("/pipeline/:id", requireAuth, (req: Request, res: Response) =
     return;
   }
   res.json({ ok: true });
+});
+
+const VALID_INVOICE_STATUSES: InvoiceStatus[] = ["Draft", "Sent", "Paid", "Overdue"];
+
+adminRouter.get("/invoices", requireAuth, (_req: Request, res: Response) => {
+  res.json(getInvoices());
+});
+
+adminRouter.get("/invoices/contacts", requireAuth, (_req: Request, res: Response) => {
+  const inquiries = getDiscoveryInquiries();
+  const retainers = getRetainerClients();
+  const leads = getEmailLeads();
+  const pipeline = getPipelineContacts();
+
+  const contactMap = new Map<string, { id: string; name: string; source: string }>();
+
+  for (const inq of inquiries) {
+    const key = inq.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: inq.id, name: inq.name, source: "inquiry" });
+    }
+  }
+
+  for (const ret of retainers) {
+    const key = ret.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: ret.id, name: ret.name, source: "retainer" });
+    }
+  }
+
+  for (const lead of leads) {
+    const name = lead.firstName || lead.email;
+    const key = name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: lead.id, name, source: "lead" });
+    }
+  }
+
+  for (const contact of pipeline) {
+    const key = contact.name.toLowerCase().trim();
+    if (!contactMap.has(key)) {
+      contactMap.set(key, { id: contact.id, name: contact.name, source: "pipeline" });
+    }
+  }
+
+  res.json(Array.from(contactMap.values()));
+});
+
+adminRouter.post("/invoices", requireAuth, (req: Request, res: Response) => {
+  const { clientName, contactId, description, amount, currency, invoiceDate, dueDate, status } = req.body;
+  if (!clientName || !description || typeof amount !== "number" || !invoiceDate || !dueDate) {
+    res.status(400).json({ error: "clientName, description, amount, invoiceDate, and dueDate are required" });
+    return;
+  }
+  const invoiceStatus: InvoiceStatus = VALID_INVOICE_STATUSES.includes(status) ? status : "Draft";
+  const invoices = getInvoices();
+  const newInvoice: Invoice = {
+    id: `inv-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    clientName,
+    contactId: contactId || undefined,
+    description,
+    amount,
+    currency: currency || "USD",
+    invoiceDate,
+    dueDate,
+    status: invoiceStatus,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  invoices.unshift(newInvoice);
+  saveInvoices(invoices);
+  res.json(newInvoice);
+});
+
+adminRouter.put("/invoices/:id", requireAuth, (req: Request, res: Response) => {
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  const { clientName, contactId, description, amount, currency, invoiceDate, dueDate, status } = req.body;
+  if (clientName !== undefined) invoices[idx].clientName = clientName;
+  if (contactId !== undefined) invoices[idx].contactId = contactId || undefined;
+  if (description !== undefined) invoices[idx].description = description;
+  if (amount !== undefined) invoices[idx].amount = amount;
+  if (currency !== undefined) invoices[idx].currency = currency;
+  if (invoiceDate !== undefined) invoices[idx].invoiceDate = invoiceDate;
+  if (dueDate !== undefined) invoices[idx].dueDate = dueDate;
+  if (status !== undefined && VALID_INVOICE_STATUSES.includes(status)) {
+    invoices[idx].status = status;
+  }
+  invoices[idx].updatedAt = new Date().toISOString();
+  saveInvoices(invoices);
+  res.json(invoices[idx]);
+});
+
+adminRouter.delete("/invoices/:id", requireAuth, (req: Request, res: Response) => {
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  invoices.splice(idx, 1);
+  saveInvoices(invoices);
+  res.json({ ok: true });
+});
+
+adminRouter.patch("/invoices/:id/status", requireAuth, (req: Request, res: Response) => {
+  const { status } = req.body;
+  if (!VALID_INVOICE_STATUSES.includes(status)) {
+    res.status(400).json({ error: "Invalid status. Must be one of: Draft, Sent, Paid, Overdue" });
+    return;
+  }
+  const invoices = getInvoices();
+  const idx = invoices.findIndex((inv) => inv.id === req.params.id);
+  if (idx === -1) {
+    res.status(404).json({ error: "Invoice not found" });
+    return;
+  }
+  invoices[idx].status = status;
+  invoices[idx].updatedAt = new Date().toISOString();
+  saveInvoices(invoices);
+  res.json(invoices[idx]);
 });
