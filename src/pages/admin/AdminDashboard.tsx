@@ -460,6 +460,8 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/ka-sprint"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -480,6 +482,8 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/rag-pipeline"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -500,6 +504,8 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/prompt-workshop"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -520,6 +526,8 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/monthly-retainer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
