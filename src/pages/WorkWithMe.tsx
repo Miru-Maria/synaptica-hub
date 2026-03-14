@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Calendar, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -22,33 +22,16 @@ export default function WorkWithMe() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
-  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
-  const scriptRef = useRef<HTMLScriptElement | null>(null);
+  const [bookingUrl, setBookingUrl] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/public/booking-url")
       .then((r) => (r.ok ? r.json() : {}))
       .then((data) => {
-        if (data.calendlyUrl) setCalendlyUrl(data.calendlyUrl);
+        if (data.calendlyUrl) setBookingUrl(data.calendlyUrl);
       })
       .catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (!calendlyUrl) return;
-    if (scriptRef.current) return;
-    const script = document.createElement("script");
-    script.src = "https://assets.calendly.com/assets/external/widget.js";
-    script.async = true;
-    scriptRef.current = script;
-    document.body.appendChild(script);
-    return () => {
-      if (scriptRef.current) {
-        document.body.removeChild(scriptRef.current);
-        scriptRef.current = null;
-      }
-    };
-  }, [calendlyUrl]);
 
   const canSubmit = form.name && form.company && form.challenge && form.timeline;
 
@@ -239,11 +222,15 @@ export default function WorkWithMe() {
                   Prefer to talk it through? Schedule a free 30-minute discovery call.
                 </p>
                 <div className="rounded-xl overflow-hidden border border-white/10 bg-black/40 min-h-[320px] flex items-center justify-center">
-                  {calendlyUrl ? (
-                    <div
-                      className="calendly-inline-widget w-full"
-                      data-url={calendlyUrl}
-                      style={{ minWidth: "320px", height: "630px" }}
+                  {bookingUrl ? (
+                    <iframe
+                      src={`${bookingUrl}?embed=true&theme=dark`}
+                      width="100%"
+                      height="630"
+                      frameBorder="0"
+                      title="Book a discovery call"
+                      className="w-full"
+                      style={{ colorScheme: "dark" }}
                     />
                   ) : (
                     <div className="text-center p-6">

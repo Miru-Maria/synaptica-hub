@@ -1311,9 +1311,9 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <div className="space-y-2 pt-2 border-t border-neutral-700">
-                  <Label className="text-neutral-200">Calendly Booking URL</Label>
+                  <Label className="text-neutral-200">Booking Calendar URL</Label>
                   <p className="text-xs text-neutral-500 mt-0.5">
-                    Paste your Calendly link here to enable the inline booking widget on the Work With Me page.
+                    Your Cal.com or Calendly link. When set, an inline booking widget appears on the Work With Me page.
                   </p>
                   <Input
                     type="url"
@@ -1321,7 +1321,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setAdminSettings((prev) => ({ ...prev, calendlyUrl: e.target.value }))
                     }
-                    placeholder="https://calendly.com/your-name/30min"
+                    placeholder="https://cal.eu/your-name/30min"
                     className="bg-neutral-800 border-neutral-700 text-neutral-100 max-w-md"
                   />
                 </div>
