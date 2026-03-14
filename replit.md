@@ -167,6 +167,21 @@ A GPT-4o powered chat widget on the public site acting as a knowledgeable sales 
 - **Files**: `server/routes/chat.ts`, `src/components/ChatWidget.tsx`, `src/pages/admin/ChatSessionsViewer.tsx`
 - **DB tables**: `chat_sessions`, `chat_messages`; `admin_settings` extended with `chat_widget_enabled` and `chat_system_prompt` columns.
 
+## Autonomous UX Testing Agent
+
+An admin-only tool at `/admin/ux-tester` for running autonomous AI-driven UX tests across the entire platform. Features:
+- **5 AI Personas**: Skeptical CTO, First-time Visitor, Freelance Technical Writer, Enterprise IT Manager, AI Enthusiast Startup Founder — each with distinct backgrounds, intents, and tones
+- **35+ test scenarios** across 4 areas: Chat Assistant, Lab Tools (DocAudit, KA Sprint, Prompt Workshop), Navigation (route checks), and Lead Capture (email validation)
+- **Autonomous execution**: Server-side agent iterates through all personas and scenarios, calling live internal APIs
+- **LLM evaluation**: Each interaction is evaluated by a second GPT-4o call judging coherence, helpfulness, accuracy, and persona-appropriateness
+- **Live progress**: Polling-based UI shows real-time progress with percentage bar during test runs
+- **Structured findings**: Results categorized by severity (Good / Needs Attention / Issue) with expandable detail cards showing raw input/output
+- **Report history**: Past test runs stored in PostgreSQL and viewable from the run history panel
+- **Markdown export**: Full findings report downloadable as structured Markdown
+- **DB tables**: `ux_test_runs`, `ux_test_findings` in PostgreSQL
+- **API routes**: `GET /api/admin/ux-agent/personas`, `POST /api/admin/ux-agent/run`, `GET /api/admin/ux-agent/runs`, `GET /api/admin/ux-agent/runs/:id`, `GET /api/admin/ux-agent/runs/:id/export`
+- **Files**: `server/routes/ux-agent.ts`, `server/services/ux-agent.ts`, `server/services/ux-personas.ts`, `server/data/ux-test-store.ts`, `src/pages/admin/UXTester.tsx`
+
 ## Known Notes (Non-Critical)
 
 - **Production SSL deprecation warning** — On startup, the `pg` library prints a "SECURITY WARNING" about SSL mode changes coming in pg v9. This is cosmetic. The database connects and initializes correctly ("Database initialized" always follows). No action needed until upgrading to pg v9.

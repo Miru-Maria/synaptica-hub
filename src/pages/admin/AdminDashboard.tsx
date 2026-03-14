@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
@@ -476,6 +476,10 @@ export default function AdminDashboard() {
             {navBtn("internal", Hammer, "Internal Tools")}
             {navBtn("metrics", Activity, "Metrics")}
             {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
+            <a href="/admin/ux-tester" className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+              <FlaskConical className="w-4 h-4 flex-shrink-0" />
+              <span className="flex-1 truncate">UX Tester</span>
+            </a>
 
             <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Account</p>
             {navBtn("settings", Settings, "Settings")}
@@ -498,6 +502,10 @@ export default function AdminDashboard() {
           {mobileNavBtn("internal", Hammer, "Tools")}
           {mobileNavBtn("metrics", Activity, "Metrics")}
           {mobileNavBtn("sessions", FolderOpen, "Sessions")}
+          <a href="/admin/ux-tester" className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
+            <FlaskConical className="w-4 h-4" />
+            <span className="whitespace-nowrap">UX Test</span>
+          </a>
           {mobileNavBtn("settings", Settings, "Settings")}
         </div>
 
@@ -1119,6 +1127,27 @@ export default function AdminDashboard() {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <FlaskConical className="w-4 h-4 text-cyan-400" />
+                  UX Testing Agent
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Run autonomous AI-driven UX tests across the platform. Multiple personas exercise the chat assistant, lab tools, navigation, and lead capture — then an evaluator grades every interaction and produces a structured report.
+                </p>
+                <a
+                  href="/admin/ux-tester"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
