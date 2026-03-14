@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -337,4 +337,20 @@ adminRouter.put("/outcome-stats", requireAuth, (req: Request, res: Response) => 
   saveOutcomeStats(items);
   res.json({ ok: true });
 });
+
+adminRouter.get("/leads", requireAuth, (_req: Request, res: Response) => {
+  res.json(getEmailLeads());
+});
+
+adminRouter.get("/leads/export", requireAuth, (_req: Request, res: Response) => {
+  const leads = getEmailLeads();
+  const header = "ID,Email,First Name,Tool Source,Document Type,Captured At";
+  const rows = leads.map((l) => {
+    const escape = (s: string) => `"${(s || "").replace(/"/g, '""')}"`;
+    return [escape(l.id), escape(l.email), escape(l.firstName), escape(l.toolSource), escape(l.documentType || ""), escape(l.capturedAt)].join(",");
+  });
+  const csv = [header, ...rows].join("\n");
+  res.setHeader("Content-Type", "text/csv");
+  res.setHeader("Content-Disposition", "attachment; filename=email-leads.csv");
+  res.send(csv);
 });

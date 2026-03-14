@@ -13,7 +13,7 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { Download, AlertTriangle, AlertCircle, Info, CheckCircle, RotateCcw } from "lucide-react";
+import { Download, AlertTriangle, AlertCircle, Info, CheckCircle, RotateCcw, Lock } from "lucide-react";
 import { jsPDF } from "jspdf";
 
 interface TopicCoverage {
@@ -33,6 +33,7 @@ interface GapReportProps {
   result: AuditResult;
   kbName: string;
   onReset: () => void;
+  gateUnlocked?: boolean;
 }
 
 const severityConfig = {
@@ -54,7 +55,7 @@ function getScoreRing(score: number): string {
   return "border-red-400/40";
 }
 
-export function GapReport({ result, kbName, onReset }: GapReportProps) {
+export function GapReport({ result, kbName, onReset, gateUnlocked = false }: GapReportProps) {
   const radarData = result.topicCoverages.map((tc) => ({
     topic: tc.topic.length > 20 ? tc.topic.slice(0, 18) + "..." : tc.topic,
     fullTopic: tc.topic,
@@ -330,10 +331,12 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
             <RotateCcw className="w-4 h-4" />
             New Audit
           </button>
-          <button onClick={() => { exportPDF().catch(console.error); }} className="btn-primary flex items-center gap-2 text-sm min-h-[44px] !py-2 !px-4">
-            <Download className="w-4 h-4" />
-            Download Report
-          </button>
+          {gateUnlocked && (
+            <button onClick={() => { exportPDF().catch(console.error); }} className="btn-primary flex items-center gap-2 text-sm min-h-[44px] !py-2 !px-4">
+              <Download className="w-4 h-4" />
+              Download Report
+            </button>
+          )}
         </div>
       </div>
 
@@ -367,105 +370,129 @@ export function GapReport({ result, kbName, onReset }: GapReportProps) {
         </div>
       </div>
 
-      <div className="glass rounded-2xl p-6">
-        <h3 className="text-lg font-semibold text-foreground mb-4">Coverage Map</h3>
-        <div className="overflow-x-auto -mx-2 px-2">
-          {radarData.length <= 12 ? (
-            <ResponsiveContainer width="100%" height={300} minWidth={300}>
-              <RadarChart data={radarData}>
-                <PolarGrid stroke="rgba(255,255,255,0.1)" />
-                <PolarAngleAxis dataKey="topic" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 9 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Radar
-                  name="Coverage"
-                  dataKey="coverage"
-                  stroke="hsl(165, 100%, 39%)"
-                  fill="hsl(165, 100%, 39%)"
-                  fillOpacity={0.2}
-                  strokeWidth={2}
-                />
-              </RadarChart>
-            </ResponsiveContainer>
-          ) : (
-            <ResponsiveContainer width="100%" height={Math.max(300, radarData.length * 36)} minWidth={300}>
-              <BarChart data={radarData} layout="vertical" margin={{ left: 10, right: 10 }}>
-                <XAxis type="number" domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} />
-                <YAxis type="category" dataKey="topic" width={120} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar dataKey="coverage" radius={[0, 4, 4, 0]}>
-                  {radarData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        entry.coverage >= 70 ? "rgb(74, 222, 128)" :
-                        entry.coverage >= 40 ? "rgb(250, 204, 21)" :
-                        "rgb(239, 68, 68)"
-                      }
-                      fillOpacity={0.7}
+      {gateUnlocked ? (
+        <>
+          <div className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Coverage Map</h3>
+            <div className="overflow-x-auto -mx-2 px-2">
+              {radarData.length <= 12 ? (
+                <ResponsiveContainer width="100%" height={300} minWidth={300}>
+                  <RadarChart data={radarData}>
+                    <PolarGrid stroke="rgba(255,255,255,0.1)" />
+                    <PolarAngleAxis dataKey="topic" tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
+                    <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 9 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Radar
+                      name="Coverage"
+                      dataKey="coverage"
+                      stroke="hsl(165, 100%, 39%)"
+                      fill="hsl(165, 100%, 39%)"
+                      fillOpacity={0.2}
+                      strokeWidth={2}
                     />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          )}
-        </div>
-      </div>
+                  </RadarChart>
+                </ResponsiveContainer>
+              ) : (
+                <ResponsiveContainer width="100%" height={Math.max(300, radarData.length * 36)} minWidth={300}>
+                  <BarChart data={radarData} layout="vertical" margin={{ left: 10, right: 10 }}>
+                    <XAxis type="number" domain={[0, 100]} tick={{ fill: "rgba(255,255,255,0.4)", fontSize: 10 }} />
+                    <YAxis type="category" dataKey="topic" width={120} tick={{ fill: "rgba(255,255,255,0.6)", fontSize: 10 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Bar dataKey="coverage" radius={[0, 4, 4, 0]}>
+                      {radarData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={
+                            entry.coverage >= 70 ? "rgb(74, 222, 128)" :
+                            entry.coverage >= 40 ? "rgb(250, 204, 21)" :
+                            "rgb(239, 68, 68)"
+                          }
+                          fillOpacity={0.7}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </div>
 
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold text-foreground">
-          {gaps.length > 0 ? `Prioritized Gaps (${gaps.length})` : "All Topics Covered"}
-        </h3>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">
+              {gaps.length > 0 ? `Prioritized Gaps (${gaps.length})` : "All Topics Covered"}
+            </h3>
 
-        {result.topicCoverages.map((tc, idx) => {
-          const config = severityConfig[tc.severity];
-          const Icon = config.icon;
+            {result.topicCoverages.map((tc, idx) => {
+              const config = severityConfig[tc.severity];
+              const Icon = config.icon;
 
-          return (
-            <motion.div
-              key={tc.topic}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: idx * 0.05 }}
-              className="glass rounded-xl p-5"
+              return (
+                <motion.div
+                  key={tc.topic}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                  className="glass rounded-xl p-5"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className={`w-9 h-9 rounded-lg ${config.bg} border ${config.border} flex items-center justify-center flex-shrink-0 mt-0.5`}>
+                      <Icon className={`w-4 h-4 ${config.color}`} />
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h4 className="font-semibold text-foreground">{tc.topic}</h4>
+                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.bg} ${config.color} border ${config.border}`}>
+                          {config.label}
+                        </span>
+                        <span className="text-sm text-muted-foreground ml-auto">
+                          {Math.round(tc.score * 100)}%
+                        </span>
+                      </div>
+
+                      <div className="w-full bg-white/5 rounded-full h-1.5 mb-3">
+                        <div
+                          className="h-1.5 rounded-full transition-all duration-500"
+                          style={{
+                            width: `${Math.round(tc.score * 100)}%`,
+                            backgroundColor:
+                              tc.severity === "critical" ? "rgb(239, 68, 68)" :
+                              tc.severity === "high" ? "rgb(251, 146, 60)" :
+                              tc.severity === "medium" ? "rgb(250, 204, 21)" :
+                              "rgb(74, 222, 128)",
+                          }}
+                        />
+                      </div>
+
+                      <p className="text-sm text-muted-foreground leading-relaxed">{tc.recommendation}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        </>
+      ) : (
+        <div className="relative">
+          <div className="glass rounded-2xl p-8 text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
+              <Lock className="w-7 h-7 text-primary" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground">Full Report Locked</h3>
+            <p className="text-sm text-muted-foreground max-w-md mx-auto">
+              The summary above shows your overall score and severity breakdown.
+              To access the full coverage map, detailed topic analysis, prioritized gaps, and PDF export,
+              provide your email when prompted.
+            </p>
+            <button
+              onClick={onReset}
+              className="btn-secondary text-sm !py-2 !px-4 mt-2"
             >
-              <div className="flex items-start gap-4">
-                <div className={`w-9 h-9 rounded-lg ${config.bg} border ${config.border} flex items-center justify-center flex-shrink-0 mt-0.5`}>
-                  <Icon className={`w-4 h-4 ${config.color}`} />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2 flex-wrap">
-                    <h4 className="font-semibold text-foreground break-words min-w-0">{tc.topic}</h4>
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${config.bg} ${config.color} border ${config.border}`}>
-                      {config.label}
-                    </span>
-                    <span className="text-sm text-muted-foreground sm:ml-auto">
-                      {Math.round(tc.score * 100)}%
-                    </span>
-                  </div>
-
-                  <div className="w-full bg-white/5 rounded-full h-1.5 mb-3">
-                    <div
-                      className="h-1.5 rounded-full transition-all duration-500"
-                      style={{
-                        width: `${Math.round(tc.score * 100)}%`,
-                        backgroundColor:
-                          tc.severity === "critical" ? "rgb(239, 68, 68)" :
-                          tc.severity === "high" ? "rgb(251, 146, 60)" :
-                          tc.severity === "medium" ? "rgb(250, 204, 21)" :
-                          "rgb(74, 222, 128)",
-                      }}
-                    />
-                  </div>
-
-                  <p className="text-sm text-muted-foreground leading-relaxed">{tc.recommendation}</p>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
-      </div>
+              Run Another Audit
+            </button>
+          </div>
+        </div>
+      )
     </motion.div>
   );
 }

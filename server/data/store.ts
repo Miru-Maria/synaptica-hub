@@ -547,3 +547,28 @@ export function getPublishedArticles(): BlogArticle[] {
 }
 
 export { estimateReadingTime };
+
+export interface EmailLead {
+  id: string;
+  email: string;
+  firstName: string;
+  toolSource: string;
+  documentType?: string;
+  capturedAt: string;
+}
+
+const LEADS_FILE = path.join(DATA_DIR, "email-leads.json");
+
+export function getEmailLeads(): EmailLead[] {
+  return readJson(LEADS_FILE, []);
+}
+
+export function saveEmailLead(lead: EmailLead) {
+  const leads = getEmailLeads();
+  leads.push(lead);
+  writeJson(LEADS_FILE, leads);
+}
+
+export function saveEmailLeads(leads: EmailLead[]) {
+  writeJson(LEADS_FILE, leads);
+}

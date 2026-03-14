@@ -4,6 +4,7 @@ import { ArrowLeft, FileSearch, Shield, Zap, Target, AlertTriangle } from "lucid
 import { InputPanel } from "@/components/docaudit/InputPanel";
 import { TaxonomyConfig } from "@/components/docaudit/TaxonomyConfig";
 import { GapReport } from "@/components/docaudit/GapReport";
+import { EmailCaptureModal } from "@/components/EmailCaptureModal";
 
 async function safeJsonParse(res: Response): Promise<Record<string, unknown>> {
   const text = await res.text();
@@ -14,7 +15,7 @@ async function safeJsonParse(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
-type Step = "input" | "configure" | "report";
+type Step = "input" | "configure" | "gate" | "report";
 
 interface AuditResult {
   overallScore: number;
@@ -52,6 +53,8 @@ export default function DocAudit() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showGate, setShowGate] = useState(false);
+  const [gateUnlocked, setGateUnlocked] = useState(false);
 
   const handleChunksReady = (newChunks: string[]) => {
     setChunks(newChunks);
@@ -73,7 +76,8 @@ export default function DocAudit() {
       if (!res.ok) throw new Error((data.error as string) || "Request failed");
 
       setResult(data as unknown as AuditResult);
-      setStep("report");
+      setShowGate(true);
+      setStep("gate");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -87,6 +91,36 @@ export default function DocAudit() {
     setKbName("");
     setResult(null);
     setError(null);
+    setShowGate(false);
+    setGateUnlocked(false);
+  };
+
+  const handleEmailSubmit = async (data: { email: string; firstName: string }): Promise<boolean> => {
+    try {
+      const res = await fetch("/api/public/capture-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: data.email,
+          firstName: data.firstName,
+          toolSource: "docaudit",
+          documentType: kbName || undefined,
+        }),
+      });
+      if (!res.ok) return false;
+    } catch {
+      return false;
+    }
+    setShowGate(false);
+    setGateUnlocked(true);
+    setStep("report");
+    return true;
+  };
+
+  const handleGateSkip = () => {
+    setShowGate(false);
+    setGateUnlocked(false);
+    setStep("report");
   };
 
   const features = [
@@ -202,8 +236,17 @@ export default function DocAudit() {
             />
           )}
 
+          {step === "gate" && result && (
+            <EmailCaptureModal
+              open={showGate}
+              onSubmit={handleEmailSubmit}
+              onSkip={handleGateSkip}
+              toolName="Your DocAudit report"
+            />
+          )}
+
           {step === "report" && result && (
-            <GapReport result={result} kbName={kbName} onReset={handleReset} />
+            <GapReport result={result} kbName={kbName} onReset={handleReset} gateUnlocked={gateUnlocked} />
           )}
 
           {error && step === "configure" && (

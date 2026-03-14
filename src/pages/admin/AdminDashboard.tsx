@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail } from "lucide-react";
 import BlogManager from "./BlogManager";
 
 interface DiscoveryInquiry {
@@ -75,6 +75,16 @@ interface OutcomeStat {
   value: string;
 }
 
+interface EmailLead {
+  id: string;
+  email: string;
+  firstName: string;
+  toolSource: string;
+  documentType?: string;
+  capturedAt: string;
+}
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -88,6 +98,7 @@ export default function AdminDashboard() {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [caseStudies, setCaseStudies] = useState<CaseStudy[]>([]);
   const [outcomeStats, setOutcomeStats] = useState<OutcomeStat[]>([]);
+  const [leads, setLeads] = useState<EmailLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingTools, setSavingTools] = useState(false);
@@ -127,13 +138,14 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const [pkgRes, inqRes, toolsRes, testRes, csRes, statRes] = await Promise.all([
+      const [pkgRes, inqRes, toolsRes, testRes, csRes, statRes, leadsRes] = await Promise.all([
         fetch("/api/admin/packages", { headers: authHeaders() }),
         fetch("/api/admin/discovery-inquiries", { headers: authHeaders() }),
         fetch("/api/admin/tools", { headers: authHeaders() }),
         fetch("/api/admin/testimonials", { headers: authHeaders() }),
         fetch("/api/admin/case-studies", { headers: authHeaders() }),
         fetch("/api/admin/outcome-stats", { headers: authHeaders() }),
+        fetch("/api/admin/leads", { headers: authHeaders() }),
       ]);
       if (pkgRes.ok) setPackages(await pkgRes.json());
       if (inqRes.ok) setInquiries(await inqRes.json());
@@ -141,6 +153,7 @@ export default function AdminDashboard() {
       if (testRes.ok) setTestimonials(await testRes.json());
       if (csRes.ok) setCaseStudies(await csRes.json());
       if (statRes.ok) setOutcomeStats(await statRes.json());
+      if (leadsRes.ok) setLeads(await leadsRes.json());
       setLoading(false);
     }
     load();
@@ -422,6 +435,13 @@ export default function AdminDashboard() {
             <TabsTrigger value="sessions" className="data-[state=active]:bg-neutral-800 gap-2" onClick={() => { if (sessions.length === 0) loadSessions(); }}>
               <FolderOpen className="w-4 h-4" />
               Sessions
+            </TabsTrigger>
+            <TabsTrigger value="leads" className="data-[state=active]:bg-neutral-800 gap-2">
+              <Mail className="w-4 h-4" />
+              Email Leads
+              {leads.length > 0 && (
+                <span className="ml-1 text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">{leads.length}</span>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -1134,6 +1154,84 @@ export default function AdminDashboard() {
                   </Card>
                 ))}
               </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="blog" className="mt-6">
+            <BlogManager />
+          </TabsContent>
+
+          <TabsContent value="leads" className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Email leads captured from public tools.
+              </p>
+              <a
+                href="/api/admin/leads/export"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const token = localStorage.getItem("admin_token");
+                  fetch("/api/admin/leads/export", {
+                    headers: token ? { Authorization: `Bearer ${token}` } : {},
+                  })
+                    .then((res) => res.blob())
+                    .then((blob) => {
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement("a");
+                      a.href = url;
+                      a.download = "email-leads.csv";
+                      a.click();
+                      URL.revokeObjectURL(url);
+                    });
+                }}
+                className="inline-flex items-center gap-1.5"
+              >
+                <Button variant="outline" size="sm" className="border-neutral-700 text-neutral-300">
+                  <Download className="w-4 h-4 mr-1" />
+                  Export CSV
+                </Button>
+              </a>
+            </div>
+
+            {leads.length === 0 ? (
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardContent className="py-12 text-center">
+                  <Mail className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
+                  <p className="text-neutral-400 text-sm">No email leads captured yet.</p>
+                  <p className="text-neutral-500 text-xs mt-1">Leads will appear here when users submit their email on tool result pages.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardContent className="p-0">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-neutral-800">
+                          <th className="text-left px-4 py-3 text-neutral-400 font-medium text-xs uppercase tracking-wider">Name</th>
+                          <th className="text-left px-4 py-3 text-neutral-400 font-medium text-xs uppercase tracking-wider">Email</th>
+                          <th className="text-left px-4 py-3 text-neutral-400 font-medium text-xs uppercase tracking-wider">Tool</th>
+                          <th className="text-left px-4 py-3 text-neutral-400 font-medium text-xs uppercase tracking-wider">Document</th>
+                          <th className="text-left px-4 py-3 text-neutral-400 font-medium text-xs uppercase tracking-wider">Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...leads].reverse().map((lead) => (
+                          <tr key={lead.id} className="border-b border-neutral-800/50 hover:bg-neutral-800/30">
+                            <td className="px-4 py-3 text-neutral-200">{lead.firstName}</td>
+                            <td className="px-4 py-3 text-neutral-300">{lead.email}</td>
+                            <td className="px-4 py-3">
+                              <span className="text-xs bg-emerald-400/10 text-emerald-400 px-2 py-0.5 rounded">{lead.toolSource}</span>
+                            </td>
+                            <td className="px-4 py-3 text-neutral-400">{lead.documentType || "—"}</td>
+                            <td className="px-4 py-3 text-neutral-500 text-xs">{new Date(lead.capturedAt).toLocaleDateString()}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </TabsContent>
         </Tabs>
