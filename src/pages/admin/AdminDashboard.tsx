@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2 } from "lucide-react";
 
 interface DiscoveryInquiry {
   id: string;
@@ -31,6 +31,18 @@ interface ServicePackage {
   highlighted: boolean;
 }
 
+interface SavedSession {
+  id: string;
+  tool: string;
+  clientName: string;
+  name: string;
+  step?: string;
+  version?: string;
+  promptCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -43,6 +55,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
+  const [sessions, setSessions] = useState<SavedSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -59,6 +73,17 @@ export default function AdminDashboard() {
       return false;
     }
   }, [setLocation]);
+
+  const loadSessions = useCallback(async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await fetch("/api/admin/sessions", { headers: authHeaders() });
+      if (res.ok) setSessions(await res.json());
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
+    }
+    setSessionsLoading(false);
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -195,6 +220,10 @@ export default function AdminDashboard() {
             <TabsTrigger value="internal" className="data-[state=active]:bg-neutral-800 gap-2">
               <Hammer className="w-4 h-4" />
               Tools
+            </TabsTrigger>
+            <TabsTrigger value="sessions" className="data-[state=active]:bg-neutral-800 gap-2" onClick={() => { if (sessions.length === 0) loadSessions(); }}>
+              <FolderOpen className="w-4 h-4" />
+              Sessions
             </TabsTrigger>
           </TabsList>
 
@@ -615,6 +644,76 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
+          </TabsContent>
+
+          <TabsContent value="sessions" className="mt-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-neutral-400">
+                Recent saved sessions from KA Sprint and Prompt Workshop tools.
+              </p>
+              <Button variant="outline" size="sm" onClick={loadSessions} className="border-neutral-700 text-neutral-300">
+                <Loader2 className={`w-4 h-4 mr-1 ${sessionsLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+            </div>
+
+            {sessionsLoading && sessions.length === 0 ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+              </div>
+            ) : sessions.length === 0 ? (
+              <Card className="bg-neutral-900 border-neutral-800">
+                <CardContent className="py-12 text-center">
+                  <FolderOpen className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
+                  <p className="text-neutral-400 text-sm">No saved sessions yet.</p>
+                  <p className="text-neutral-500 text-xs mt-1">Save a session from the KA Sprint or Prompt Workshop tools to see it here.</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {sessions.map((s) => (
+                  <Card key={s.id} className="bg-neutral-900 border-neutral-800 hover:border-neutral-700 transition-colors">
+                    <CardContent className="py-4 px-5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                              s.tool === "KA Sprint"
+                                ? "bg-emerald-400/15 text-emerald-400"
+                                : "bg-purple-400/15 text-purple-300"
+                            }`}>
+                              {s.tool}
+                            </span>
+                            <span className="font-medium text-neutral-100 text-sm">{s.clientName}</span>
+                            {s.version && (
+                              <span className="text-xs text-neutral-500">v{s.version}</span>
+                            )}
+                          </div>
+                          <p className="text-xs text-neutral-400 truncate">{s.name}</p>
+                          <div className="flex items-center gap-3 mt-1.5 text-xs text-neutral-500">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {new Date(s.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            </span>
+                            {s.step && <span>Step: {s.step}</span>}
+                            {s.promptCount !== undefined && <span>{s.promptCount} prompt{s.promptCount !== 1 ? "s" : ""}</span>}
+                          </div>
+                        </div>
+                        <a
+                          href={s.tool === "KA Sprint" ? "/admin/ka-sprint" : "/admin/prompt-workshop"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-md transition-colors text-neutral-300 shrink-0 ml-3"
+                        >
+                          Open Tool
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </main>

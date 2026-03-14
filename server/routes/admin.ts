@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
 import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient } from "../data/store.js";
+import { getKASessions } from "../data/sessions-store.js";
+import { getPWSessions } from "../data/sessions-store.js";
 
 export const adminRouter = Router();
 
@@ -226,4 +228,35 @@ adminRouter.put("/retainers/:id/priority-requests/:requestId", requireAuth, (req
 
 adminRouter.get("/discovery-inquiries", requireAuth, (_req: Request, res: Response) => {
   res.json(getDiscoveryInquiries());
+});
+
+adminRouter.get("/sessions", requireAuth, (_req: Request, res: Response) => {
+  try {
+    const kaSessions = getKASessions().map((s) => ({
+      id: s.id,
+      tool: "KA Sprint" as const,
+      clientName: s.clientName,
+      name: s.domain ? s.domain.substring(0, 80) : "Untitled",
+      step: s.step,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
+    const pwSessions = getPWSessions().map((s) => ({
+      id: s.id,
+      tool: "Prompt Workshop" as const,
+      clientName: s.clientName,
+      name: s.sessionName,
+      version: s.version,
+      promptCount: s.prompts.length,
+      createdAt: s.createdAt,
+      updatedAt: s.updatedAt,
+    }));
+    const all = [...kaSessions, ...pwSessions].sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
+    res.json(all);
+  } catch (error: unknown) {
+    console.error("Admin sessions list error:", error);
+    res.status(500).json({ error: "Failed to load sessions" });
+  }
 });

@@ -1,6 +1,13 @@
 import { Router, Response } from "express";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
 import OpenAI from "openai";
+import {
+  getKASessions,
+  getKASessionById,
+  createKASession,
+  updateKASession,
+  deleteKASession,
+} from "../data/sessions-store.js";
 
 function getOpenAI(): OpenAI {
   const apiKey = process.env.OPENAI_API_KEY;
@@ -203,5 +210,157 @@ Produce the complete, final architecture document.`,
   } catch (error: unknown) {
     console.error("KA Sprint architecture document error:", error);
     res.status(500).json({ error: error instanceof Error ? error.message : "Failed to generate architecture document" });
+  }
+});
+
+kaSprintRouter.get("/sessions", async (_req: AuthenticatedRequest, res: Response) => {
+  try {
+    const sessions = getKASessions();
+    res.json(sessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()));
+  } catch (error: unknown) {
+    console.error("KA Sprint sessions list error:", error);
+    res.status(500).json({ error: "Failed to load sessions" });
+  }
+});
+
+kaSprintRouter.get("/sessions/:id", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const session = getKASessionById(req.params.id);
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    res.json(session);
+  } catch (error: unknown) {
+    console.error("KA Sprint session get error:", error);
+    res.status(500).json({ error: "Failed to load session" });
+  }
+});
+
+kaSprintRouter.post("/sessions", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { clientName, sessionDate, step, domain, currentStructure, primaryUseCase, targetSystem, taxonomyContent, retrievalContent, documentContent } = req.body;
+    if (!clientName || typeof clientName !== "string" || !clientName.trim()) {
+      res.status(400).json({ error: "Client name is required" });
+      return;
+    }
+    const session = createKASession({
+      clientName: clientName.trim(),
+      sessionDate: sessionDate || new Date().toISOString().split("T")[0],
+      step: step || "input",
+      domain: domain || "",
+      currentStructure: currentStructure || "",
+      primaryUseCase: primaryUseCase || "",
+      targetSystem: targetSystem || "",
+      taxonomyContent: taxonomyContent || "",
+      retrievalContent: retrievalContent || "",
+      documentContent: documentContent || "",
+    });
+    res.status(201).json(session);
+  } catch (error: unknown) {
+    console.error("KA Sprint session save error:", error);
+    res.status(500).json({ error: "Failed to save session" });
+  }
+});
+
+kaSprintRouter.put("/sessions/:id", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { clientName, sessionDate, step, domain, currentStructure, primaryUseCase, targetSystem, taxonomyContent, retrievalContent, documentContent } = req.body;
+    const session = updateKASession(req.params.id, {
+      clientName: clientName || "",
+      sessionDate: sessionDate || "",
+      step: step || "input",
+      domain: domain || "",
+      currentStructure: currentStructure || "",
+      primaryUseCase: primaryUseCase || "",
+      targetSystem: targetSystem || "",
+      taxonomyContent: taxonomyContent || "",
+      retrievalContent: retrievalContent || "",
+      documentContent: documentContent || "",
+    });
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    res.json(session);
+  } catch (error: unknown) {
+    console.error("KA Sprint session update error:", error);
+    res.status(500).json({ error: "Failed to update session" });
+  }
+});
+
+kaSprintRouter.delete("/sessions/:id", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const deleted = deleteKASession(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    res.json({ success: true });
+  } catch (error: unknown) {
+    console.error("KA Sprint session delete error:", error);
+    res.status(500).json({ error: "Failed to delete session" });
+  }
+});
+
+kaSprintRouter.get("/sessions/:id/export", async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const session = getKASessionById(req.params.id);
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+
+    const lines: string[] = [];
+    lines.push("# Knowledge Architecture Deliverable\n");
+    lines.push(`**Client:** ${session.clientName}`);
+    lines.push(`**Date:** ${session.sessionDate}`);
+    lines.push(`**Generated:** ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}\n`);
+    lines.push("---\n");
+
+    lines.push("## 1. Knowledge Domain Inputs\n");
+    lines.push(`**Domain:** ${session.domain || "Not specified"}\n`);
+    if (session.currentStructure) {
+      lines.push(`**Current Structure:** ${session.currentStructure}\n`);
+    }
+    if (session.primaryUseCase) {
+      lines.push(`**Primary Use Case:** ${session.primaryUseCase}\n`);
+    }
+    if (session.targetSystem) {
+      lines.push(`**Target System / Audience:** ${session.targetSystem}\n`);
+    }
+    lines.push("---\n");
+
+    if (session.taxonomyContent) {
+      lines.push("## 2. Taxonomy Design\n");
+      lines.push("```json");
+      lines.push(session.taxonomyContent);
+      lines.push("```\n");
+      lines.push("---\n");
+    }
+
+    if (session.retrievalContent) {
+      lines.push("## 3. Retrieval Logic & Metadata Schema\n");
+      lines.push("```json");
+      lines.push(session.retrievalContent);
+      lines.push("```\n");
+      lines.push("---\n");
+    }
+
+    if (session.documentContent) {
+      lines.push("## 4. Architecture Document\n");
+      lines.push(session.documentContent);
+      lines.push("\n---\n");
+    }
+
+    lines.push("*Document generated by Knowledge Architecture Sprint Tool*\n");
+
+    const markdown = lines.join("\n");
+    res.setHeader("Content-Type", "text/markdown; charset=utf-8");
+    res.setHeader("Content-Disposition", `attachment; filename="KA-Deliverable-${session.clientName.replace(/[^a-zA-Z0-9]/g, "-")}-${session.sessionDate}.md"`);
+    res.send(markdown);
+  } catch (error: unknown) {
+    console.error("KA Sprint session export error:", error);
+    res.status(500).json({ error: "Failed to export session" });
   }
 });

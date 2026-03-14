@@ -47,13 +47,14 @@ server/
     auth.ts            # JWT auth middleware (requireAuth, signToken, verifyToken)
   routes/
     audit.ts           # DocAudit API routes (parse-files, parse-text, parse-url, parse-notion, analyze)
-    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD)
+    admin.ts           # Protected admin routes (login, logout, me, packages CRUD, tools CRUD, sessions list)
     public.ts          # Public read-only routes (packages, tools)
-    ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes
-    prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide routes
+    ka-sprint.ts       # KA Sprint AI-powered knowledge architecture routes + session CRUD + export
+    prompt-workshop.ts # Prompt Engineering Workshop CRUD + test + style guide + session CRUD + export routes
   data/
     store.ts           # JSON file-persisted data store for packages and tools
     prompt-workshop-store.ts  # JSON file-persisted store for prompt templates and style guide
+    sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
     persist/           # Auto-created directory for JSON data files
   services/
     parser.ts          # PDF, DOCX, Markdown, text parsing + chunking
@@ -92,6 +93,7 @@ A credential-protected admin area at `/admin` for the site owner. Features:
 - Changes persist to JSON files and are reflected live on the public site
 - Public site reads package data from `/api/public/packages` and tool status from `/api/public/tools`
 - Internal Tools tab with KA Sprint and Prompt Engineering Workshop
+- Saved Sessions tab showing recent sessions across KA Sprint and Prompt Workshop tools
 
 ## Prompt Engineering Workshop
 
@@ -101,8 +103,19 @@ An admin-only internal tool at `/admin/prompt-workshop` for designing, testing, 
 - Live test panel that runs prompts against OpenAI's API with variable substitution
 - Global style guide editor that can be auto-appended to prompts
 - Handover documentation export as formatted Markdown (clipboard copy)
-- API routes at `/api/admin/prompt-workshop/*` (prompts CRUD, test, style-guide, categories)
+- Session save/load with client name, session name, version, and tags
+- Session export as structured Markdown "Prompt Library" deliverable document
+- API routes at `/api/admin/prompt-workshop/*` (prompts CRUD, test, style-guide, categories, sessions CRUD + export)
 - Data persisted to JSON files in `server/data/persist/`
+
+## KA Sprint Session Management
+
+The KA Sprint Tool at `/admin/ka-sprint` supports session persistence:
+- Save current session state (taxonomy, retrieval, document) with client name and date
+- List, reopen, continue, and delete past sessions
+- Export completed sessions as structured Markdown "Knowledge Architecture Deliverable" documents
+- Sessions visible in admin dashboard Sessions tab with client name association
+- API routes at `/api/admin/ka-sprint/sessions/*` (CRUD + export)
 
 ## DocAudit Feature
 

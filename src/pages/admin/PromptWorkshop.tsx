@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
@@ -15,6 +15,10 @@ import {
   BookOpen,
   Palette,
   Variable,
+  Save,
+  FolderOpen,
+  Download,
+  Clock,
 } from "lucide-react";
 
 function authHeaders(): Record<string, string> {
@@ -42,6 +46,27 @@ interface StyleGuide {
   updatedAt: string;
 }
 
+interface PWSession {
+  id: string;
+  clientName: string;
+  sessionName: string;
+  version: string;
+  tags: string[];
+  prompts: Array<{
+    id: string;
+    title: string;
+    category: string;
+    description: string;
+    body: string;
+    tags: string[];
+    variables: string[];
+    useStyleGuide: boolean;
+  }>;
+  styleGuideContent: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type Tab = "library" | "styleguide" | "handover";
 
 const DEFAULT_CATEGORIES = ["Marketing", "Support", "Content", "Sales", "Engineering", "HR"];
@@ -52,7 +77,7 @@ function extractVariables(body: string): string[] {
   return [...new Set(matches.map((m) => m.replace(/\{\{|\}\}/g, "")))];
 }
 
-function highlightVariables(text: string): JSX.Element[] {
+function highlightVariables(text: string): React.JSX.Element[] {
   const parts = text.split(/(\{\{[\w-]+\}\})/g);
   return parts.map((part, i) => {
     if (/^\{\{[\w-]+\}\}$/.test(part)) {
@@ -103,6 +128,17 @@ export default function PromptWorkshop() {
   const [handoverCopied, setHandoverCopied] = useState(false);
 
   const [status, setStatus] = useState("");
+
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSessionsList, setShowSessionsList] = useState(false);
+  const [sessions, setSessions] = useState<PWSession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [saveClientName, setSaveClientName] = useState("");
+  const [saveSessionName, setSaveSessionName] = useState("");
+  const [saveVersion, setSaveVersion] = useState("1.0");
+  const [saveTags, setSaveTags] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -383,6 +419,112 @@ export default function PromptWorkshop() {
     setTimeout(() => setHandoverCopied(false), 2000);
   };
 
+  const loadSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await fetch("/api/admin/prompt-workshop/sessions", { headers: authHeaders() });
+      if (res.ok) setSessions(await res.json());
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
+    }
+    setSessionsLoading(false);
+  };
+
+  const saveSessionHandler = async () => {
+    if (!saveClientName.trim() || !saveSessionName.trim()) return;
+    setSaving(true);
+    try {
+      const payload = {
+        clientName: saveClientName,
+        sessionName: saveSessionName,
+        version: saveVersion,
+        tags: saveTags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean),
+      };
+
+      let res;
+      if (currentSessionId) {
+        res = await fetch(`/api/admin/prompt-workshop/sessions/${currentSessionId}`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch("/api/admin/prompt-workshop/sessions", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (res.ok) {
+        const saved = await res.json();
+        setCurrentSessionId(saved.id);
+        setShowSaveModal(false);
+        setStatus("Session saved");
+        setTimeout(() => setStatus(""), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to save session:", err);
+    }
+    setSaving(false);
+  };
+
+  const loadSessionData = (session: PWSession) => {
+    setCurrentSessionId(session.id);
+    setSaveClientName(session.clientName);
+    setSaveSessionName(session.sessionName);
+    setSaveVersion(session.version);
+    setSaveTags(session.tags.join(", "));
+    setShowSessionsList(false);
+    setStatus(`Loaded session: ${session.sessionName}`);
+    setTimeout(() => setStatus(""), 3000);
+  };
+
+  const deleteSessionHandler = async (id: string) => {
+    if (!confirm("Delete this saved session?")) return;
+    try {
+      const res = await fetch(`/api/admin/prompt-workshop/sessions/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        setSessions((prev) => prev.filter((s) => s.id !== id));
+        if (currentSessionId === id) setCurrentSessionId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete session:", err);
+    }
+  };
+
+  const exportSession = async () => {
+    if (!currentSessionId) {
+      setStatus("Save the session first before exporting.");
+      setTimeout(() => setStatus(""), 3000);
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/prompt-workshop/sessions/${currentSessionId}/export`, {
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "Prompt-Library.md";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Failed to export session:", err);
+    }
+  };
+
   if (!authed || loading) {
     return (
       <div className="min-h-screen bg-neutral-950 flex items-center justify-center">
@@ -414,7 +556,40 @@ export default function PromptWorkshop() {
               <span className="text-purple-400">PE</span> Prompt Workshop
             </h1>
           </div>
-          {status && <span className="text-sm text-emerald-400">{status}</span>}
+          <div className="flex items-center gap-2">
+            {status && <span className="text-sm text-emerald-400">{status}</span>}
+            {currentSessionId && (
+              <span className="text-xs text-neutral-500 hidden sm:inline">
+                {saveClientName} / {saveSessionName}
+              </span>
+            )}
+            <button
+              onClick={() => {
+                loadSessions();
+                setShowSessionsList(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sessions</span>
+            </button>
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-purple-500 hover:bg-purple-400 text-white font-medium rounded-lg transition-colors"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Save</span>
+            </button>
+            {currentSessionId && (
+              <button
+                onClick={exportSession}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -917,6 +1092,163 @@ export default function PromptWorkshop() {
                       {testOutput}
                     </pre>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+              <h2 className="font-semibold text-lg text-neutral-100">
+                {currentSessionId ? "Update Session" : "Save Session"}
+              </h2>
+              <button onClick={() => setShowSaveModal(false)} className="text-neutral-400 hover:text-neutral-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                  Client Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={saveClientName}
+                  onChange={(e) => setSaveClientName(e.target.value)}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-purple-500/50"
+                  placeholder="e.g., Acme Corp"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                  Session Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={saveSessionName}
+                  onChange={(e) => setSaveSessionName(e.target.value)}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-purple-500/50"
+                  placeholder="e.g., Q1 Content Prompts"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">Version</label>
+                  <input
+                    type="text"
+                    value={saveVersion}
+                    onChange={(e) => setSaveVersion(e.target.value)}
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-purple-500/50"
+                    placeholder="1.0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-neutral-300 mb-1.5">Tags</label>
+                  <input
+                    type="text"
+                    value={saveTags}
+                    onChange={(e) => setSaveTags(e.target.value)}
+                    className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-purple-500/50"
+                    placeholder="marketing, v1"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-neutral-800">
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveSessionHandler}
+                disabled={saving || !saveClientName.trim() || !saveSessionName.trim()}
+                className="flex items-center gap-2 px-5 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    {currentSessionId ? "Update" : "Save"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSessionsList && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+              <h2 className="font-semibold text-lg text-neutral-100">Saved Sessions</h2>
+              <button onClick={() => setShowSessionsList(false)} className="text-neutral-400 hover:text-neutral-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              {sessionsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : sessions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FolderOpen className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
+                  <p className="text-neutral-400 text-sm">No saved sessions yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sessions.map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-4 hover:border-neutral-600 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-neutral-100 text-sm">{s.clientName}</span>
+                            <span className="text-xs bg-purple-400/15 text-purple-300 px-2 py-0.5 rounded-full">
+                              {s.sessionName}
+                            </span>
+                            <span className="text-xs text-neutral-500">v{s.version}</span>
+                          </div>
+                          <p className="text-xs text-neutral-400">
+                            {s.prompts.length} prompt{s.prompts.length !== 1 ? "s" : ""}
+                            {s.tags.length > 0 && ` · ${s.tags.join(", ")}`}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-neutral-500">
+                            <Clock className="w-3 h-3" />
+                            Updated {new Date(s.updatedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-3 shrink-0">
+                          <button
+                            onClick={() => loadSessionData(s)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 rounded-md text-xs text-purple-300 transition-colors"
+                          >
+                            <FolderOpen className="w-3 h-3" />
+                            Open
+                          </button>
+                          <button
+                            onClick={() => deleteSessionHandler(s.id)}
+                            className="flex items-center gap-1 px-2 py-1.5 bg-neutral-800 hover:bg-red-500/15 border border-neutral-700 hover:border-red-500/30 rounded-md text-xs text-neutral-400 hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

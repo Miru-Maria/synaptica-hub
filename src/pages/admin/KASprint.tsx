@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Loader2, RefreshCw, Copy, Check, ChevronRight } from "lucide-react";
+import { ArrowLeft, Loader2, RefreshCw, Copy, Check, ChevronRight, Save, FolderOpen, Download, Trash2, X, Clock } from "lucide-react";
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
@@ -23,6 +23,22 @@ const stepNumbers: Record<Step, number> = {
   document: 4,
 };
 
+interface KASession {
+  id: string;
+  clientName: string;
+  sessionDate: string;
+  step: string;
+  domain: string;
+  currentStructure: string;
+  primaryUseCase: string;
+  targetSystem: string;
+  taxonomyContent: string;
+  retrievalContent: string;
+  documentContent: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function KASprint() {
   const [, setLocation] = useLocation();
   const [authed, setAuthed] = useState(false);
@@ -41,6 +57,16 @@ export default function KASprint() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
+  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [showSessionsList, setShowSessionsList] = useState(false);
+  const [sessions, setSessions] = useState<KASession[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [saveClientName, setSaveClientName] = useState("");
+  const [saveSessionDate, setSaveSessionDate] = useState(new Date().toISOString().split("T")[0]);
+  const [saving, setSaving] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
+  const [saveStatus, setSaveStatus] = useState("");
+
   const checkAuth = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/me", { headers: authHeaders() });
@@ -57,6 +83,118 @@ export default function KASprint() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  const loadSessions = async () => {
+    setSessionsLoading(true);
+    try {
+      const res = await fetch("/api/admin/ka-sprint/sessions", { headers: authHeaders() });
+      if (res.ok) setSessions(await res.json());
+    } catch (err) {
+      console.error("Failed to load sessions:", err);
+    }
+    setSessionsLoading(false);
+  };
+
+  const saveSession = async () => {
+    if (!saveClientName.trim()) return;
+    setSaving(true);
+    try {
+      const payload = {
+        clientName: saveClientName,
+        sessionDate: saveSessionDate,
+        step,
+        domain,
+        currentStructure,
+        primaryUseCase,
+        targetSystem,
+        taxonomyContent,
+        retrievalContent,
+        documentContent,
+      };
+
+      let res;
+      if (currentSessionId) {
+        res = await fetch(`/api/admin/ka-sprint/sessions/${currentSessionId}`, {
+          method: "PUT",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+      } else {
+        res = await fetch("/api/admin/ka-sprint/sessions", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify(payload),
+        });
+      }
+
+      if (res.ok) {
+        const saved = await res.json();
+        setCurrentSessionId(saved.id);
+        setShowSaveModal(false);
+        setSaveStatus("Session saved");
+        setTimeout(() => setSaveStatus(""), 3000);
+      }
+    } catch (err) {
+      console.error("Failed to save session:", err);
+    }
+    setSaving(false);
+  };
+
+  const loadSession = (session: KASession) => {
+    setDomain(session.domain);
+    setCurrentStructure(session.currentStructure);
+    setPrimaryUseCase(session.primaryUseCase);
+    setTargetSystem(session.targetSystem);
+    setTaxonomyContent(session.taxonomyContent);
+    setRetrievalContent(session.retrievalContent);
+    setDocumentContent(session.documentContent);
+    setStep(session.step as Step);
+    setCurrentSessionId(session.id);
+    setSaveClientName(session.clientName);
+    setSaveSessionDate(session.sessionDate);
+    setShowSessionsList(false);
+  };
+
+  const deleteSession = async (id: string) => {
+    if (!confirm("Delete this saved session?")) return;
+    try {
+      const res = await fetch(`/api/admin/ka-sprint/sessions/${id}`, {
+        method: "DELETE",
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        setSessions((prev) => prev.filter((s) => s.id !== id));
+        if (currentSessionId === id) setCurrentSessionId(null);
+      }
+    } catch (err) {
+      console.error("Failed to delete session:", err);
+    }
+  };
+
+  const exportSession = async () => {
+    if (!currentSessionId) {
+      setError("Save the session first before exporting.");
+      return;
+    }
+    try {
+      const res = await fetch(`/api/admin/ka-sprint/sessions/${currentSessionId}/export`, {
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = res.headers.get("Content-Disposition")?.split("filename=")[1]?.replace(/"/g, "") || "KA-Deliverable.md";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (err) {
+      console.error("Failed to export session:", err);
+    }
+  };
 
   const generateTaxonomy = async () => {
     setLoading(true);
@@ -183,6 +321,40 @@ export default function KASprint() {
             <h1 className="font-semibold text-lg">
               <span className="text-emerald-400">KA</span> Sprint
             </h1>
+          </div>
+          <div className="flex items-center gap-2">
+            {saveStatus && <span className="text-sm text-emerald-400">{saveStatus}</span>}
+            {currentSessionId && (
+              <span className="text-xs text-neutral-500 hidden sm:inline">
+                {saveClientName}
+              </span>
+            )}
+            <button
+              onClick={() => {
+                loadSessions();
+                setShowSessionsList(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors"
+            >
+              <FolderOpen className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sessions</span>
+            </button>
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium rounded-lg transition-colors"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Save</span>
+            </button>
+            {currentSessionId && (
+              <button
+                onClick={exportSession}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Export</span>
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -461,6 +633,8 @@ export default function KASprint() {
                   setTaxonomyContent("");
                   setRetrievalContent("");
                   setDocumentContent("");
+                  setCurrentSessionId(null);
+                  setSaveClientName("");
                 }}
                 className="px-4 py-2.5 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-sm transition-colors"
               >
@@ -470,6 +644,134 @@ export default function KASprint() {
           </div>
         )}
       </div>
+
+      {showSaveModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+              <h2 className="font-semibold text-lg text-neutral-100">
+                {currentSessionId ? "Update Session" : "Save Session"}
+              </h2>
+              <button onClick={() => setShowSaveModal(false)} className="text-neutral-400 hover:text-neutral-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1.5">
+                  Client Name <span className="text-red-400">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={saveClientName}
+                  onChange={(e) => setSaveClientName(e.target.value)}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-emerald-400/50"
+                  placeholder="e.g., Acme Corp"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-neutral-300 mb-1.5">Session Date</label>
+                <input
+                  type="date"
+                  value={saveSessionDate}
+                  onChange={(e) => setSaveSessionDate(e.target.value)}
+                  className="w-full bg-neutral-800 border border-neutral-700 rounded-lg px-4 py-2.5 text-sm text-neutral-100 focus:outline-none focus:border-emerald-400/50"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-neutral-800">
+              <button
+                onClick={() => setShowSaveModal(false)}
+                className="px-4 py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 rounded-lg text-sm transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveSession}
+                disabled={saving || !saveClientName.trim()}
+                className="flex items-center gap-2 px-5 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saving…
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    {currentSessionId ? "Update" : "Save"}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showSessionsList && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-neutral-900 border border-neutral-700 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-800">
+              <h2 className="font-semibold text-lg text-neutral-100">Saved Sessions</h2>
+              <button onClick={() => setShowSessionsList(false)} className="text-neutral-400 hover:text-neutral-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-4 overflow-y-auto flex-1">
+              {sessionsLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin text-neutral-400" />
+                </div>
+              ) : sessions.length === 0 ? (
+                <div className="text-center py-12">
+                  <FolderOpen className="w-12 h-12 text-neutral-600 mx-auto mb-3" />
+                  <p className="text-neutral-400 text-sm">No saved sessions yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {sessions.map((s) => (
+                    <div
+                      key={s.id}
+                      className="bg-neutral-800/50 border border-neutral-700 rounded-xl p-4 hover:border-neutral-600 transition-colors"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-neutral-100 text-sm">{s.clientName}</span>
+                            <span className="text-xs bg-emerald-400/15 text-emerald-400 px-2 py-0.5 rounded-full">
+                              Step: {s.step}
+                            </span>
+                          </div>
+                          <p className="text-xs text-neutral-400 truncate">{s.domain || "No domain specified"}</p>
+                          <div className="flex items-center gap-2 mt-1.5 text-xs text-neutral-500">
+                            <Clock className="w-3 h-3" />
+                            {s.sessionDate} · Updated {new Date(s.updatedAt).toLocaleDateString()}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 ml-3 shrink-0">
+                          <button
+                            onClick={() => loadSession(s)}
+                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 rounded-md text-xs text-emerald-300 transition-colors"
+                          >
+                            <FolderOpen className="w-3 h-3" />
+                            Open
+                          </button>
+                          <button
+                            onClick={() => deleteSession(s.id)}
+                            className="flex items-center gap-1 px-2 py-1.5 bg-neutral-800 hover:bg-red-500/15 border border-neutral-700 hover:border-red-500/30 rounded-md text-xs text-neutral-400 hover:text-red-400 transition-colors"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
