@@ -395,6 +395,8 @@ export interface AdminSettings {
   emailNotificationsEnabled: boolean;
   adminEmail: string;
   calendlyUrl?: string;
+  chatWidgetEnabled: boolean;
+  chatSystemPrompt: string;
 }
 
 const HIGH_PRIORITY_TYPES: NotificationType[] = ["discovery_call", "new_subscriber"];
@@ -454,25 +456,29 @@ export async function markAllNotificationsRead(): Promise<void> {
 export async function getAdminSettings(): Promise<AdminSettings> {
   const { rows } = await pool.query("SELECT * FROM admin_settings WHERE id = 1");
   if (rows.length === 0) {
-    return { emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: undefined };
+    return { emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: undefined, chatWidgetEnabled: true, chatSystemPrompt: "" };
   }
   const r = rows[0];
   return {
     emailNotificationsEnabled: r.email_notifications_enabled,
     adminEmail: r.admin_email,
     calendlyUrl: r.calendly_url ?? undefined,
+    chatWidgetEnabled: r.chat_widget_enabled ?? true,
+    chatSystemPrompt: r.chat_system_prompt ?? "",
   };
 }
 
 export async function saveAdminSettings(settings: AdminSettings): Promise<void> {
   await pool.query(
-    `INSERT INTO admin_settings (id, email_notifications_enabled, admin_email, calendly_url)
-     VALUES (1, $1, $2, $3)
+    `INSERT INTO admin_settings (id, email_notifications_enabled, admin_email, calendly_url, chat_widget_enabled, chat_system_prompt)
+     VALUES (1, $1, $2, $3, $4, $5)
      ON CONFLICT (id) DO UPDATE SET
        email_notifications_enabled = EXCLUDED.email_notifications_enabled,
        admin_email = EXCLUDED.admin_email,
-       calendly_url = EXCLUDED.calendly_url`,
-    [settings.emailNotificationsEnabled, settings.adminEmail, settings.calendlyUrl ?? null]
+       calendly_url = EXCLUDED.calendly_url,
+       chat_widget_enabled = EXCLUDED.chat_widget_enabled,
+       chat_system_prompt = EXCLUDED.chat_system_prompt`,
+    [settings.emailNotificationsEnabled, settings.adminEmail, settings.calendlyUrl ?? null, settings.chatWidgetEnabled, settings.chatSystemPrompt]
   );
 }
 
@@ -696,7 +702,7 @@ export async function getMetrics(): Promise<MetricsResponse> {
 }
 
 export type PipelineStage = "New Lead" | "Contacted" | "Proposal Sent" | "Active Client" | "Closed";
-export type ContactSource = "discovery_call" | "tool_email_capture" | "manual";
+export type ContactSource = "discovery_call" | "tool_email_capture" | "manual" | "ai_chat";
 
 export interface PipelineContact {
   id: string;
@@ -776,5 +782,134 @@ export async function updatePipelineContact(id: string, updates: Partial<Pipelin
 
 export async function deletePipelineContact(id: string): Promise<boolean> {
   const result = await pool.query("DELETE FROM pipeline_contacts WHERE id = $1", [id]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+export interface ChatSession {
+  id: string;
+  visitorName: string;
+  visitorEmail: string;
+  leadCaptured: boolean;
+  pipelineContactId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  sessionId: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  createdAt: string;
+}
+
+export interface ChatSessionWithMessages extends ChatSession {
+  messages: ChatMessage[];
+  messageCount: number;
+}
+
+function rowToChatSession(r: Record<string, unknown>): ChatSession {
+  return {
+    id: r.id as string,
+    visitorName: r.visitor_name as string,
+    visitorEmail: r.visitor_email as string,
+    leadCaptured: r.lead_captured as boolean,
+    pipelineContactId: (r.pipeline_contact_id as string | null) ?? undefined,
+    createdAt: r.created_at as string,
+    updatedAt: r.updated_at as string,
+  };
+}
+
+function rowToChatMessage(r: Record<string, unknown>): ChatMessage {
+  return {
+    id: r.id as string,
+    sessionId: r.session_id as string,
+    role: r.role as "user" | "assistant" | "system",
+    content: r.content as string,
+    createdAt: r.created_at as string,
+  };
+}
+
+export async function createChatSession(): Promise<ChatSession> {
+  const session: ChatSession = {
+    id: `chat-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    visitorName: "",
+    visitorEmail: "",
+    leadCaptured: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  await pool.query(
+    `INSERT INTO chat_sessions (id, visitor_name, visitor_email, lead_captured, pipeline_contact_id, created_at, updated_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+    [session.id, session.visitorName, session.visitorEmail, session.leadCaptured, null, session.createdAt, session.updatedAt]
+  );
+  return session;
+}
+
+export async function getChatSession(id: string): Promise<ChatSession | null> {
+  const { rows } = await pool.query("SELECT * FROM chat_sessions WHERE id = $1", [id]);
+  return rows.length > 0 ? rowToChatSession(rows[0]) : null;
+}
+
+export async function updateChatSession(id: string, updates: Partial<Pick<ChatSession, "visitorName" | "visitorEmail" | "leadCaptured" | "pipelineContactId">>): Promise<ChatSession | null> {
+  const session = await getChatSession(id);
+  if (!session) return null;
+  const updated = { ...session, ...updates, updatedAt: new Date().toISOString() };
+  await pool.query(
+    `UPDATE chat_sessions SET visitor_name=$1, visitor_email=$2, lead_captured=$3, pipeline_contact_id=$4, updated_at=$5 WHERE id=$6`,
+    [updated.visitorName, updated.visitorEmail, updated.leadCaptured, updated.pipelineContactId ?? null, updated.updatedAt, id]
+  );
+  return updated;
+}
+
+export async function addChatMessage(sessionId: string, role: "user" | "assistant", content: string): Promise<ChatMessage> {
+  const message: ChatMessage = {
+    id: `msg-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    sessionId,
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+  };
+  await pool.query(
+    `INSERT INTO chat_messages (id, session_id, role, content, created_at) VALUES ($1,$2,$3,$4,$5)`,
+    [message.id, message.sessionId, message.role, message.content, message.createdAt]
+  );
+  await pool.query("UPDATE chat_sessions SET updated_at = $1 WHERE id = $2", [message.createdAt, sessionId]);
+  return message;
+}
+
+export async function getChatSessionMessages(sessionId: string): Promise<ChatMessage[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC",
+    [sessionId]
+  );
+  return rows.map(rowToChatMessage);
+}
+
+export async function getChatSessions(): Promise<ChatSessionWithMessages[]> {
+  const { rows: sessionRows } = await pool.query(
+    "SELECT cs.*, COALESCE(mc.msg_count, 0) as msg_count FROM chat_sessions cs LEFT JOIN (SELECT session_id, COUNT(*) as msg_count FROM chat_messages GROUP BY session_id) mc ON cs.id = mc.session_id ORDER BY cs.updated_at DESC LIMIT 200"
+  );
+  return sessionRows.map((r) => ({
+    ...rowToChatSession(r),
+    messages: [],
+    messageCount: Number(r.msg_count || 0),
+  }));
+}
+
+export async function getChatSessionWithMessages(id: string): Promise<ChatSessionWithMessages | null> {
+  const session = await getChatSession(id);
+  if (!session) return null;
+  const { rows: msgRows } = await pool.query(
+    "SELECT * FROM chat_messages WHERE session_id = $1 ORDER BY created_at ASC",
+    [id]
+  );
+  const messages = msgRows.map(rowToChatMessage);
+  return { ...session, messages, messageCount: messages.length };
+}
+
+export async function deleteChatSession(id: string): Promise<boolean> {
+  const result = await pool.query("DELETE FROM chat_sessions WHERE id = $1", [id]);
   return (result.rowCount ?? 0) > 0;
 }

@@ -7,11 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
 import InvoiceManager from "./InvoiceManager";
+import ChatSessionsViewer from "./ChatSessionsViewer";
 import NotificationBell from "@/components/NotificationBell";
 import AnalyticsOverview from "./AnalyticsOverview";
 
@@ -109,7 +110,7 @@ export default function AdminDashboard() {
   const [status, setStatus] = useState("");
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
-  const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: "" });
+  const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: "", chatWidgetEnabled: true, chatSystemPrompt: "" });
   const [savingSettings, setSavingSettings] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -466,6 +467,7 @@ export default function AdminDashboard() {
             {navBtn("pipeline", Users, "Pipeline")}
             {navBtn("inquiries", Inbox, "Inquiries", inquiries.length || undefined)}
             {navBtn("leads", Mail, "Email Leads", leads.length || undefined)}
+            {navBtn("chat-sessions", Bot, "Chat Sessions")}
             {navBtn("invoicing", Receipt, "Invoicing")}
 
             <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Tools</p>
@@ -488,6 +490,7 @@ export default function AdminDashboard() {
           {mobileNavBtn("pipeline", Users, "Pipeline")}
           {mobileNavBtn("inquiries", Inbox, "Inquiries")}
           {mobileNavBtn("leads", Mail, "Leads")}
+          {mobileNavBtn("chat-sessions", Bot, "Chat")}
           {mobileNavBtn("invoicing", Receipt, "Invoicing")}
           {mobileNavBtn("internal", Hammer, "Tools")}
           {mobileNavBtn("metrics", Activity, "Metrics")}
@@ -1292,6 +1295,10 @@ export default function AdminDashboard() {
             )}
           </div>
 
+          <div className={activeTab === "chat-sessions" ? "mt-6" : "hidden"}>
+            <ChatSessionsViewer />
+          </div>
+
           <div className={activeTab === "invoicing" ? "mt-6" : "hidden"}>
             <InvoiceManager />
           </div>
@@ -1333,6 +1340,37 @@ export default function AdminDashboard() {
                     />
                   </div>
                 )}
+                <div className="space-y-2 pt-2 border-t border-neutral-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-neutral-200">AI Chat Widget</Label>
+                      <p className="text-xs text-neutral-500 mt-0.5">
+                        Show the AI sales assistant chat bubble on the public site.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={adminSettings.chatWidgetEnabled}
+                      onCheckedChange={(checked) =>
+                        setAdminSettings((prev) => ({ ...prev, chatWidgetEnabled: checked }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 mt-3">
+                    <Label className="text-neutral-400 text-xs">Assistant System Prompt (optional override)</Label>
+                    <p className="text-[10px] text-neutral-600">
+                      Leave empty to use the default Synaptica assistant prompt. Customize to change the assistant's persona, knowledge, or behavior.
+                    </p>
+                    <Textarea
+                      value={adminSettings.chatSystemPrompt}
+                      onChange={(e) =>
+                        setAdminSettings((prev) => ({ ...prev, chatSystemPrompt: e.target.value }))
+                      }
+                      placeholder="Leave empty for default prompt..."
+                      rows={6}
+                      className="bg-neutral-800 border-neutral-700 text-neutral-100 text-xs"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-2 pt-2 border-t border-neutral-700">
                   <Label className="text-neutral-200">Booking Calendar URL</Label>
                   <p className="text-xs text-neutral-500 mt-0.5">

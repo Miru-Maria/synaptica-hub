@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Plus, Trash2, Edit, Users, DollarSign, TrendingUp, Filter, X, ChevronDown, ChevronUp } from "lucide-react";
 
 type PipelineStage = "New Lead" | "Contacted" | "Proposal Sent" | "Active Client" | "Closed";
-type ContactSource = "discovery_call" | "tool_email_capture" | "manual";
+type ContactSource = "discovery_call" | "tool_email_capture" | "manual" | "ai_chat";
 
 interface PipelineContact {
   id: string;
@@ -28,7 +28,7 @@ interface PipelineContact {
 }
 
 const STAGES: PipelineStage[] = ["New Lead", "Contacted", "Proposal Sent", "Active Client", "Closed"];
-const SOURCES: ContactSource[] = ["discovery_call", "tool_email_capture", "manual"];
+const SOURCES: ContactSource[] = ["discovery_call", "tool_email_capture", "manual", "ai_chat"];
 
 const STAGE_COLORS: Record<PipelineStage, string> = {
   "New Lead": "bg-blue-500/15 text-blue-400 border-blue-500/30",
@@ -42,6 +42,7 @@ const SOURCE_LABELS: Record<ContactSource, string> = {
   discovery_call: "Discovery Call",
   tool_email_capture: "Tool Email",
   manual: "Manual",
+  ai_chat: "AI Chat",
 };
 
 function authHeaders(): Record<string, string> {

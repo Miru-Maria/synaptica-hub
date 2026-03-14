@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -411,7 +411,7 @@ adminRouter.get("/metrics", requireAuth, async (_req: Request, res: Response) =>
 });
 
 const VALID_STAGES: PipelineStage[] = ["New Lead", "Contacted", "Proposal Sent", "Active Client", "Closed"];
-const VALID_SOURCES: ContactSource[] = ["discovery_call", "tool_email_capture", "manual"];
+const VALID_SOURCES: ContactSource[] = ["discovery_call", "tool_email_capture", "manual", "ai_chat"];
 
 adminRouter.get("/pipeline", requireAuth, async (_req: Request, res: Response) => {
   try {
@@ -660,7 +660,7 @@ adminRouter.get("/settings", requireAuth, async (_req: Request, res: Response) =
 });
 
 adminRouter.put("/settings", requireAuth, async (req: Request, res: Response) => {
-  const { emailNotificationsEnabled, adminEmail, calendlyUrl } = req.body;
+  const { emailNotificationsEnabled, adminEmail, calendlyUrl, chatWidgetEnabled, chatSystemPrompt } = req.body;
   if (typeof emailNotificationsEnabled !== "boolean") {
     res.status(400).json({ error: "emailNotificationsEnabled must be a boolean" });
     return;
@@ -669,10 +669,13 @@ adminRouter.put("/settings", requireAuth, async (req: Request, res: Response) =>
     res.status(400).json({ error: "adminEmail must be a string" });
     return;
   }
+  const currentSettings = await getAdminSettings();
   const settings: AdminSettings = {
     emailNotificationsEnabled,
     adminEmail,
     calendlyUrl: typeof calendlyUrl === "string" ? calendlyUrl.trim() : undefined,
+    chatWidgetEnabled: typeof chatWidgetEnabled === "boolean" ? chatWidgetEnabled : currentSettings.chatWidgetEnabled,
+    chatSystemPrompt: typeof chatSystemPrompt === "string" ? chatSystemPrompt : currentSettings.chatSystemPrompt,
   };
   try {
     await saveAdminSettings(settings);
@@ -680,6 +683,44 @@ adminRouter.put("/settings", requireAuth, async (req: Request, res: Response) =>
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save settings" });
+  }
+});
+
+adminRouter.get("/chat-sessions", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const sessions = await getChatSessions();
+    res.json(sessions);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load chat sessions" });
+  }
+});
+
+adminRouter.get("/chat-sessions/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const session = await getChatSessionWithMessages(req.params.id);
+    if (!session) {
+      res.status(404).json({ error: "Chat session not found" });
+      return;
+    }
+    res.json(session);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load chat session" });
+  }
+});
+
+adminRouter.delete("/chat-sessions/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const deleted = await deleteChatSession(req.params.id);
+    if (!deleted) {
+      res.status(404).json({ error: "Chat session not found" });
+      return;
+    }
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete chat session" });
   }
 });
 

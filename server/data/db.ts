@@ -133,7 +133,9 @@ export async function initDb(): Promise<void> {
       id INTEGER PRIMARY KEY DEFAULT 1,
       email_notifications_enabled BOOLEAN NOT NULL DEFAULT false,
       admin_email TEXT NOT NULL DEFAULT '',
-      calendly_url TEXT
+      calendly_url TEXT,
+      chat_widget_enabled BOOLEAN NOT NULL DEFAULT true,
+      chat_system_prompt TEXT NOT NULL DEFAULT ''
     );
 
     CREATE TABLE IF NOT EXISTS email_leads (
@@ -171,7 +173,31 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+      id VARCHAR(100) PRIMARY KEY,
+      visitor_name TEXT NOT NULL DEFAULT '',
+      visitor_email TEXT NOT NULL DEFAULT '',
+      lead_captured BOOLEAN NOT NULL DEFAULT false,
+      pipeline_contact_id TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id VARCHAR(100) PRIMARY KEY,
+      session_id VARCHAR(100) NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      created_at TEXT NOT NULL
+    );
   `);
+
+  try {
+    await pool.query("ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS chat_widget_enabled BOOLEAN NOT NULL DEFAULT true");
+    await pool.query("ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS chat_system_prompt TEXT NOT NULL DEFAULT ''");
+  } catch {
+  }
 
   await seedDefaults();
 }

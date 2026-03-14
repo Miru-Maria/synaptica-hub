@@ -154,6 +154,19 @@ A documentation gap analysis tool accessible at `/docaudit`. Users submit knowle
 
 Content is chunked, embedded via OpenAI, and compared against user-selected topic taxonomies (4 presets + custom topics). Results show coverage scores, radar chart visualization, severity-ranked gaps, and actionable recommendations. Reports can be exported as branded PDF with Synaptica logo, dark header, severity breakdown, section-by-section findings, priority recommendations, and paginated footer.
 
+## AI Sales Assistant Chat Widget
+
+A GPT-4o powered chat widget on the public site acting as a knowledgeable sales assistant. Features:
+- **Chat bubble**: Floating emerald bubble on all public pages (hidden on `/admin/*` routes). Opens into an expandable chat panel with message history and typing indicator.
+- **AI backend**: `POST /api/chat` endpoint uses GPT-4o with a system prompt encoding Synaptica's services, pricing tiers, tools, and Miruna's tone. Rate-limited to 10 messages/minute per IP.
+- **Lead capture**: When the assistant detects buying intent and collects name + email, it automatically creates a pipeline contact tagged as "ai_chat" source, updates the chat session, and triggers a notification.
+- **Session persistence**: Chat sessions and messages stored in `chat_sessions` and `chat_messages` PostgreSQL tables. Sessions track visitor name/email, lead capture status, and linked pipeline contact.
+- **Admin transcript viewer**: "Chat Sessions" tab in admin dashboard. Browse all conversations, see which resulted in a captured lead, and read full transcripts.
+- **Admin controls**: Settings panel includes chat widget on/off toggle and system prompt editor. Widget status checked via `GET /api/chat/widget-status` (public endpoint).
+- **Source type**: `ai_chat` added to `ContactSource` type in both backend and PipelineManager frontend.
+- **Files**: `server/routes/chat.ts`, `src/components/ChatWidget.tsx`, `src/pages/admin/ChatSessionsViewer.tsx`
+- **DB tables**: `chat_sessions`, `chat_messages`; `admin_settings` extended with `chat_widget_enabled` and `chat_system_prompt` columns.
+
 ## Known Notes (Non-Critical)
 
 - **Production SSL deprecation warning** — On startup, the `pg` library prints a "SECURITY WARNING" about SSL mode changes coming in pg v9. This is cosmetic. The database connects and initializes correctly ("Database initialized" always follows). No action needed until upgrading to pg v9.

@@ -16,6 +16,7 @@ import KASprint from "@/pages/admin/KASprint";
 import RAGPipeline from "@/pages/admin/RAGPipeline";
 import PromptWorkshop from "@/pages/admin/PromptWorkshop";
 import MonthlyRetainer from "@/pages/admin/MonthlyRetainer";
+import ChatWidget from "@/components/ChatWidget";
 
 const queryClient = new QueryClient();
 
@@ -70,6 +71,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <WouterRouter base={base}>
         <Router />
+        <ChatWidget />
       </WouterRouter>
     </QueryClientProvider>
   );

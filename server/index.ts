@@ -12,6 +12,7 @@ import { kaSprintRouter } from "./routes/ka-sprint.js";
 import { ragRouter } from "./routes/rag.js";
 import { promptWorkshopRouter } from "./routes/prompt-workshop.js";
 import { blogRouter } from "./routes/blog.js";
+import { chatRouter } from "./routes/chat.js";
 import { checkRetainerCheckins } from "./data/store.js";
 import { initDb } from "./data/db.js";
 
@@ -33,6 +34,7 @@ app.use("/api/admin/ka-sprint", kaSprintRouter);
 app.use("/api/admin/rag", ragRouter);
 app.use("/api/admin/prompt-workshop", promptWorkshopRouter);
 app.use("/api/blog", blogRouter);
+app.use("/api/chat", chatRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/public", publicRouter);
 
