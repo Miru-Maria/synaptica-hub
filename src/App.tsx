@@ -6,6 +6,7 @@ import LearningOSPage from "@/pages/LearningOS";
 import Legal from "@/pages/Legal";
 import DocAudit from "@/pages/DocAudit";
 import WorkWithMe from "@/pages/WorkWithMe";
+import Results from "@/pages/Results";
 import Blog from "@/pages/Blog";
 import BlogArticle from "@/pages/BlogArticle";
 import NotFound from "@/pages/not-found";
@@ -35,6 +36,7 @@ function Router() {
       <Route path="/privacy" component={Legal} />
       <Route path="/refund" component={Legal} />
       <Route path="/work-with-me" component={WorkWithMe} />
+      <Route path="/results" component={Results} />
       <Route path="/blog/:slug" component={BlogArticle} />
       <Route path="/blog" component={Blog} />
       <Route path="/docaudit" component={DocAudit} />

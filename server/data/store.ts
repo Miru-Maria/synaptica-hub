@@ -594,6 +594,7 @@ export interface Notification {
 export interface AdminSettings {
   emailNotificationsEnabled: boolean;
   adminEmail: string;
+  calendlyUrl?: string;
 }
 
 const NOTIFICATIONS_FILE = path.join(DATA_DIR, "notifications.json");

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact, addNotification } from "../data/store.js";
+import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact, addNotification, getAdminSettings } from "../data/store.js";
 import type { DiscoveryInquiry, EmailLead, PipelineContact } from "../data/store.js";
 
 export const publicRouter = Router();
@@ -99,4 +99,9 @@ publicRouter.post("/capture-email", (req: Request, res: Response) => {
     "/admin?tab=leads"
   );
   res.json({ ok: true });
+});
+
+publicRouter.get("/booking-url", (_req: Request, res: Response) => {
+  const settings = getAdminSettings();
+  res.json({ calendlyUrl: settings.calendlyUrl || null });
 });

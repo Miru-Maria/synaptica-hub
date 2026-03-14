@@ -579,7 +579,7 @@ adminRouter.get("/settings", requireAuth, (_req: Request, res: Response) => {
 });
 
 adminRouter.put("/settings", requireAuth, (req: Request, res: Response) => {
-  const { emailNotificationsEnabled, adminEmail } = req.body;
+  const { emailNotificationsEnabled, adminEmail, calendlyUrl } = req.body;
   if (typeof emailNotificationsEnabled !== "boolean") {
     res.status(400).json({ error: "emailNotificationsEnabled must be a boolean" });
     return;
@@ -588,7 +588,11 @@ adminRouter.put("/settings", requireAuth, (req: Request, res: Response) => {
     res.status(400).json({ error: "adminEmail must be a string" });
     return;
   }
-  const settings: AdminSettings = { emailNotificationsEnabled, adminEmail };
+  const settings: AdminSettings = {
+    emailNotificationsEnabled,
+    adminEmail,
+    calendlyUrl: typeof calendlyUrl === "string" ? calendlyUrl.trim() : undefined,
+  };
   saveAdminSettings(settings);
   res.json({ ok: true });
 });

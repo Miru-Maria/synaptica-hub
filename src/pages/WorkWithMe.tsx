@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, Calendar, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
@@ -22,6 +22,33 @@ export default function WorkWithMe() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [calendlyUrl, setCalendlyUrl] = useState<string | null>(null);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
+
+  useEffect(() => {
+    fetch("/api/public/booking-url")
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((data) => {
+        if (data.calendlyUrl) setCalendlyUrl(data.calendlyUrl);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!calendlyUrl) return;
+    if (scriptRef.current) return;
+    const script = document.createElement("script");
+    script.src = "https://assets.calendly.com/assets/external/widget.js";
+    script.async = true;
+    scriptRef.current = script;
+    document.body.appendChild(script);
+    return () => {
+      if (scriptRef.current) {
+        document.body.removeChild(scriptRef.current);
+        scriptRef.current = null;
+      }
+    };
+  }, [calendlyUrl]);
 
   const canSubmit = form.name && form.company && form.challenge && form.timeline;
 
@@ -212,15 +239,23 @@ export default function WorkWithMe() {
                   Prefer to talk it through? Schedule a free 30-minute discovery call.
                 </p>
                 <div className="rounded-xl overflow-hidden border border-white/10 bg-black/40 min-h-[320px] flex items-center justify-center">
-                  <div className="text-center p-6">
-                    <Calendar className="w-10 h-10 text-primary/40 mx-auto mb-3" />
-                    <p className="text-sm text-muted-foreground">
-                      Calendly integration coming soon.
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-2">
-                      In the meantime, submit the form and I'll send you a scheduling link.
-                    </p>
-                  </div>
+                  {calendlyUrl ? (
+                    <div
+                      className="calendly-inline-widget w-full"
+                      data-url={calendlyUrl}
+                      style={{ minWidth: "320px", height: "630px" }}
+                    />
+                  ) : (
+                    <div className="text-center p-6">
+                      <Calendar className="w-10 h-10 text-primary/40 mx-auto mb-3" />
+                      <p className="text-sm text-muted-foreground">
+                        Scheduling link coming soon.
+                      </p>
+                      <p className="text-xs text-muted-foreground/60 mt-2">
+                        Submit the form and I'll send you a booking link directly.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 

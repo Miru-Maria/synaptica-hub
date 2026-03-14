@@ -109,7 +109,7 @@ export default function AdminDashboard() {
   const [status, setStatus] = useState("");
   const [sessions, setSessions] = useState<SavedSession[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
-  const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "" });
+  const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: "" });
   const [savingSettings, setSavingSettings] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
@@ -1310,6 +1310,21 @@ export default function AdminDashboard() {
                     />
                   </div>
                 )}
+                <div className="space-y-2 pt-2 border-t border-neutral-700">
+                  <Label className="text-neutral-200">Calendly Booking URL</Label>
+                  <p className="text-xs text-neutral-500 mt-0.5">
+                    Paste your Calendly link here to enable the inline booking widget on the Work With Me page.
+                  </p>
+                  <Input
+                    type="url"
+                    value={adminSettings.calendlyUrl}
+                    onChange={(e) =>
+                      setAdminSettings((prev) => ({ ...prev, calendlyUrl: e.target.value }))
+                    }
+                    placeholder="https://calendly.com/your-name/30min"
+                    className="bg-neutral-800 border-neutral-700 text-neutral-100 max-w-md"
+                  />
+                </div>
                 <Button
                   size="sm"
                   onClick={async () => {
