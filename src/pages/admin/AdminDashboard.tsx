@@ -22,12 +22,6 @@ interface ServicePackage {
   highlighted: boolean;
 }
 
-interface ClientTool {
-  name: string;
-  slug: string;
-  enabled: boolean;
-}
-
 function authHeaders(): Record<string, string> {
   const token = sessionStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -36,7 +30,6 @@ function authHeaders(): Record<string, string> {
 export default function AdminDashboard() {
   const [, setLocation] = useLocation();
   const [packages, setPackages] = useState<ServicePackage[]>([]);
-  const [tools, setTools] = useState<ClientTool[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState("");
@@ -62,13 +55,8 @@ export default function AdminDashboard() {
       const authed = await checkAuth();
       if (!authed) return;
 
-      const [pkgRes, toolRes] = await Promise.all([
-        fetch("/api/admin/packages", { headers: authHeaders() }),
-        fetch("/api/admin/tools", { headers: authHeaders() }),
-      ]);
-
+      const pkgRes = await fetch("/api/admin/packages", { headers: authHeaders() });
       if (pkgRes.ok) setPackages(await pkgRes.json());
-      if (toolRes.ok) setTools(await toolRes.json());
       setLoading(false);
     }
     load();
@@ -90,24 +78,6 @@ export default function AdminDashboard() {
       });
       if (res.ok) setStatus("Packages saved");
       else setStatus("Failed to save packages");
-    } catch {
-      setStatus("Network error");
-    }
-    setSaving(false);
-    setTimeout(() => setStatus(""), 3000);
-  };
-
-  const saveTools = async () => {
-    setSaving(true);
-    setStatus("");
-    try {
-      const res = await fetch("/api/admin/tools", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify(tools),
-      });
-      if (res.ok) setStatus("Tools saved");
-      else setStatus("Failed to save tools");
     } catch {
       setStatus("Network error");
     }
@@ -170,14 +140,6 @@ export default function AdminDashboard() {
 
   const removePackage = (index: number) => {
     setPackages((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const toggleTool = (index: number) => {
-    setTools((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], enabled: !next[index].enabled };
-      return next;
-    });
   };
 
   if (loading) {
@@ -356,161 +318,215 @@ export default function AdminDashboard() {
             ))}
           </TabsContent>
 
-          <TabsContent value="internal" className="mt-6 space-y-8">
+          <TabsContent value="internal" className="mt-6 space-y-4">
 
-            {/* Client-facing tools */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">DA</span> DocAudit
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  AI-powered document analysis tool. Upload a document to receive a structured audit covering clarity, completeness, structure, and actionable recommendations.
+                </p>
+                <a
+                  href="/docaudit"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Open Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <div className="ml-6 border-l-2 border-neutral-700 pl-4 py-1">
+              <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
                 <div>
-                  <h2 className="text-sm font-semibold text-neutral-200">Client-Facing Tools</h2>
-                  <p className="text-xs text-neutral-500 mt-0.5">Public tools accessible from the site. Toggle visibility on or off.</p>
+                  <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
+                  <p className="text-sm font-medium text-neutral-300">SEOScope</p>
                 </div>
-                <Button size="sm" onClick={saveTools} disabled={saving}>
-                  <Save className="w-4 h-4 mr-1" />
-                  Save
-                </Button>
+                <a
+                  href="https://seo-scope.replit.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
+                >
+                  Open SEOScope
+                  <ExternalLink className="w-3 h-3" />
+                </a>
               </div>
-
-              {tools.map((tool, idx) => (
-                <div key={tool.slug}>
-                  <Card className="bg-neutral-900 border-neutral-800">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                          <span className="text-emerald-400">↗</span>
-                          {tool.name}
-                        </CardTitle>
-                        <div className="flex items-center gap-3">
-                          <span className={`text-xs ${tool.enabled ? "text-emerald-400" : "text-neutral-500"}`}>
-                            {tool.enabled ? "Enabled" : "Disabled"}
-                          </span>
-                          <Switch checked={tool.enabled} onCheckedChange={() => toggleTool(idx)} />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-neutral-500 mb-4">/{tool.slug}</p>
-                      <a
-                        href={`/${tool.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
-                      >
-                        Open Tool
-                        <ExternalLink className="w-3.5 h-3.5" />
-                      </a>
-                    </CardContent>
-                  </Card>
-                  {tool.slug === "docaudit" && (
-                    <div className="ml-6 mt-1 border-l-2 border-neutral-700 pl-4 py-2">
-                      <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
-                        <div>
-                          <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
-                          <p className="text-sm font-medium text-neutral-300">SEOScope</p>
-                        </div>
-                        <a
-                          href="https://seo-scope.replit.app/"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
-                        >
-                          Open SEOScope
-                          <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
             </div>
 
-            {/* Internal admin tools */}
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-sm font-semibold text-neutral-200">Internal Admin Tools</h2>
-                <p className="text-xs text-neutral-500 mt-0.5">Admin-only tools for knowledge architecture and client management work.</p>
-              </div>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">SKA</span> Synaptica Knowledge Architecture
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Semantic knowledge architecture search and exploration tool for mapping and navigating complex knowledge domains.
+                </p>
+                <a
+                  href="/synaptica-ka"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Open Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-neutral-900 border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                    <span className="text-emerald-400">KA</span> Knowledge Architecture Sprint
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-neutral-400 mb-4">
-                    Walk through a guided, AI-powered sprint to design taxonomy, retrieval logic, metadata schemas, and generate a complete knowledge architecture document — ready for client delivery or internal use.
-                  </p>
-                  <a
-                    href="/admin/ka-sprint"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
-                  >
-                    Launch Tool
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </CardContent>
-              </Card>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">DL</span> DiffLens
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Document diff and comparison tool. Identify structural and semantic differences between document versions to support content governance and change tracking.
+                </p>
+                <a
+                  href="/difflens"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Open Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-neutral-900 border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                    <span className="text-purple-400">RAG</span> Pipeline
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-neutral-400 mb-4">
-                    Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
-                  </p>
-                  <a
-                    href="/admin/rag-pipeline"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-                  >
-                    Launch Tool
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </CardContent>
-              </Card>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">DF</span> DocForge PDF
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Structured PDF generation tool for producing clean, branded documentation from raw content inputs — reports, audits, and deliverables.
+                </p>
+                <a
+                  href="/docforge"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Open Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-neutral-900 border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                    <span className="text-purple-400">PE</span> Prompt Engineering Workshop
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-neutral-400 mb-4">
-                    Design, test, document, and share prompt templates with variable placeholders. Includes a live test panel powered by OpenAI, style guide enforcement, and exportable handover documentation for team use.
-                  </p>
-                  <a
-                    href="/admin/prompt-workshop"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-                  >
-                    Launch Tool
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </CardContent>
-              </Card>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">DS</span> DocScope Intel Engine
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Competitive and content intelligence engine. Scope, analyze, and benchmark documentation landscapes to surface gaps and strategic opportunities.
+                </p>
+                <a
+                  href="/docscope"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Open Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
 
-              <Card className="bg-neutral-900 border-neutral-800">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                    <span className="text-teal-400">MR</span> Monthly Retainer
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-neutral-400 mb-4">
-                    Manage ongoing retainer client relationships — track commitments, monthly health checks, support sessions, and priority requests for clients on the knowledge architecture support retainer.
-                  </p>
-                  <a
-                    href="/admin/monthly-retainer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
-                  >
-                    Launch Tool
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">KA</span> Knowledge Architecture Sprint
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Walk through a guided, AI-powered sprint to design taxonomy, retrieval logic, metadata schemas, and generate a complete knowledge architecture document — ready for client delivery or internal use.
+                </p>
+                <a
+                  href="/admin/ka-sprint"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-purple-400">RAG</span> Pipeline
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
+                </p>
+                <a
+                  href="/admin/rag-pipeline"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-purple-400">PE</span> Prompt Engineering Workshop
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Design, test, document, and share prompt templates with variable placeholders. Includes a live test panel powered by OpenAI, style guide enforcement, and exportable handover documentation for team use.
+                </p>
+                <a
+                  href="/admin/prompt-workshop"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-teal-400">MR</span> Monthly Retainer
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  Manage ongoing retainer client relationships — track commitments, monthly health checks, support sessions, and priority requests for clients on the knowledge architecture support retainer.
+                </p>
+                <a
+                  href="/admin/monthly-retainer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
+                >
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              </CardContent>
+            </Card>
 
           </TabsContent>
         </Tabs>
