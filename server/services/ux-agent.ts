@@ -194,12 +194,12 @@ async function runEmailGateScenario(scenario: TestScenario): Promise<string> {
   const baseUrl = getBaseUrl();
   const input = scenario.input as Record<string, unknown>;
 
-  const payload = {
+  const payload: Record<string, unknown> = {
     email: input.email || "",
     firstName: input.firstName || "",
-    toolSource: input.toolSource || "ux-test",
-    documentType: input.documentType || undefined,
   };
+  if (input.toolSource !== undefined) payload.toolSource = input.toolSource;
+  if (input.documentType !== undefined) payload.documentType = input.documentType;
 
   try {
     const res = await fetch(`${baseUrl}/api/public/capture-email`, {
