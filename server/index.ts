@@ -49,45 +49,13 @@ app.get("/docscope", (_req, res) => {
   res.redirect(302, "https://intel-engine-scope.replit.app/");
 });
 
-const KNOWN_FRONTEND_ROUTES = new Set([
-  "/",
-  "/learning-os",
-  "/legal",
-  "/terms",
-  "/privacy",
-  "/refund",
-  "/work-with-me",
-  "/results",
-  "/blog",
-  "/docaudit",
-  "/synaptica-ka",
-  "/docforge",
-  "/difflens",
-  "/docscope",
-  "/admin",
-  "/admin/login",
-  "/admin/ka-sprint",
-  "/admin/rag-pipeline",
-  "/admin/prompt-workshop",
-  "/admin/monthly-retainer",
-  "/admin/ux-tester",
-]);
-
-const KNOWN_FRONTEND_PREFIXES = ["/blog/", "/admin/"];
-
-function isKnownFrontendRoute(path: string): boolean {
-  const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-  if (KNOWN_FRONTEND_ROUTES.has(normalized)) return true;
-  return KNOWN_FRONTEND_PREFIXES.some((prefix) => normalized.startsWith(prefix));
-}
 
 if (isProd) {
   const distPath = join(__dirname, "..", "dist");
   if (existsSync(distPath)) {
     app.use(express.static(distPath));
     app.get("/{*splat}", (_req, res) => {
-      const statusCode = isKnownFrontendRoute(_req.path) ? 200 : 404;
-      res.status(statusCode).sendFile(join(distPath, "index.html"));
+      res.status(200).sendFile(join(distPath, "index.html"));
     });
   }
 }

@@ -18,7 +18,7 @@ function getOpenAI(): OpenAI {
 }
 
 function getBaseUrl(): string {
-  return `http://0.0.0.0:${process.env.NODE_ENV === "production" ? (process.env.PORT || "5000") : "3001"}`;
+  return `http://0.0.0.0:${process.env.NODE_ENV === "production" ? (process.env.PORT || "5000") : "5000"}`;
 }
 
 async function evaluateInteraction(
