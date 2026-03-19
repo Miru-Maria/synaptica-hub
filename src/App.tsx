@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Switch, Route, Router as WouterRouter } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import Home from "@/pages/Home";
 import LearningOSPage from "@/pages/LearningOS";
@@ -21,6 +21,14 @@ import ChatWidget from "@/components/ChatWidget";
 
 const queryClient = new QueryClient();
 
+function ScrollToTop() {
+  const [location] = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location]);
+  return null;
+}
+
 function ExternalRedirect({ url }: { url: string }) {
   useEffect(() => {
     window.location.replace(url);
@@ -30,6 +38,8 @@ function ExternalRedirect({ url }: { url: string }) {
 
 function Router() {
   return (
+    <>
+    <ScrollToTop />
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/learning-os" component={LearningOSPage} />
@@ -63,6 +73,7 @@ function Router() {
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
+    </>
   );
 }
 
