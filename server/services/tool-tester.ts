@@ -34,7 +34,7 @@ async function runDocAuditScenario(chunks: string[], topics: string[], kbName: s
   const baseUrl = getBaseUrl();
   const res = await fetch(`${baseUrl}/api/audit/analyze`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", "X-Internal-Tool-Tester": "1" },
     body: JSON.stringify({ chunks, topics, kbName }),
   });
   if (!res.ok) {
@@ -42,10 +42,18 @@ async function runDocAuditScenario(chunks: string[], topics: string[], kbName: s
     return `HTTP ${res.status}: ${text}`;
   }
   const data = await res.json() as Record<string, unknown>;
-  const topicResults = (data.topicResults as Array<{ topic: string; coverageScore: number; status: string }> || [])
-    .map(t => `  - ${t.topic}: ${Math.round(t.coverageScore * 100)}% (${t.status})`)
+  const topicCoverages = (data.topicCoverages as Array<{ topic: string; score: number; severity: string }> | null) ?? [];
+  const topicLines = topicCoverages
+    .map(t => `  - ${t.topic}: ${Math.round(t.score * 100)}% (${t.severity})`)
     .join("\n");
-  return `Status: ${data.overallStatus}\nOverall Coverage: ${Math.round(Number(data.overallCoverageScore || 0) * 100)}%\nTopics:\n${topicResults}\nGaps found: ${(data.gaps as unknown[])?.length ?? 0}`;
+  const overallScore = Number(data.overallScore ?? 0);
+  const critHighCount = topicCoverages.filter(t => t.severity === "critical" || t.severity === "high").length;
+  return (
+    `Overall Score: ${overallScore}%\n` +
+    `Topics (${topicCoverages.length}):\n${topicLines || "  (none)"}\n` +
+    `Critical/High gaps: ${critHighCount}\n` +
+    `Summary: ${String(data.summary ?? "")}`
+  );
 }
 
 async function runChatScenario(message: string, sessionId: string | null): Promise<{ result: string; sessionId: string | undefined }> {
@@ -107,7 +115,7 @@ async function runKASprint(endpoint: string, body: Record<string, unknown>): Pro
   }
   const data = await res.json() as Record<string, unknown>;
   const preview = JSON.stringify(data, null, 2);
-  return preview.slice(0, 2500) + (preview.length > 2500 ? "\n…[truncated]" : "");
+  return preview.slice(0, 6000) + (preview.length > 6000 ? "\n…[truncated beyond 6000 chars]" : "");
 }
 
 async function runRAG(endpoint: string, body: Record<string, unknown>): Promise<string> {
