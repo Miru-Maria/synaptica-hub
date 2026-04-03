@@ -1172,7 +1172,7 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-400 mb-4">
-                  Autonomous AI evaluation of every tool and Learning OS through 14 hypothetical use cases — stress-testing DocAudit, external tool availability, and chat knowledge accuracy. Produces a downloadable Markdown report. Reports are stored for 60 days, max 10 kept.
+                  Autonomous AI evaluation across 23 hypothetical use cases — DocAudit functionality, external tool health (with response time and content checks), KA Sprint, RAG Pipeline, Prompt Workshop, and chat knowledge accuracy. Produces a downloadable Markdown report stored for 60 days, max 10 kept.
                 </p>
                 <a
                   href="/admin/tool-tester"

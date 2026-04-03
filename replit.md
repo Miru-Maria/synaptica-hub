@@ -185,10 +185,13 @@ An admin-only tool at `/admin/ux-tester` for running autonomous AI-driven UX tes
 ## Autonomous Tool Functionality Tester
 
 An admin-only tool at `/admin/tool-tester` for running autonomous AI evaluation of all platform tools and Learning OS. Features:
-- **14 hypothetical test scenarios** across 3 areas: DocAudit (5 functional scenarios), External Tools (5 accessibility checks), Chat Assistant tool knowledge (4 scenarios)
+- **23 hypothetical test scenarios** across 6 areas: DocAudit (5), External Tools (5), Chat Assistant knowledge (4), KA Sprint (3), RAG Pipeline (3), Prompt Workshop (3)
 - **DocAudit scenarios**: well-documented SaaS, sparse startup docs, technical API reference, minimal content edge case, topic/content mismatch
-- **External tool checks**: DiffLens, DocForge PDF, DocScope, Synaptica KA Demo, Learning OS — each checked for HTTP accessibility
+- **External tool checks**: DiffLens, DocForge PDF, DocScope, Synaptica KA Demo, Learning OS — each checked for HTTP status, response time, page title, content size, and app shell presence
 - **Chat knowledge scenarios**: free tools inquiry, DocAudit pricing, Learning OS explanation, honest limitations
+- **KA Sprint scenarios**: taxonomy generation (full fields), retrieval schema from a provided taxonomy, taxonomy with minimal input only
+- **RAG Pipeline scenarios**: status endpoint, ingest text then query accurately, off-topic question honesty check
+- **Prompt Workshop scenarios**: prompts list endpoint, style guide endpoint, live prompt execution via /test
 - **LLM evaluation**: each scenario result is evaluated by GPT-4o against a stated hypothesis — severity rated pass / warning / fail
 - **Pre-generated Markdown report**: GPT-4o synthesises an executive summary + recommendations at run end; stored in DB for instant download
 - **Report lifecycle**: max 10 reports stored; any older than 60 days deleted automatically when a new run completes

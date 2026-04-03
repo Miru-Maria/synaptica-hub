@@ -11,7 +11,6 @@ import {
   AlertTriangle,
   XCircle,
   Download,
-  Clock,
   FlaskConical,
   RefreshCw,
   ChevronDown,
@@ -20,7 +19,9 @@ import {
   Globe,
   MessageSquare,
   FileText,
-  ExternalLink,
+  BrainCircuit,
+  Database,
+  PenTool,
 } from "lucide-react";
 
 interface Finding {
@@ -58,12 +59,20 @@ const AREA_LABELS: Record<string, string> = {
   docaudit: "DocAudit",
   external_tools: "External Tools",
   chat: "Chat Assistant",
+  ka_sprint: "KA Sprint",
+  rag_pipeline: "RAG Pipeline",
+  prompt_workshop: "Prompt Workshop",
 };
+
+const AREA_ORDER = ["docaudit", "external_tools", "chat", "ka_sprint", "rag_pipeline", "prompt_workshop"];
 
 const AREA_ICONS: Record<string, React.ReactNode> = {
   docaudit: <FileText className="w-4 h-4" />,
   external_tools: <Globe className="w-4 h-4" />,
   chat: <MessageSquare className="w-4 h-4" />,
+  ka_sprint: <BrainCircuit className="w-4 h-4" />,
+  rag_pipeline: <Database className="w-4 h-4" />,
+  prompt_workshop: <PenTool className="w-4 h-4" />,
 };
 
 function SeverityBadge({ severity }: { severity: Finding["severity"] }) {
@@ -137,7 +146,7 @@ function RunDetail({ run, onClose, onCleanup }: {
   const [cleanMsg, setCleanMsg] = useState("");
   const [downloading, setDownloading] = useState(false);
 
-  const areas = ["docaudit", "external_tools", "chat"];
+  const areas = AREA_ORDER;
   const findings = run.findings || [];
 
   const handleCleanup = async () => {
@@ -464,7 +473,7 @@ export default function ToolTester() {
                     <Globe className="w-3.5 h-3.5 text-emerald-400" />
                     External Tools — 5 checks
                   </div>
-                  <p className="text-xs text-neutral-500">Accessibility of DiffLens, DocForge, DocScope, KA Demo, Learning OS</p>
+                  <p className="text-xs text-neutral-500">Availability, response time, page title and app shell for DiffLens, DocForge, DocScope, KA Demo, Learning OS</p>
                 </div>
                 <div className="bg-neutral-800/40 rounded-lg p-3">
                   <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
@@ -473,9 +482,30 @@ export default function ToolTester() {
                   </div>
                   <p className="text-xs text-neutral-500">Free tools, pricing, Learning OS, honest limitations</p>
                 </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <BrainCircuit className="w-3.5 h-3.5 text-violet-400" />
+                    KA Sprint — 3 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Taxonomy generation, retrieval schema, and edge case with minimal input</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <Database className="w-3.5 h-3.5 text-cyan-400" />
+                    RAG Pipeline — 3 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Status check, ingest + accurate retrieval, off-topic question handling</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <PenTool className="w-3.5 h-3.5 text-rose-400" />
+                    Prompt Workshop — 3 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Prompt list retrieval, style guide access, and live prompt execution test</p>
+                </div>
               </div>
               <p className="text-xs text-neutral-500">
-                Reports are stored for up to 60 days and a maximum of 10 reports are kept. The oldest is removed automatically when a new run completes.
+                23 scenarios total. Reports are stored for up to 60 days, max 10 kept — oldest removed automatically when a new run completes.
               </p>
             </div>
 
