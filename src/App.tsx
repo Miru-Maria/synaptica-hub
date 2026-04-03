@@ -17,6 +17,7 @@ import RAGPipeline from "@/pages/admin/RAGPipeline";
 import PromptWorkshop from "@/pages/admin/PromptWorkshop";
 import MonthlyRetainer from "@/pages/admin/MonthlyRetainer";
 import UXTester from "@/pages/admin/UXTester";
+import ToolTester from "@/pages/admin/ToolTester";
 import ChatWidget from "@/components/ChatWidget";
 
 const queryClient = new QueryClient();
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/admin/prompt-workshop" component={PromptWorkshop} />
       <Route path="/admin/monthly-retainer" component={MonthlyRetainer} />
       <Route path="/admin/ux-tester" component={UXTester} />
+      <Route path="/admin/tool-tester" component={ToolTester} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

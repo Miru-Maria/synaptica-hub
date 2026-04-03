@@ -182,6 +182,21 @@ An admin-only tool at `/admin/ux-tester` for running autonomous AI-driven UX tes
 - **API routes**: `GET /api/admin/ux-agent/personas`, `POST /api/admin/ux-agent/run`, `GET /api/admin/ux-agent/runs`, `GET /api/admin/ux-agent/runs/:id`, `GET /api/admin/ux-agent/runs/:id/export`
 - **Files**: `server/routes/ux-agent.ts`, `server/services/ux-agent.ts`, `server/services/ux-personas.ts`, `server/data/ux-test-store.ts`, `src/pages/admin/UXTester.tsx`
 
+## Autonomous Tool Functionality Tester
+
+An admin-only tool at `/admin/tool-tester` for running autonomous AI evaluation of all platform tools and Learning OS. Features:
+- **14 hypothetical test scenarios** across 3 areas: DocAudit (5 functional scenarios), External Tools (5 accessibility checks), Chat Assistant tool knowledge (4 scenarios)
+- **DocAudit scenarios**: well-documented SaaS, sparse startup docs, technical API reference, minimal content edge case, topic/content mismatch
+- **External tool checks**: DiffLens, DocForge PDF, DocScope, Synaptica KA Demo, Learning OS — each checked for HTTP accessibility
+- **Chat knowledge scenarios**: free tools inquiry, DocAudit pricing, Learning OS explanation, honest limitations
+- **LLM evaluation**: each scenario result is evaluated by GPT-4o against a stated hypothesis — severity rated pass / warning / fail
+- **Pre-generated Markdown report**: GPT-4o synthesises an executive summary + recommendations at run end; stored in DB for instant download
+- **Report lifecycle**: max 10 reports stored; any older than 60 days deleted automatically when a new run completes
+- **Cleanup**: removes test chat sessions and any leads/notifications created during testing without touching the report
+- **API routes**: `POST /api/admin/tool-tester/run`, `GET /api/admin/tool-tester/runs`, `GET /api/admin/tool-tester/runs/:id`, `GET /api/admin/tool-tester/runs/:id/download`, `POST /api/admin/tool-tester/runs/:id/cleanup`
+- **DB tables**: `tool_test_runs`, `tool_test_findings` in PostgreSQL
+- **Files**: `server/routes/tool-tester.ts`, `server/services/tool-tester.ts`, `server/data/tool-test-store.ts`, `src/pages/admin/ToolTester.tsx`
+
 ## Known Notes (Non-Critical)
 
 - **Production SSL deprecation warning** — On startup, the `pg` library prints a "SECURITY WARNING" about SSL mode changes coming in pg v9. This is cosmetic. The database connects and initializes correctly ("Database initialized" always follows). No action needed until upgrading to pg v9.
