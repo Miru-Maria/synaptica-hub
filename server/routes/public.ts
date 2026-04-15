@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { getPackages, getTools, saveDiscoveryInquiry, getTestimonials, getCaseStudies, getOutcomeStats, saveEmailLead, addPipelineContact, addNotification, getAdminSettings } from "../data/store.js";
 import type { DiscoveryInquiry, EmailLead, PipelineContact } from "../data/store.js";
+import { sendInquiryNotification } from "../services/email.js";
 
 export const publicRouter = Router();
 
@@ -60,6 +61,16 @@ publicRouter.post("/discovery", async (req: Request, res: Response) => {
       `${inquiry.name} from ${inquiry.company} submitted a discovery inquiry.`,
       "/admin?tab=inquiries"
     );
+    const settings = await getAdminSettings();
+    if (settings.emailNotificationsEnabled && settings.adminEmail) {
+      sendInquiryNotification({
+        toEmail: settings.adminEmail,
+        name: inquiry.name,
+        company: inquiry.company,
+        challenge: inquiry.challenge,
+        timeline: inquiry.timeline,
+      }).catch((err) => console.error("[email] Notification failed (non-blocking):", err));
+    }
     res.json({ ok: true });
   } catch (err) {
     console.error(err);

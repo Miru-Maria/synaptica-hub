@@ -59,6 +59,7 @@ server/
     sessions-store.ts  # JSON file-persisted store for KA Sprint and Prompt Workshop sessions
     persist/           # Legacy JSON files (superseded by PostgreSQL; still used by sessions-store and prompt-workshop-store)
   services/
+    email.ts           # Resend email service — sends inquiry notification emails (lazy client, non-crashing if key absent)
     parser.ts          # PDF, DOCX, Markdown, text parsing + chunking
     scraper.ts         # URL scraping with SSRF protection
     analyzer.ts        # OpenAI embeddings + GPT-4o gap analysis pipeline
