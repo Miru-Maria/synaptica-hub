@@ -23,6 +23,7 @@ import { CurrencySelector } from "@/components/CurrencySelector";
 import { PhoenixLogo } from "@/components/PhoenixLogo";
 import { initializePaddle, type Paddle } from "@paddle/paddle-js";
 import { Link } from "wouter";
+import { Helmet } from "@/components/Helmet";
 
 const LEARNING_OS_URL = "https://synaptica-knowledge-systems-learning-os.replit.app/";
 
@@ -202,6 +203,13 @@ function LearningOSContent() {
 
   return (
     <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white">
+      <Helmet
+        title="Synaptica Learning OS — Master AI Knowledge Architecture"
+        description="A structured operating system for professionals transitioning into AI knowledge architecture. Five integrated modules, three progressive learning tiers, one AI tutor."
+        ogTitle="Synaptica Learning OS"
+        ogDescription="Master AI Knowledge Architecture systematically. Five modules, three learning tiers, one AI tutor."
+        ogType="website"
+      />
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-white/10 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
@@ -214,6 +222,7 @@ function LearningOSContent() {
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">
+            <Link href="/" className="nav-link text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">← Main site</Link>
             <button onClick={() => scrollToSection("curriculum")} className="nav-link text-sm font-medium">Curriculum</button>
             <button onClick={() => scrollToSection("pricing")} className="nav-link text-sm font-medium">Pricing</button>
             <button onClick={() => scrollToSection("faq")} className="nav-link text-sm font-medium">FAQ</button>

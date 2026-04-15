@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, FileSearch, Shield, Zap, Target, AlertTriangle } from "lucide-react";
+import { Helmet } from "@/components/Helmet";
 import { InputPanel } from "@/components/docaudit/InputPanel";
 import { TaxonomyConfig } from "@/components/docaudit/TaxonomyConfig";
 import { GapReport } from "@/components/docaudit/GapReport";
@@ -155,6 +156,13 @@ export default function DocAudit() {
 
   return (
     <div className="bg-background min-h-screen text-foreground selection:bg-primary/30 selection:text-white overflow-x-hidden">
+      <Helmet
+        title="DocAudit — Documentation Gap Analysis · Synaptica Knowledge Systems"
+        description="Submit your knowledge base content and get an AI-powered audit of coverage gaps, with prioritized recommendations for what to document next."
+        ogTitle="DocAudit — Documentation Gap Analysis"
+        ogDescription="AI-powered documentation gap analysis — find what's missing from your knowledge base before your users do."
+        ogType="website"
+      />
       <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">

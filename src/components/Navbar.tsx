@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { PhoenixLogo } from "./PhoenixLogo";
 
 export function Navbar() {
-  const [, navigate] = useLocation();
+  const [location, navigate] = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -21,9 +21,13 @@ export function Navbar() {
 
   const scrollTo = (id: string) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+    if (location === "/") {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      window.location.href = `/#${id}`;
     }
   };
 
@@ -42,11 +46,16 @@ export function Navbar() {
       )}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Logo */}
         <button 
           className="flex items-center gap-3 cursor-pointer group min-h-[44px]"
-          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          aria-label="Scroll to top"
+          onClick={() => {
+            if (location === "/") {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            } else {
+              navigate("/");
+            }
+          }}
+          aria-label="Go to homepage"
         >
           <div className="relative w-8 h-8 rounded-full flex items-center justify-center bg-primary/10 group-hover:bg-primary/20 transition-colors">
             <PhoenixLogo size={22} glowIntensity="medium" />
@@ -56,7 +65,6 @@ export function Navbar() {
           </span>
         </button>
 
-        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
             <button
@@ -74,9 +82,12 @@ export function Navbar() {
               {link.name}
             </button>
           ))}
-          <Link href="/blog">
-            <span className="nav-link text-sm font-medium cursor-pointer">Blog</span>
-          </Link>
+          <button
+            onClick={() => { setMobileMenuOpen(false); navigate("/blog"); }}
+            className="nav-link text-sm font-medium"
+          >
+            Blog
+          </button>
           <button
             onClick={() => { setMobileMenuOpen(false); navigate("/work-with-me"); }}
             className="btn-primary py-2 px-5 text-sm"
@@ -85,7 +96,6 @@ export function Navbar() {
           </button>
         </nav>
 
-        {/* Mobile Menu Toggle */}
         <button 
           className="md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-foreground"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -95,7 +105,6 @@ export function Navbar() {
         </button>
       </div>
 
-      {/* Mobile Nav */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -121,14 +130,12 @@ export function Navbar() {
                   {link.name}
                 </button>
               ))}
-              <Link href="/blog">
-                <span
-                  className="block text-left text-lg font-medium text-foreground py-2 border-b border-white/5 cursor-pointer"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  Blog
-                </span>
-              </Link>
+              <button
+                onClick={() => { setMobileMenuOpen(false); navigate("/blog"); }}
+                className="text-left text-lg font-medium text-foreground min-h-[44px] py-3 border-b border-white/5"
+              >
+                Blog
+              </button>
               <button
                 onClick={() => { setMobileMenuOpen(false); navigate("/work-with-me"); }}
                 className="btn-primary mt-4 min-h-[44px] py-3"

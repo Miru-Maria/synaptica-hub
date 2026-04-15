@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Send, Calendar, CheckCircle2 } from "lucide-react";
 import { useLocation } from "wouter";
 import { PhoenixLogo } from "@/components/PhoenixLogo";
+import { Helmet } from "@/components/Helmet";
 
 const TIMELINE_OPTIONS = [
   "ASAP — within 2 weeks",
@@ -62,6 +63,13 @@ export default function WorkWithMe() {
       <div className="absolute top-1/4 -left-64 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/4 -right-64 w-96 h-96 bg-secondary/20 rounded-full blur-[120px] pointer-events-none" />
 
+      <Helmet
+        title="Work With Me — Synaptica Knowledge Systems"
+        description="Start an AI knowledge systems engagement. Submit a project inquiry or book a free 30-minute discovery call."
+        ogTitle="Work With Me — Synaptica Knowledge Systems"
+        ogDescription="Submit a project inquiry or book a free 30-minute discovery call to discuss your knowledge architecture needs."
+        ogType="website"
+      />
       <header className="fixed top-0 left-0 right-0 z-50 bg-background border-b border-white/10 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
           <button
@@ -221,27 +229,34 @@ export default function WorkWithMe() {
                 <p className="text-sm text-muted-foreground mb-4">
                   Prefer to talk it through? Schedule a free 30-minute discovery call.
                 </p>
-                <div className="rounded-xl overflow-hidden border border-white/10 bg-black/40 min-h-[320px] flex items-center justify-center">
+                <div className="rounded-xl border border-white/10 bg-black/40 p-6 flex flex-col items-center justify-center gap-5 min-h-[200px] text-center">
                   {bookingUrl ? (
-                    <iframe
-                      src={`${bookingUrl}?embed=true&theme=dark`}
-                      width="100%"
-                      height="630"
-                      frameBorder="0"
-                      title="Book a discovery call"
-                      className="w-full"
-                      style={{ colorScheme: "dark" }}
-                    />
+                    <>
+                      <div className="w-14 h-14 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
+                        <Calendar className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-foreground mb-1">30-minute free call</p>
+                        <p className="text-xs text-muted-foreground">No commitment — just a conversation about your project.</p>
+                      </div>
+                      <a
+                        href={bookingUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-primary py-3 px-8 w-full text-center inline-flex items-center justify-center gap-2"
+                      >
+                        <Calendar className="w-4 h-4" />
+                        Open Booking Calendar
+                      </a>
+                    </>
                   ) : (
-                    <div className="text-center p-6">
-                      <Calendar className="w-10 h-10 text-primary/40 mx-auto mb-3" />
-                      <p className="text-sm text-muted-foreground">
-                        Scheduling link coming soon.
-                      </p>
-                      <p className="text-xs text-muted-foreground/60 mt-2">
-                        Submit the form and I'll send you a booking link directly.
-                      </p>
-                    </div>
+                    <>
+                      <Calendar className="w-10 h-10 text-primary/40" />
+                      <div>
+                        <p className="text-sm text-muted-foreground">Scheduling link coming soon.</p>
+                        <p className="text-xs text-muted-foreground/60 mt-2">Submit the form and I'll send you a booking link directly.</p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
