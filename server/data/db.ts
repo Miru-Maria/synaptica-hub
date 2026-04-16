@@ -249,6 +249,7 @@ export async function initDb(): Promise<void> {
   try {
     await pool.query("ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS chat_widget_enabled BOOLEAN NOT NULL DEFAULT true");
     await pool.query("ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS chat_system_prompt TEXT NOT NULL DEFAULT ''");
+    await pool.query("ALTER TABLE admin_settings ADD COLUMN IF NOT EXISTS last_blog_draft_at TIMESTAMPTZ");
   } catch {
   }
 

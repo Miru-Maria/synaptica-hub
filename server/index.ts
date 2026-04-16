@@ -17,6 +17,7 @@ import { uxAgentRouter } from "./routes/ux-agent.js";
 import { toolTesterRouter } from "./routes/tool-tester.js";
 import { webhookRouter } from "./routes/webhooks.js";
 import { checkRetainerCheckins } from "./data/store.js";
+import { generateBlogDraft, shouldGenerateDraft } from "./services/blog-generator.js";
 import { initDb } from "./data/db.js";
 import { initUXTestTables } from "./data/ux-test-store.js";
 import { initToolTestTables } from "./data/tool-test-store.js";
@@ -80,10 +81,26 @@ async function start() {
 
   createServer(app).listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on port ${PORT}`);
+
     checkRetainerCheckins().catch((err) => console.error("checkRetainerCheckins error:", err));
     setInterval(() => {
       checkRetainerCheckins().catch((err) => console.error("checkRetainerCheckins error:", err));
     }, 6 * 60 * 60 * 1000);
+
+    async function runBlogSchedulerCheck() {
+      try {
+        const due = await shouldGenerateDraft();
+        if (due) {
+          console.log("[blog-scheduler] 30 days elapsed — generating monthly draft...");
+          await generateBlogDraft();
+        }
+      } catch (err) {
+        console.error("[blog-scheduler] Error during scheduled check:", err);
+      }
+    }
+
+    setTimeout(runBlogSchedulerCheck, 60 * 1000);
+    setInterval(runBlogSchedulerCheck, 24 * 60 * 60 * 1000);
   });
 }
 
