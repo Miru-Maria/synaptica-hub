@@ -135,18 +135,18 @@ export default function Legal() {
 
           <H3>7. Tool Usage and Document Handling</H3>
           <P>
-            When you use AI-powered tools on this site — including DocAudit, the Knowledge Architecture Sprint tool, the Prompt Engineering Workshop, and the RAG Pipeline tool — you may submit documents, text, URLs, or other content for processing. By submitting content you acknowledge and agree that:
+            AI-powered tools on this site — including DocAudit, the Knowledge Architecture Sprint tool, the Prompt Engineering Workshop, and the RAG Pipeline tool — are used exclusively by me (Miruna Paun) as part of delivering consulting services. Clients do not operate these tools directly. As a consulting client, you may grant me access to your documentation, internal content, or other materials so that I can process and analyse them on your behalf. By sharing such content with me you acknowledge and agree that:
           </P>
           <UL items={[
-            "Your submitted content is processed in server memory and is not written to any persistent database, file system, or log.",
-            "Raw document content is discarded automatically once the analysis response is returned to you. No copies are retained.",
+            "Content you share with me is processed in server memory for the duration of the analysis session only. It is not written to any persistent database, file system, or log.",
+            "Raw document content is discarded automatically once the analysis is complete. No copies are retained by the system.",
             "Only session metadata is logged — tool name, timestamp, document count, approximate size, and content type — not the content itself.",
             "Content forwarded to AI models (OpenAI) for analysis is governed by OpenAI's API data usage policy. By default, OpenAI does not use API inputs for model training.",
-            "You warrant that you have the right to submit the content you provide and that doing so does not violate any third-party intellectual property rights or confidentiality obligations.",
-            "I accept no liability for the accuracy of AI-generated analysis results. Results are indicative and should be reviewed by a qualified professional before acting on them.",
+            "You confirm that you have the authority to share the content with me and that doing so does not breach any third-party intellectual property rights, confidentiality obligations, or data protection requirements.",
+            "I accept no liability for the accuracy of AI-generated analysis results. Results are indicative and should be reviewed before acting on them.",
           ]} />
           <P>
-            A processing certificate documenting the session metadata (not the content) can be requested for any tool session. See the <a href="#data-processing" className="underline underline-offset-2 hover:text-primary transition-colors">Data Processing</a> section for details.
+            A processing certificate documenting the session metadata (not the content) is automatically generated for every tool session. See the <a href="#data-processing" className="underline underline-offset-2 hover:text-primary transition-colors">Data Processing</a> section for details.
           </P>
 
           <H3>8. Limitation of Liability</H3>
@@ -182,7 +182,7 @@ export default function Legal() {
             "Payment data: billing address and payment method details — processed and stored by Paddle.com on my behalf. I do not store raw card data.",
             "Usage data: pages visited, features used, session timestamps — collected to improve the platform.",
             "Communications: emails or messages you send me directly.",
-            "Tool session metadata: when you use AI analysis tools, I log metadata only (tool name, timestamp, document count, approximate character count, content type). The actual content you submit is never stored.",
+            "Tool session metadata: when I use AI analysis tools to process documentation shared with me by a client, I log metadata only (tool name, timestamp, document count, approximate character count, content type). The actual content is never stored.",
           ]} />
 
           <H3>3. How I Use Your Data</H3>
@@ -196,14 +196,14 @@ export default function Legal() {
 
           <H3>4. Tool Processing — What Is and Is Not Stored</H3>
           <P>
-            When you submit documents or text to AI tools on this site, the following applies:
+            When I use AI analysis tools on this site to process documentation shared with me by a client, the following applies:
           </P>
           <UL items={[
             "Raw content (files, pasted text, scraped URLs) is loaded into server memory for analysis only. It is not written to any database or storage layer.",
-            "Once the analysis response is sent to your browser, the raw content is released from memory. There is no persistent copy anywhere in the system.",
+            "Once the analysis is complete, the raw content is released from memory. There is no persistent copy anywhere in the system.",
             "A session record is created containing only: session ID, tool name, document count, approximate total character count, content type categories (e.g. PDF, text), and timestamps. This metadata is retained for 12 months.",
             "Content submitted to AI models (OpenAI GPT-4o) via the OpenAI API is governed by OpenAI's data use policy. API data is not used for OpenAI model training by default.",
-            <>You may request a <strong>processing certificate</strong> for any tool session — a formal record confirming what metadata was logged and that no raw content was retained. Use {CONTACT_LINK} with your session reference.</>,
+            <>Clients may request a <strong>processing certificate</strong> for any tool session — a formal record confirming what metadata was logged and that no raw content was retained. Use {CONTACT_LINK} with the session date and approximate time.</>,
           ]} />
 
           <H3>5. Data Processors</H3>
@@ -279,31 +279,31 @@ export default function Legal() {
         {/* ── DATA PROCESSING ── */}
         <Section id="data-processing" title="Data Processing & Client Document Policy">
           <P>
-            This section explains specifically how client documents and proprietary content are handled when submitted to AI tools on this site. It is intended to give clients clear, verifiable assurance about data handling.
+            This section explains how client documents and proprietary content are handled when I process them using AI tools as part of a consulting engagement. It is intended to give clients clear, verifiable assurance about data handling.
           </P>
 
-          <H3>What happens to documents you submit to tools</H3>
+          <H3>How client documents are processed</H3>
           <P>
-            When you upload a file, paste text, or provide a URL to any tool on this site (DocAudit, Knowledge Architecture Sprint, RAG Pipeline, Prompt Workshop):
+            AI-powered tools on this site are operated by me (Miruna Paun) — not by clients directly. When a client shares documentation, internal content, or other materials with me as part of a consulting engagement, I upload and process that content on their behalf using tools such as DocAudit, Knowledge Architecture Sprint, RAG Pipeline, and Prompt Workshop. The following applies to all such sessions:
           </P>
           <UL items={[
-            "Your content is loaded into server memory for the duration of that analysis session only.",
-            "It is processed through the AI analysis pipeline and the results are returned to your browser.",
-            "The raw content is then released from memory. There is no database write, no file system copy, no cache, and no backup of the content you submitted.",
+            "Client content is loaded into server memory for the duration of that analysis session only.",
+            "It is processed through the AI analysis pipeline and the results are used to deliver the agreed consulting output.",
+            "The raw content is then released from memory. There is no database write, no file system copy, no cache, and no backup of the content processed.",
             "The only record created is a session metadata log containing: session ID, tool used, timestamp, number of documents, approximate total size, and content type (e.g. PDF, plain text). The actual text is never stored.",
           ]} />
 
-          <H3>What I do not do with your content</H3>
+          <H3>What I do not do with client content</H3>
           <UL items={[
-            "I do not store, archive, or retain copies of your documents.",
-            "I do not use your content to train AI models.",
-            "I do not share your content with third parties, except as required by the AI model API call (OpenAI) to perform analysis.",
-            "I do not access or read your documents beyond what the automated analysis pipeline processes.",
+            "I do not store, archive, or retain copies of client documents.",
+            "I do not use client content to train AI models.",
+            "I do not share client content with third parties, except as required by the AI model API call (OpenAI) to perform analysis.",
+            "I do not use client content for any purpose beyond the specific analysis session it was shared for.",
           ]} />
 
           <H3>Third-party AI processing (OpenAI)</H3>
           <P>
-            Analysis tools on this site use OpenAI's API to perform semantic analysis. Content is sent to OpenAI's servers as part of this process. Under OpenAI's API data usage policy (as of the effective date above), data submitted via the API is not used to train OpenAI's models. Clients with strict data residency or confidentiality requirements should review OpenAI's enterprise data agreements before submitting sensitive material.
+            Analysis tools on this site use OpenAI's API to perform semantic analysis. Content is sent to OpenAI's servers as part of this process. Under OpenAI's API data usage policy (as of the effective date above), data submitted via the API is not used to train OpenAI's models. Clients with strict data residency or confidentiality requirements should raise this before the engagement begins so we can agree on appropriate handling.
           </P>
 
           <H3>Processing certificates</H3>
@@ -313,21 +313,21 @@ export default function Legal() {
           <UL items={[
             "A unique session ID and timestamp",
             "The tool used",
-            "Number of documents submitted and their approximate combined size",
+            "Number of documents processed and their approximate combined size",
             "A one-way cryptographic hash of the submitted content (proves what was processed without revealing the content)",
             "A confirmation that raw_content_retained = false",
             "The time processing completed",
           ]} />
           <P>
-            Processing certificates can be shared with your own clients, compliance teams, or legal counsel as evidence that their proprietary documents were not retained by Synaptica Knowledge Systems. To request a certificate for a specific session, use {CONTACT_LINK} with the date and approximate time of the session.
+            Processing certificates can be provided to clients, their compliance teams, or legal counsel as evidence that proprietary documents were not retained by Synaptica Knowledge Systems. To request a certificate for a specific session, use {CONTACT_LINK} with the date and approximate time of the session.
           </P>
 
-          <H3>For consulting clients</H3>
+          <H3>Consulting engagement data handling</H3>
           <P>
-            When I work with you on a consulting engagement and you provide proprietary documents for analysis as part of the scope of work, the same principles apply: documents are processed in-memory and not stored. Where the scope of the engagement involves me holding or reviewing documents over an extended period (e.g. a multi-week sprint), this is governed by the confidentiality clauses in your individual engagement agreement, which I sign before work begins.
+            When you engage me for consulting services and share proprietary documents for analysis, the principles above apply throughout. Where the engagement involves me reviewing documents over an extended period (e.g. a multi-week sprint), this is also governed by the confidentiality clauses in your individual engagement agreement, which I sign before work begins.
           </P>
           <P>
-            If you have questions about how your organization's data is handled, use {CONTACT_LINK} to request a pre-engagement data processing discussion.
+            If you have questions about how your organisation's data will be handled before committing to an engagement, use {CONTACT_LINK} to request a pre-engagement data processing discussion.
           </P>
         </Section>
 
