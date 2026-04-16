@@ -33,7 +33,7 @@ export function Navbar() {
 
   const navLinks: { name: string; id: string; href?: string }[] = [
     { name: "About", id: "about" },
-    { name: "Services & Lab", id: "services" },
+    { name: "Services", id: "services" },
     { name: "Learning OS", id: "learning-os", href: "/learning-os" },
     { name: "Packages", id: "packages" },
   ];
