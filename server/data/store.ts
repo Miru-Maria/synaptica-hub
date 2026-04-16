@@ -1094,3 +1094,98 @@ export async function deleteProjectTask(projectId: string, id: string): Promise<
   const result = await pool.query("DELETE FROM project_tasks WHERE id = $1 AND project_id = $2", [id, projectId]);
   return (result.rowCount ?? 0) > 0;
 }
+
+export interface ProcessingCertificate {
+  id: string;
+  toolName: string;
+  toolSlug: string;
+  documentCount: number;
+  chunkCount: number;
+  approximateChars: number;
+  contentTypes: string;
+  clientReference: string;
+  rawContentRetained: boolean;
+  sessionHash: string;
+  processedAt: string;
+  completedAt: string;
+}
+
+export async function createProcessingCertificate(opts: {
+  toolName: string;
+  toolSlug: string;
+  documentCount: number;
+  chunkCount: number;
+  approximateChars: number;
+  contentTypes: string;
+  clientReference?: string;
+  sessionHash: string;
+  processedAt: string;
+  completedAt: string;
+}): Promise<ProcessingCertificate> {
+  const id = `cert-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const cert: ProcessingCertificate = {
+    id,
+    toolName: opts.toolName,
+    toolSlug: opts.toolSlug,
+    documentCount: opts.documentCount,
+    chunkCount: opts.chunkCount,
+    approximateChars: opts.approximateChars,
+    contentTypes: opts.contentTypes,
+    clientReference: opts.clientReference || "",
+    rawContentRetained: false,
+    sessionHash: opts.sessionHash,
+    processedAt: opts.processedAt,
+    completedAt: opts.completedAt,
+  };
+  await pool.query(
+    `INSERT INTO processing_certificates
+       (id, tool_name, tool_slug, document_count, chunk_count, approximate_chars, content_types,
+        client_reference, raw_content_retained, session_hash, processed_at, completed_at)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)`,
+    [cert.id, cert.toolName, cert.toolSlug, cert.documentCount, cert.chunkCount,
+     cert.approximateChars, cert.contentTypes, cert.clientReference,
+     cert.rawContentRetained, cert.sessionHash, cert.processedAt, cert.completedAt]
+  );
+  return cert;
+}
+
+export async function getProcessingCertificates(limit = 100): Promise<ProcessingCertificate[]> {
+  const { rows } = await pool.query(
+    "SELECT * FROM processing_certificates ORDER BY processed_at DESC LIMIT $1",
+    [limit]
+  );
+  return rows.map((r) => ({
+    id: r.id,
+    toolName: r.tool_name,
+    toolSlug: r.tool_slug,
+    documentCount: Number(r.document_count),
+    chunkCount: Number(r.chunk_count),
+    approximateChars: Number(r.approximate_chars),
+    contentTypes: r.content_types,
+    clientReference: r.client_reference,
+    rawContentRetained: r.raw_content_retained,
+    sessionHash: r.session_hash,
+    processedAt: r.processed_at,
+    completedAt: r.completed_at,
+  }));
+}
+
+export async function getProcessingCertificate(id: string): Promise<ProcessingCertificate | null> {
+  const { rows } = await pool.query("SELECT * FROM processing_certificates WHERE id = $1", [id]);
+  if (rows.length === 0) return null;
+  const r = rows[0];
+  return {
+    id: r.id,
+    toolName: r.tool_name,
+    toolSlug: r.tool_slug,
+    documentCount: Number(r.document_count),
+    chunkCount: Number(r.chunk_count),
+    approximateChars: Number(r.approximate_chars),
+    contentTypes: r.content_types,
+    clientReference: r.client_reference,
+    rawContentRetained: r.raw_content_retained,
+    sessionHash: r.session_hash,
+    processedAt: r.processed_at,
+    completedAt: r.completed_at,
+  };
+}

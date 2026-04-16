@@ -15,6 +15,7 @@ import { blogRouter } from "./routes/blog.js";
 import { chatRouter } from "./routes/chat.js";
 import { uxAgentRouter } from "./routes/ux-agent.js";
 import { toolTesterRouter } from "./routes/tool-tester.js";
+import { webhookRouter } from "./routes/webhooks.js";
 import { checkRetainerCheckins } from "./data/store.js";
 import { initDb } from "./data/db.js";
 import { initUXTestTables } from "./data/ux-test-store.js";
@@ -30,6 +31,9 @@ app.use(cors({
   credentials: true,
   origin: true,
 }));
+
+app.use("/api/webhooks", express.raw({ type: "application/json" }), webhookRouter);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(cookieParser());
 

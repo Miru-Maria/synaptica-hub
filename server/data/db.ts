@@ -216,6 +216,34 @@ export async function initDb(): Promise<void> {
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS paddle_subscription_events (
+      id VARCHAR(100) PRIMARY KEY,
+      event_id TEXT UNIQUE,
+      event_type TEXT NOT NULL,
+      subscription_id TEXT,
+      customer_id TEXT,
+      customer_email TEXT,
+      plan_name TEXT,
+      status TEXT,
+      raw_event JSONB NOT NULL,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS processing_certificates (
+      id VARCHAR(100) PRIMARY KEY,
+      tool_name TEXT NOT NULL,
+      tool_slug TEXT NOT NULL,
+      document_count INTEGER NOT NULL DEFAULT 0,
+      chunk_count INTEGER NOT NULL DEFAULT 0,
+      approximate_chars BIGINT NOT NULL DEFAULT 0,
+      content_types TEXT NOT NULL DEFAULT '',
+      client_reference TEXT NOT NULL DEFAULT '',
+      raw_content_retained BOOLEAN NOT NULL DEFAULT false,
+      session_hash TEXT NOT NULL DEFAULT '',
+      processed_at TEXT NOT NULL,
+      completed_at TEXT NOT NULL DEFAULT ''
+    );
   `);
 
   try {

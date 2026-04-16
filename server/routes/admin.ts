@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask } from "../data/store.js";
+import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask, getProcessingCertificates, getProcessingCertificate } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings, ProjectStatus, ProjectTaskStatus, ProjectTaskPriority } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -965,5 +965,39 @@ adminRouter.get("/analytics/overview", requireAuth, async (_req: Request, res: R
   } catch (error: unknown) {
     console.error("Analytics overview error:", error);
     res.status(500).json({ error: "Failed to load analytics" });
+  }
+});
+
+adminRouter.get("/processing-certificates", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const certs = await getProcessingCertificates(200);
+    res.json(certs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load processing certificates" });
+  }
+});
+
+adminRouter.get("/processing-certificates/:id", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const cert = await getProcessingCertificate(req.params.id);
+    if (!cert) { res.status(404).json({ error: "Certificate not found" }); return; }
+    res.json(cert);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load certificate" });
+  }
+});
+
+adminRouter.get("/paddle-events", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const { pool } = await import("../data/db.js");
+    const { rows } = await pool.query(
+      "SELECT id, event_id, event_type, subscription_id, customer_email, status, created_at FROM paddle_subscription_events ORDER BY created_at DESC LIMIT 100"
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to load Paddle events" });
   }
 });

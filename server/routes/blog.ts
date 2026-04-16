@@ -125,3 +125,92 @@ blogRouter.delete("/:id", requireAuth, async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to delete article" });
   }
 });
+
+blogRouter.post("/generate-draft", requireAuth, async (req: Request, res: Response) => {
+  try {
+    const { topic } = req.body;
+    const OpenAI = (await import("openai")).default;
+    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    const ROTATING_TOPICS = [
+      "How to measure the ROI of a knowledge architecture project",
+      "The difference between a knowledge base and a knowledge graph",
+      "When to use RAG versus fine-tuning for enterprise AI",
+      "How to write documentation that AI can actually use",
+      "The hidden cost of unstructured knowledge in large organizations",
+      "Building a prompt library your whole team will actually use",
+      "Why your AI assistant keeps hallucinating — and how to fix it",
+      "What a knowledge audit reveals that a tech audit cannot",
+      "Semantic search vs keyword search: what the difference means for your team",
+      "How to future-proof your documentation for AI",
+    ];
+
+    const chosenTopic = (typeof topic === "string" && topic.trim())
+      ? topic.trim()
+      : ROTATING_TOPICS[new Date().getMonth() % ROTATING_TOPICS.length];
+
+    const systemPrompt = `You are a knowledge architecture expert writing for a professional B2B blog.
+Your name is Miruna Paun and your company is Synaptica Knowledge Systems.
+Write in a clear, authoritative, and practical tone — no fluff, no hype.
+Output a full blog post in Markdown. Include:
+- A clear H1 title
+- 2-4 H2 sections with substantive content
+- Practical takeaways
+- A brief conclusion
+Aim for 600-900 words. Do not use excessive buzzwords.`;
+
+    const completion = await client.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Write a blog post about: ${chosenTopic}` },
+      ],
+      max_tokens: 1800,
+    });
+
+    const rawBody = completion.choices[0]?.message?.content || "";
+
+    const titleMatch = rawBody.match(/^#\s+(.+)/m);
+    const title = titleMatch ? titleMatch[1].trim() : chosenTopic;
+    const body = rawBody.replace(/^#\s+.+\n/, "").trim();
+    const excerpt = body.replace(/^#+.*\n/gm, "").replace(/\n+/g, " ").trim().slice(0, 200) + "…";
+
+    const slug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .slice(0, 80);
+
+    const now = new Date().toISOString();
+    const id = `art-draft-${Date.now()}`;
+
+    const categories = ["Knowledge Architecture", "Documentation Strategy", "RAG & Retrieval", "Prompt Engineering"];
+    const category = categories.find((c) => {
+      const lc = chosenTopic.toLowerCase();
+      if (c === "RAG & Retrieval" && (lc.includes("rag") || lc.includes("retriev"))) return true;
+      if (c === "Prompt Engineering" && (lc.includes("prompt") || lc.includes("hallucin"))) return true;
+      if (c === "Documentation Strategy" && (lc.includes("doc") || lc.includes("knowledge base"))) return true;
+      return false;
+    }) || "Knowledge Architecture";
+
+    const { pool } = await import("../data/db.js");
+    await pool.query(
+      `INSERT INTO blog_articles (id, title, slug, excerpt, body, category, featured_image, publish_date, published, reading_time, created_at, updated_at)
+       VALUES ($1,$2,$3,$4,$5,$6,NULL,$7,false,$8,$9,$9)`,
+      [id, title, slug, excerpt, rawBody, category, now.slice(0, 10), Math.ceil(body.split(/\s+/).length / 200), now]
+    );
+
+    const { addNotification } = await import("../data/store.js");
+    await addNotification(
+      "new_subscriber",
+      "New Monthly Blog Draft Ready",
+      `Draft: "${title}" saved for your review. Publish it from the Blog editor.`,
+      "/admin?tab=blog"
+    );
+
+    res.json({ ok: true, id, title, slug, category });
+  } catch (err) {
+    console.error("[blog/generate-draft]", err);
+    res.status(500).json({ error: "Failed to generate draft" });
+  }
+});

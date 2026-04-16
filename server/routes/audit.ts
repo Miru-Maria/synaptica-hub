@@ -3,7 +3,8 @@ import multer from "multer";
 import { parsePDF, parseDOCX, parseMarkdown, chunkText } from "../services/parser.js";
 import { scrapeUrl } from "../services/scraper.js";
 import { analyzeDocumentation, AuditResult } from "../services/analyzer.js";
-import { getTools, logToolRun } from "../data/store.js";
+import { getTools, logToolRun, createProcessingCertificate } from "../data/store.js";
+import crypto from "crypto";
 
 async function requireToolEnabled(req: Request, res: Response, next: NextFunction) {
   try {
@@ -507,6 +508,13 @@ auditRouter.post("/analyze", async (req: Request, res: Response) => {
       .map((t) => t.topic)
       .slice(0, 10) || [];
 
+    const completedAt = new Date().toISOString();
+    const sessionHash = crypto
+      .createHash("sha256")
+      .update(safeChunks.join("\n"))
+      .digest("hex")
+      .slice(0, 24);
+
     try {
       await logToolRun({
         toolName: "DocAudit",
@@ -518,6 +526,23 @@ auditRouter.post("/analyze", async (req: Request, res: Response) => {
       });
     } catch (logErr) {
       console.error("Failed to log tool run:", logErr);
+    }
+
+    try {
+      await createProcessingCertificate({
+        toolName: "DocAudit",
+        toolSlug: "docaudit",
+        documentCount: (req.body._documentCount as number) || 1,
+        chunkCount: safeChunks.length,
+        approximateChars: totalChars,
+        contentTypes: (req.body._inputType as string) || "unknown",
+        clientReference: (req.body._clientRef as string) || "",
+        sessionHash,
+        processedAt: new Date(Date.now() - 1000).toISOString(),
+        completedAt,
+      });
+    } catch (certErr) {
+      console.error("Failed to create processing certificate:", certErr);
     }
 
     res.json(result);
