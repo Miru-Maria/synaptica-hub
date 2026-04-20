@@ -948,23 +948,25 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <div className="ml-6 border-l-2 border-neutral-700 pl-4 py-1">
-              <div className="flex items-center justify-between bg-neutral-900/60 rounded-md px-4 py-3 border border-neutral-800">
-                <div>
-                  <p className="text-xs text-neutral-500 uppercase tracking-wider mb-0.5">Companion Tool</p>
-                  <p className="text-sm font-medium text-neutral-300">SEOScope</p>
-                </div>
+            <Card className="bg-neutral-900 border-neutral-800">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+                  <span className="text-emerald-400">SE</span> SEOScope
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-neutral-400 mb-4">
+                  SEO analysis tool. Paste a page's content, enter a URL, and set target keywords to get a structured Claude-powered report covering keyword usage, content quality, heading structure, and actionable recommendations.
+                </p>
                 <a
-                  href="https://seo-scope.replit.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition-colors bg-emerald-400/10 hover:bg-emerald-400/20 rounded px-3 py-1.5"
+                  href="/admin/seoscope"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
-                  Open SEOScope
-                  <ExternalLink className="w-3 h-3" />
+                  Launch Tool
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
             <Card className="bg-neutral-900 border-neutral-800">
               <CardHeader className="pb-3">
@@ -996,15 +998,13 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-400 mb-4">
-                  Document diff and comparison tool. Identify structural and semantic differences between document versions to support content governance and change tracking.
+                  Word-level document comparison. Upload or paste two versions of any document and get a clear, colour-coded diff highlighting every addition, deletion, and change — with word-count stats.
                 </p>
                 <a
-                  href="/difflens"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/admin/difflens"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
-                  Open Tool
+                  Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </CardContent>
@@ -1013,20 +1013,18 @@ export default function AdminDashboard() {
             <Card className="bg-neutral-900 border-neutral-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-emerald-400">DF</span> DocForge PDF
+                  <span className="text-emerald-400">DF</span> DocForge
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-400 mb-4">
-                  Structured PDF generation tool for producing clean, branded documentation from raw content inputs — reports, audits, and deliverables.
+                  Transform raw notes, bullet points, or rough drafts into polished, structured documents. Choose a format (report, brief, guide, audit, proposal), add branding notes, upload a file or paste content — Claude does the rest.
                 </p>
                 <a
-                  href="/docforge"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/admin/docforge"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
-                  Open Tool
+                  Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </CardContent>
@@ -1040,15 +1038,13 @@ export default function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-400 mb-4">
-                  Competitive and content intelligence engine. Scope, analyze, and benchmark documentation landscapes to surface gaps and strategic opportunities.
+                  Paste any content — emails, Slack threads, meeting notes, or documents — and get a structured AI analysis of gaps, inconsistencies, structure problems, and coverage issues.
                 </p>
                 <a
-                  href="/docscope"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/admin/docscope"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
-                  Open Tool
+                  Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </CardContent>

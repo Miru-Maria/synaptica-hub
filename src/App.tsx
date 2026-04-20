@@ -18,6 +18,10 @@ import PromptWorkshop from "@/pages/admin/PromptWorkshop";
 import MonthlyRetainer from "@/pages/admin/MonthlyRetainer";
 import UXTester from "@/pages/admin/UXTester";
 import ToolTester from "@/pages/admin/ToolTester";
+import DocScopePage from "@/pages/admin/DocScope";
+import DocForgePage from "@/pages/admin/DocForge";
+import SEOScopePage from "@/pages/admin/SEOScope";
+import DiffLensPage from "@/pages/admin/DiffLensAdmin";
 import ChatWidget from "@/components/ChatWidget";
 
 const queryClient = new QueryClient();
@@ -72,6 +76,10 @@ function Router() {
       <Route path="/admin/monthly-retainer" component={MonthlyRetainer} />
       <Route path="/admin/ux-tester" component={UXTester} />
       <Route path="/admin/tool-tester" component={ToolTester} />
+      <Route path="/admin/docscope" component={DocScopePage} />
+      <Route path="/admin/docforge" component={DocForgePage} />
+      <Route path="/admin/seoscope" component={SEOScopePage} />
+      <Route path="/admin/difflens" component={DiffLensPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

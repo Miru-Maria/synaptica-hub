@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@hookform/resolvers": "^3.10.0",
     "@paddle/paddle-js": "^1.6.2",
     "@radix-ui/react-accordion": "^1.2.12",
@@ -44,6 +45,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.90.21",
     "@types/cookie-parser": "^1.4.10",
+    "@types/diff": "^7.0.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.1.0",
     "@types/pdf-parse": "^1.1.5",
@@ -55,6 +57,7 @@
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "date-fns": "^3.6.0",
+    "diff": "^9.0.0",
     "embla-carousel-react": "^8.6.0",
     "express": "^5.2.1",
     "framer-motion": "^12.35.1",
