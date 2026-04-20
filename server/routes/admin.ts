@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
 import { validateBody, schemas } from "../middleware/validate.js";
 import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask, getProcessingCertificates, getProcessingCertificate } from "../data/store.js";
+import { sendBlogDraftNotification } from "../services/email.js";
+import { generateBlogDraft } from "../services/blog-generator.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings, ProjectStatus, ProjectTaskStatus, ProjectTaskPriority } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
 import { getPWSessions } from "../data/sessions-store.js";
@@ -684,6 +686,38 @@ adminRouter.put("/settings", requireAuth, async (req: Request, res: Response) =>
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to save settings" });
+  }
+});
+
+adminRouter.post("/test-email", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const settings = await getAdminSettings();
+    if (!settings.adminEmail) {
+      res.status(400).json({ error: "No admin email configured. Set your email address in Settings first." });
+      return;
+    }
+    await sendBlogDraftNotification({
+      toEmail: settings.adminEmail,
+      title: "Test Blog Draft — Email Delivery Check",
+      category: "Documentation Strategy",
+      articleId: "test-email-check",
+    });
+    res.json({ ok: true, sentTo: settings.adminEmail });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin] test-email error:", message);
+    res.status(500).json({ error: message });
+  }
+});
+
+adminRouter.post("/blog/generate-now", requireAuth, async (_req: Request, res: Response) => {
+  try {
+    const draft = await generateBlogDraft();
+    res.json({ ok: true, draft });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[admin] blog/generate-now error:", message);
+    res.status(500).json({ error: message });
   }
 });
 

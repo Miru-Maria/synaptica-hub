@@ -10,7 +10,7 @@ import {
   ToolTestSeverity,
 } from "../data/tool-test-store.js";
 
-export const TOTAL_TOOL_TEST_SCENARIOS = 23;
+export const TOTAL_TOOL_TEST_SCENARIOS = 37;
 
 function getBaseUrl(): string {
   return `http://0.0.0.0:${process.env.NODE_ENV === "production" ? (process.env.PORT || "5000") : "5000"}`;
@@ -154,6 +154,147 @@ async function runPromptWorkshop(method: "GET" | "POST", endpoint: string, body?
   return `HTTP ${res.status}\n${preview}`;
 }
 
+async function collectSSEStream(url: string, method: "GET" | "POST", headers: Record<string, string>, body?: string): Promise<string> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45000);
+  try {
+    const res = await fetch(url, {
+      method,
+      headers: { ...headers, Accept: "text/event-stream" },
+      ...(body ? { body } : {}),
+      signal: controller.signal,
+    });
+    clearTimeout(timer);
+    if (!res.ok) {
+      const text = await res.text();
+      return `HTTP ${res.status}: ${text.slice(0, 500)}`;
+    }
+    const text = await res.text();
+    const lines = text.split("\n");
+    let collected = "";
+    for (const line of lines) {
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (payload === "[DONE]") break;
+      try {
+        const parsed = JSON.parse(payload) as { text?: string; error?: string };
+        if (parsed.error) return `SSE error: ${parsed.error}`;
+        if (parsed.text) collected += parsed.text;
+      } catch { /* skip non-JSON lines */ }
+    }
+    return collected.trim() || "(no content streamed)";
+  } catch (err) {
+    clearTimeout(timer);
+    if ((err as Error).name === "AbortError") return "TIMEOUT — stream did not complete within 45 seconds";
+    return `Error: ${err instanceof Error ? err.message : String(err)}`;
+  }
+}
+
+async function runDocScope(content: string, mode: string): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  return collectSSEStream(
+    `${baseUrl}/api/admin/docscope/analyze`,
+    "POST",
+    { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    JSON.stringify({ content, mode })
+  );
+}
+
+async function runDocForge(rawText: string, outputFormat: string): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  const form = new FormData();
+  form.append("rawText", rawText);
+  form.append("outputFormat", outputFormat);
+  form.append("documentTitle", "Tool Test Document");
+  const res = await fetch(`${baseUrl}/api/admin/docforge/generate`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    return `HTTP ${res.status}: ${text.slice(0, 500)}`;
+  }
+  const text = await res.text();
+  const lines = text.split("\n");
+  let collected = "";
+  for (const line of lines) {
+    if (!line.startsWith("data:")) continue;
+    const payload = line.slice(5).trim();
+    if (payload === "[DONE]") break;
+    try {
+      const parsed = JSON.parse(payload) as { text?: string; error?: string };
+      if (parsed.error) return `SSE error: ${parsed.error}`;
+      if (parsed.text) collected += parsed.text;
+    } catch { /* skip */ }
+  }
+  return collected.trim() || "(no content streamed)";
+}
+
+async function runSEOScope(content: string, analysisType: string): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  return collectSSEStream(
+    `${baseUrl}/api/admin/seoscope/analyze`,
+    "POST",
+    { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    JSON.stringify({ content, analysisType })
+  );
+}
+
+async function runKAJson(method: "GET" | "POST" | "DELETE", path: string, body?: Record<string, unknown>): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  const res = await fetch(`${baseUrl}/api/admin/ka/${path}`, {
+    method,
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    ...(body ? { body: JSON.stringify(body) } : {}),
+  });
+  const text = await res.text();
+  let preview: string;
+  try {
+    const data = JSON.parse(text) as unknown;
+    preview = JSON.stringify(data, null, 2).slice(0, 3000);
+  } catch {
+    preview = text.slice(0, 3000);
+  }
+  return `HTTP ${res.status}\n${preview}`;
+}
+
+async function runKASSE(path: string, body: Record<string, unknown>): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  return collectSSEStream(
+    `${baseUrl}/api/admin/ka/${path}`,
+    "POST",
+    { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    JSON.stringify(body)
+  );
+}
+
+async function ingestKAText(kbId: string, text: string): Promise<string> {
+  const token = getAdminToken();
+  if (!token) return "ERROR: Could not generate admin token.";
+  const baseUrl = getBaseUrl();
+  const form = new FormData();
+  form.append("text", text);
+  const res = await fetch(`${baseUrl}/api/admin/ka/kb/${kbId}/ingest`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  });
+  const data = await res.json() as Record<string, unknown>;
+  if (!res.ok) return `HTTP ${res.status}: ${JSON.stringify(data)}`;
+  return JSON.stringify(data, null, 2);
+}
+
 async function evaluateFinding(
   scenario: string,
   hypothesis: string,
@@ -241,7 +382,7 @@ Keep language professional but plain. Focus on real user impact, not technical m
     recommendations = "Review the failing and warning scenarios above for specific action items.";
   }
 
-  const areaOrder = ["docaudit", "external_tools", "chat", "ka_sprint", "rag_pipeline", "prompt_workshop"];
+  const areaOrder = ["docaudit", "external_tools", "chat", "ka_sprint", "rag_pipeline", "prompt_workshop", "docscope", "docforge", "seoscope", "difflens", "ka_suite"];
   const areaLabels: Record<string, string> = {
     docaudit: "DocAudit — Functionality Tests",
     external_tools: "External Tools — Availability & Health",
@@ -249,6 +390,11 @@ Keep language professional but plain. Focus on real user impact, not technical m
     ka_sprint: "Knowledge Architecture Sprint",
     rag_pipeline: "RAG Pipeline",
     prompt_workshop: "Prompt Engineering Workshop",
+    docscope: "DocScope — Intel Engine",
+    docforge: "DocForge — Document Formatter",
+    seoscope: "SEOScope — SEO Analyzer",
+    difflens: "DiffLens — Document Comparison",
+    ka_suite: "Knowledge Architecture Suite",
   };
 
   const severityIcon = (s: ToolTestSeverity) =>
@@ -582,6 +728,216 @@ Design Rationale: Structured to support fast retrieval by both support agents an
         renderedPrompt: "You are a documentation quality reviewer. Analyse the following documentation snippet and identify the top 3 gaps that would prevent an AI system from retrieving accurate answers:\n\n---\nOur product is a project management tool. It has tasks and users. You can assign tasks to users. Tasks have due dates.\n---\n\nList the 3 gaps in order of severity, with one sentence explanation each.",
       })
     );
+
+    // ── DocScope Intel Engine (2 scenarios) ─────────────────────────────────
+    const DOCSCOPE_SAMPLE = `The onboarding process for new enterprise clients begins when a contract is signed. A welcome email is sent automatically. However, the exact steps for the client success team are unclear. Timelines for the first kickoff call are not documented. Some clients have reported confusion about what to expect in the first 30 days. The product team and the sales team use different terminology for the same features, which creates friction during handoff calls. There is no single source of truth for the onboarding checklist.`;
+
+    await saveFinding(
+      "DocScope",
+      "docscope",
+      "Gap detection on sparse internal process doc",
+      "Should identify that the content lacks documented timelines, a clear onboarding checklist, role responsibilities, and consistent terminology. Should return structured findings in at least 3 of the 4 expected sections (summary, key gaps, missing context, recommendations).",
+      await runDocScope(DOCSCOPE_SAMPLE, "gaps")
+    );
+
+    await saveFinding(
+      "DocScope",
+      "docscope",
+      "Full analysis mode on mixed-quality content",
+      "Should produce a comprehensive multi-section analysis covering knowledge gaps, inconsistencies, structural issues, content quality, and prioritized recommendations. Output should be substantive (200+ words) and actionable.",
+      await runDocScope(DOCSCOPE_SAMPLE, "full")
+    );
+
+    // ── DocForge Document Formatter (2 scenarios) ────────────────────────────
+    const DOCFORGE_RAW = `We ran a knowledge audit for a mid-sized legal firm. They had 400 documents in Confluence, none tagged consistently. Key findings: 60% of documents had no owner, 35% were out of date (last updated 2+ years ago), only 15% of documents could be retrieved by the internal AI assistant. We recommended: (1) implement a tagging taxonomy with 5 top-level categories, (2) assign document owners quarterly, (3) archive documents older than 3 years unless flagged as evergreen. Estimated time to implement: 6 weeks with internal team, 3 weeks with our support.`;
+
+    await saveFinding(
+      "DocForge",
+      "docforge",
+      "Format raw notes into a consulting report",
+      "Should transform the raw text into a structured consulting report with at least an Executive Summary, Key Findings, and Recommendations sections. Output should be well-formatted Markdown with headers, substantially longer than the input, and professional in tone.",
+      await runDocForge(DOCFORGE_RAW, "report")
+    );
+
+    await saveFinding(
+      "DocForge",
+      "docforge",
+      "Format raw notes into an executive brief",
+      "Should produce a concise executive brief with Overview, Key Points, and Next Steps sections. Output should be shorter and more scannable than the full report format, suitable for a C-suite audience.",
+      await runDocForge(DOCFORGE_RAW, "brief")
+    );
+
+    // ── SEOScope SEO Analyzer (2 scenarios) ──────────────────────────────────
+    const SEOSCOPE_CONTENT = `Knowledge Architecture for AI-Ready Organizations
+
+Many organizations are investing in AI tools but seeing poor results. The root cause is usually structural: their documentation was never designed to be machine-readable. Knowledge architecture is the discipline of designing how information is structured, tagged, and retrieved — both by humans and AI systems.
+
+A well-designed knowledge architecture enables better RAG pipelines, more accurate AI assistants, and faster onboarding for new team members. It starts with a documentation audit to identify gaps, followed by a taxonomy design that reflects how users actually search for information.
+
+Synaptica Knowledge Systems helps mid-sized B2B companies design and implement knowledge architectures that work for both people and AI. Our typical engagement takes 6-12 weeks and produces a taxonomy, metadata schema, and chunking strategy tailored to your content stack.`;
+
+    await saveFinding(
+      "SEOScope",
+      "seoscope",
+      "Full SEO audit of a knowledge architecture blog post",
+      "Should perform a comprehensive SEO analysis covering title/meta assessment, heading structure, keyword usage, content depth, internal linking opportunities, and produce a prioritized action list. Output should be substantive with specific, actionable recommendations.",
+      await runSEOScope(SEOSCOPE_CONTENT, "full")
+    );
+
+    await saveFinding(
+      "SEOScope",
+      "seoscope",
+      "Keyword analysis for 'knowledge architecture' target keyword",
+      "Should identify primary keyword placement, analyse density and distribution across the content, flag missing opportunities (subheadings, first paragraph, image alt text), and suggest semantic/LSI keywords. Output should be specific to the provided content.",
+      await runSEOScope(SEOSCOPE_CONTENT, "keywords")
+    );
+
+    // ── DiffLens (1 scenario — client-side tool) ─────────────────────────────
+    await saveFinding(
+      "DiffLens",
+      "difflens",
+      "Admin page is accessible and loads correctly",
+      "The /admin/difflens route should return a 200 response with a valid HTML page containing the app shell. DiffLens runs client-side so no API call is needed — accessibility of the admin UI is the key acceptance criterion.",
+      await checkExternalTool("DiffLens Admin Page", `${getBaseUrl()}/admin/difflens`)
+    );
+
+    // ── Knowledge Architecture Suite (7 scenarios) ──────────────────────────
+    const KA_TEST_TEXT = `Synaptica Knowledge Systems — Service Overview
+
+Documentation Audit ($1,500–$2,000): A comprehensive gap analysis of your existing documentation. We ingest your content, embed it semantically, and compare coverage against your support queries and user journeys. Deliverable: a prioritised gap report with coverage scores per topic.
+
+Knowledge Architecture Sprint ($2,500–$4,000): We design your taxonomy, metadata schema, and chunking strategy. Deliverable: taxonomy document, retrieval schema, architecture brief.
+
+RAG Pipeline Design & Build (custom, $8,000–$25,000+): End-to-end implementation of a retrieval-augmented generation pipeline. Includes vector store setup, embedding strategy, retrieval evaluation, and integration with your AI assistant.
+
+Onboarding: New clients start with a discovery call to align on scope. We then request access to documentation (Confluence, Notion, Google Docs, or file uploads). The audit phase takes 1–2 weeks. Sprint work takes 2–4 weeks. Pipeline build depends on complexity.`;
+
+    // KA-1: Create a knowledge base and verify listing
+    const kbCreateResult = await runKAJson("POST", "kb", {
+      name: "Tool Test KB — Synaptica Services",
+      description: "Auto-created during tool tester run. Safe to delete.",
+    });
+    let testKbId: string | null = null;
+    try {
+      const kbLines = kbCreateResult.replace(/^HTTP \d+\n/, "");
+      const kb = JSON.parse(kbLines) as { id?: string };
+      testKbId = kb.id || null;
+    } catch { /* id extraction failed */ }
+
+    const kbListResult = testKbId
+      ? await runKAJson("GET", "kb")
+      : "Skipped — KB creation failed";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Knowledge base creation and listing",
+      "POST /ka/kb should return a new KB object with an id, name, and chunkCount. GET /ka/kb should return an array that includes the newly created KB. Both should return HTTP 200.",
+      `CREATE RESULT:\n${kbCreateResult}\n\nLIST RESULT:\n${kbListResult}`
+    );
+
+    // KA-2: Ingest a text document into the test KB
+    const ingestResult = testKbId
+      ? await ingestKAText(testKbId, KA_TEST_TEXT)
+      : "Skipped — KB creation failed, no KB ID available";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Document ingestion produces chunks with embeddings",
+      "Ingesting a text document should split it into chunks, embed each with text-embedding-3-small, and return a JSON object with chunkCount > 0. HTTP 200 expected.",
+      ingestResult
+    );
+
+    // KA-3: Semantic search on ingested content
+    const searchResult = testKbId
+      ? await runKAJson("POST", "search", {
+          kbId: testKbId,
+          query: "What does the Documentation Audit service include and how much does it cost?",
+          topK: 3,
+        })
+      : "Skipped — KB creation failed";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Semantic search retrieves relevant chunks from ingested content",
+      "A query about Documentation Audit pricing and scope should return at least 1 chunk with a similarity score above 0.5, and the chunk text should reference the $1,500–$2,000 price range or the gap analysis deliverable.",
+      searchResult
+    );
+
+    // KA-4: Gap analyzer (SSE)
+    const gapResult = testKbId
+      ? await runKASSE("gaps", {
+          kbId: testKbId,
+          queries: "Clients are asking: How do I get started? What is the timeline? Do you offer retainer support?",
+        })
+      : "Skipped — KB creation failed";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Gap analyzer produces structured gap report via streaming",
+      "Should stream a gap analysis report with an executive summary and at least critical/medium gap sections. The report should identify that the ingested content lacks detail on retainer support and specific onboarding timelines for each service tier.",
+      gapResult.slice(0, 4000)
+    );
+
+    // KA-5: FAQ builder (SSE)
+    const faqResult = testKbId
+      ? await runKASSE("faq", {
+          kbId: testKbId,
+          audience: "potential B2B clients evaluating a knowledge architecture engagement",
+        })
+      : "Skipped — KB creation failed";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "FAQ builder generates audience-calibrated FAQ from ingested content",
+      "Should stream at least 10 Q&A pairs in Markdown format, grouped under headings, calibrated to a B2B client audience. Questions should reflect real concerns (pricing, timelines, deliverables, process). Output should not hallucinate information not in the source text.",
+      faqResult.slice(0, 4000)
+    );
+
+    // KA-6: Onboarding session create + RAG chat
+    const sessionCreateResult = await runKAJson("POST", "onboarding", testKbId
+      ? { kbId: testKbId, title: "Tool Test Onboarding Session" }
+      : { kbId: "non-existent-kb", title: "Tool Test Onboarding Session" }
+    );
+    let testSessionId: string | null = null;
+    try {
+      const sessionLines = sessionCreateResult.replace(/^HTTP \d+\n/, "");
+      const session = JSON.parse(sessionLines) as { id?: string };
+      testSessionId = session.id || null;
+    } catch { /* id extraction failed */ }
+
+    const chatResult = testSessionId
+      ? await runKASSE(`onboarding/${testSessionId}/chat`, {
+          message: "What services does Synaptica offer and what are the typical timelines?",
+        })
+      : "Skipped — onboarding session creation failed";
+
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Onboarding assistant RAG chat streams contextually grounded response",
+      "Creating a session should return a session object with an id. The RAG chat should stream a response grounded in the ingested content, mentioning at least one service name (Documentation Audit, KA Sprint, or RAG Pipeline Build) and associated timelines.",
+      `SESSION CREATE:\n${sessionCreateResult}\n\nCHAT RESPONSE:\n${chatResult.slice(0, 3000)}`
+    );
+
+    // KA-7: Prompt templates list returns seeded prompts
+    const promptsResult = await runKAJson("GET", "prompts");
+    await saveFinding(
+      "KA Suite",
+      "ka_suite",
+      "Prompt templates endpoint returns seeded library",
+      "GET /ka/prompts should return HTTP 200 with a JSON array containing at least 5 prompts. Each prompt should have id, name, category, and template fields. The built-in seeded prompts (e.g. Documentation Gap Analyzer, FAQ Generator) should be present.",
+      promptsResult
+    );
+
+    // Clean up test KB
+    if (testKbId) {
+      await runKAJson("DELETE", `kb/${testKbId}`).catch(() => { /* cleanup best-effort */ });
+    }
 
     await updateToolTestRun(runId, { testChatSessionIds: chatSessionIds });
 

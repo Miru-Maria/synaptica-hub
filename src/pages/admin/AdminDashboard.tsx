@@ -113,6 +113,9 @@ export default function AdminDashboard() {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [adminSettings, setAdminSettings] = useState({ emailNotificationsEnabled: false, adminEmail: "", calendlyUrl: "", chatWidgetEnabled: true, chatSystemPrompt: "" });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [emailTestStatus, setEmailTestStatus] = useState<{ loading: boolean; result: string; ok: boolean | null }>({ loading: false, result: "", ok: null });
+  const [generatingDraft, setGeneratingDraft] = useState(false);
+  const [draftGenResult, setDraftGenResult] = useState<{ title?: string; error?: string } | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
   const checkAuth = useCallback(async () => {
@@ -1386,17 +1389,87 @@ export default function AdminDashboard() {
                   />
                 </div>
                 {adminSettings.emailNotificationsEnabled && (
-                  <div className="space-y-2">
-                    <Label className="text-neutral-400 text-xs">Admin Email Address</Label>
-                    <Input
-                      type="email"
-                      value={adminSettings.adminEmail}
-                      onChange={(e) =>
-                        setAdminSettings((prev) => ({ ...prev, adminEmail: e.target.value }))
-                      }
-                      placeholder="admin@example.com"
-                      className="bg-neutral-800 border-neutral-700 text-neutral-100 max-w-md"
-                    />
+                  <div className="space-y-3">
+                    <div className="space-y-2">
+                      <Label className="text-neutral-400 text-xs">Admin Email Address</Label>
+                      <Input
+                        type="email"
+                        value={adminSettings.adminEmail}
+                        onChange={(e) =>
+                          setAdminSettings((prev) => ({ ...prev, adminEmail: e.target.value }))
+                        }
+                        placeholder="admin@example.com"
+                        className="bg-neutral-800 border-neutral-700 text-neutral-100 max-w-md"
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-neutral-600 text-neutral-300 hover:bg-neutral-800"
+                        disabled={emailTestStatus.loading || !adminSettings.adminEmail}
+                        onClick={async () => {
+                          setEmailTestStatus({ loading: true, result: "", ok: null });
+                          try {
+                            const res = await fetch("/api/admin/test-email", {
+                              method: "POST",
+                              headers: authHeaders(),
+                            });
+                            const data = await res.json() as { ok?: boolean; sentTo?: string; error?: string };
+                            if (res.ok) {
+                              setEmailTestStatus({ loading: false, result: `Test email sent to ${data.sentTo}`, ok: true });
+                            } else {
+                              setEmailTestStatus({ loading: false, result: data.error || "Send failed", ok: false });
+                            }
+                          } catch {
+                            setEmailTestStatus({ loading: false, result: "Network error — could not reach server", ok: false });
+                          }
+                          setTimeout(() => setEmailTestStatus({ loading: false, result: "", ok: null }), 8000);
+                        }}
+                      >
+                        {emailTestStatus.loading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <Mail className="w-3.5 h-3.5 mr-1.5" />}
+                        Send Test Email
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="border-neutral-600 text-neutral-300 hover:bg-neutral-800"
+                        disabled={generatingDraft}
+                        onClick={async () => {
+                          setGeneratingDraft(true);
+                          setDraftGenResult(null);
+                          try {
+                            const res = await fetch("/api/admin/blog/generate-now", {
+                              method: "POST",
+                              headers: authHeaders(),
+                            });
+                            const data = await res.json() as { ok?: boolean; draft?: { title?: string }; error?: string };
+                            if (res.ok) {
+                              setDraftGenResult({ title: data.draft?.title });
+                            } else {
+                              setDraftGenResult({ error: data.error || "Generation failed" });
+                            }
+                          } catch {
+                            setDraftGenResult({ error: "Network error" });
+                          }
+                          setGeneratingDraft(false);
+                          setTimeout(() => setDraftGenResult(null), 10000);
+                        }}
+                      >
+                        {generatingDraft ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 mr-1.5" />}
+                        Generate Draft Now
+                      </Button>
+                    </div>
+                    {emailTestStatus.result && (
+                      <p className={`text-xs ${emailTestStatus.ok ? "text-emerald-400" : "text-red-400"}`}>
+                        {emailTestStatus.ok ? "✓" : "✗"} {emailTestStatus.result}
+                      </p>
+                    )}
+                    {draftGenResult && (
+                      <p className={`text-xs ${draftGenResult.error ? "text-red-400" : "text-emerald-400"}`}>
+                        {draftGenResult.error ? `✗ ${draftGenResult.error}` : `✓ Draft created: "${draftGenResult.title}" — check the Blog tab`}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="space-y-2 pt-2 border-t border-neutral-700">

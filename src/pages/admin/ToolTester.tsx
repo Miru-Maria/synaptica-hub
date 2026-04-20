@@ -22,6 +22,11 @@ import {
   BrainCircuit,
   Database,
   PenTool,
+  ScanSearch,
+  Hammer,
+  BarChart2,
+  GitCompare,
+  Layers,
 } from "lucide-react";
 
 interface Finding {
@@ -62,9 +67,14 @@ const AREA_LABELS: Record<string, string> = {
   ka_sprint: "KA Sprint",
   rag_pipeline: "RAG Pipeline",
   prompt_workshop: "Prompt Workshop",
+  docscope: "DocScope",
+  docforge: "DocForge",
+  seoscope: "SEOScope",
+  difflens: "DiffLens",
+  ka_suite: "KA Suite",
 };
 
-const AREA_ORDER = ["docaudit", "external_tools", "chat", "ka_sprint", "rag_pipeline", "prompt_workshop"];
+const AREA_ORDER = ["docaudit", "external_tools", "chat", "ka_sprint", "rag_pipeline", "prompt_workshop", "docscope", "docforge", "seoscope", "difflens", "ka_suite"];
 
 const AREA_ICONS: Record<string, React.ReactNode> = {
   docaudit: <FileText className="w-4 h-4" />,
@@ -73,6 +83,11 @@ const AREA_ICONS: Record<string, React.ReactNode> = {
   ka_sprint: <BrainCircuit className="w-4 h-4" />,
   rag_pipeline: <Database className="w-4 h-4" />,
   prompt_workshop: <PenTool className="w-4 h-4" />,
+  docscope: <ScanSearch className="w-4 h-4" />,
+  docforge: <Hammer className="w-4 h-4" />,
+  seoscope: <BarChart2 className="w-4 h-4" />,
+  difflens: <GitCompare className="w-4 h-4" />,
+  ka_suite: <Layers className="w-4 h-4" />,
 };
 
 function SeverityBadge({ severity }: { severity: Finding["severity"] }) {
@@ -503,9 +518,44 @@ export default function ToolTester() {
                   </div>
                   <p className="text-xs text-neutral-500">Prompt list retrieval, style guide access, and live prompt execution test</p>
                 </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <ScanSearch className="w-3.5 h-3.5 text-indigo-400" />
+                    DocScope — 2 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Gap detection mode and full-analysis mode on mixed-quality content</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <Hammer className="w-3.5 h-3.5 text-orange-400" />
+                    DocForge — 2 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Consulting report format and executive brief format from raw notes</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <BarChart2 className="w-3.5 h-3.5 text-green-400" />
+                    SEOScope — 2 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">Full SEO audit and keyword analysis on a knowledge architecture article</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <GitCompare className="w-3.5 h-3.5 text-pink-400" />
+                    DiffLens — 1 scenario
+                  </div>
+                  <p className="text-xs text-neutral-500">Admin page accessibility check (client-side tool, no API required)</p>
+                </div>
+                <div className="bg-neutral-800/40 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-neutral-300 font-medium mb-1">
+                    <Layers className="w-3.5 h-3.5 text-teal-400" />
+                    KA Suite — 7 scenarios
+                  </div>
+                  <p className="text-xs text-neutral-500">KB create/list, document ingest, semantic search, gap analysis, FAQ builder, RAG chat, prompt templates</p>
+                </div>
               </div>
               <p className="text-xs text-neutral-500">
-                23 scenarios total. Reports are stored for up to 60 days, max 10 kept — oldest removed automatically when a new run completes.
+                37 scenarios total across 11 tool areas. Reports stored for up to 60 days, max 10 kept — oldest removed automatically when a new run completes.
               </p>
             </div>
 
