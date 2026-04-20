@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { validateBody, schemas } from "../middleware/validate.js";
 import OpenAI from "openai";
 
 export const seoscopeRouter = Router();
@@ -18,7 +19,7 @@ const typePrompts: Record<string, string> = {
   technical: "Analyze technical SEO elements visible in the content: 1) Title tag quality, 2) Meta description, 3) Heading hierarchy, 4) Image alt text usage, 5) Internal link anchor text, 6) Schema markup opportunities, 7) URL structure if provided.",
 };
 
-seoscopeRouter.post("/analyze", async (req: AuthenticatedRequest, res: Response) => {
+seoscopeRouter.post("/analyze", validateBody(schemas.seoscopeAnalyze), async (req: AuthenticatedRequest, res: Response) => {
   const { content, url, targetKeywords, analysisType } = req.body;
 
   if (!content && !url) {

@@ -2,6 +2,7 @@ import { Router, Request, Response } from "express";
 import multer from "multer";
 import OpenAI from "openai";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { validateBody, schemas } from "../middleware/validate.js";
 import {
   listKnowledgeBases, getKnowledgeBase, createKnowledgeBase, deleteKnowledgeBase,
   insertChunks, clearChunks, searchChunks, getChunksByKb,
@@ -101,7 +102,7 @@ kaRouter.get("/kb", async (_req: Request, res: Response) => {
   }
 });
 
-kaRouter.post("/kb", async (req: AuthenticatedRequest, res: Response) => {
+kaRouter.post("/kb", validateBody(schemas.kaKbCreate), async (req: AuthenticatedRequest, res: Response) => {
   const { name, description } = req.body;
   if (!name?.trim()) { res.status(400).json({ error: "Name is required" }); return; }
   try {
@@ -191,7 +192,7 @@ kaRouter.post("/kb/:id/ingest", upload.single("file"), async (req: Request, res:
 // SEMANTIC SEARCH
 // ─────────────────────────────────────────────
 
-kaRouter.post("/search", async (req: Request, res: Response) => {
+kaRouter.post("/search", validateBody(schemas.kaSearch), async (req: Request, res: Response) => {
   const { kb_id, query, topK = 5 } = req.body;
   if (!kb_id || !query?.trim()) {
     res.status(400).json({ error: "kb_id and query are required" });
@@ -213,7 +214,7 @@ kaRouter.post("/search", async (req: Request, res: Response) => {
 // GAP ANALYZER
 // ─────────────────────────────────────────────
 
-kaRouter.post("/gaps", async (req: Request, res: Response) => {
+kaRouter.post("/gaps", validateBody(schemas.kaGaps), async (req: Request, res: Response) => {
   const { kb_id, tickets } = req.body;
   if (!kb_id || !tickets?.trim()) {
     res.status(400).json({ error: "kb_id and tickets are required" });
@@ -289,7 +290,7 @@ Analyze the gaps between what the documentation covers and what users are asking
 // FAQ BUILDER
 // ─────────────────────────────────────────────
 
-kaRouter.post("/faq", async (req: Request, res: Response) => {
+kaRouter.post("/faq", validateBody(schemas.kaFaq), async (req: Request, res: Response) => {
   const { kb_id, audience, additionalContext } = req.body;
   if (!kb_id || !audience?.trim()) {
     res.status(400).json({ error: "kb_id and audience are required" });
@@ -358,7 +359,7 @@ kaRouter.get("/onboarding", async (_req: Request, res: Response) => {
   }
 });
 
-kaRouter.post("/onboarding", async (req: Request, res: Response) => {
+kaRouter.post("/onboarding", validateBody(schemas.kaOnboardingCreate), async (req: Request, res: Response) => {
   const { kb_id, role, title } = req.body;
   if (!role?.trim()) { res.status(400).json({ error: "Role is required" }); return; }
   try {
@@ -395,7 +396,7 @@ kaRouter.delete("/onboarding/:id", async (req: Request, res: Response) => {
   }
 });
 
-kaRouter.post("/onboarding/:id/chat", async (req: Request, res: Response) => {
+kaRouter.post("/onboarding/:id/chat", validateBody(schemas.kaOnboardingChat), async (req: Request, res: Response) => {
   const { id } = req.params;
   const { message } = req.body;
 
@@ -490,7 +491,7 @@ kaRouter.get("/prompts", async (_req: Request, res: Response) => {
   }
 });
 
-kaRouter.post("/prompts", async (req: Request, res: Response) => {
+kaRouter.post("/prompts", validateBody(schemas.promptCreate), async (req: Request, res: Response) => {
   const { title, category, description, prompt, variables, tags } = req.body;
   if (!title?.trim() || !prompt?.trim()) {
     res.status(400).json({ error: "Title and prompt are required" });

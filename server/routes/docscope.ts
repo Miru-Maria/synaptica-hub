@@ -1,5 +1,6 @@
 import { Router, Response } from "express";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { validateBody, schemas } from "../middleware/validate.js";
 import OpenAI from "openai";
 
 export const docscopeRouter = Router();
@@ -18,7 +19,7 @@ const modePrompts: Record<string, string> = {
   full: "Perform a comprehensive intelligence analysis of the content below. Cover: 1) Executive summary, 2) Knowledge gaps, 3) Inconsistencies and contradictions, 4) Structural issues, 5) Content quality assessment, 6) Prioritized recommendations.",
 };
 
-docscopeRouter.post("/analyze", async (req: AuthenticatedRequest, res: Response) => {
+docscopeRouter.post("/analyze", validateBody(schemas.docscopeAnalyze), async (req: AuthenticatedRequest, res: Response) => {
   const { content, mode } = req.body;
   if (!content || typeof content !== "string" || !content.trim()) {
     res.status(400).json({ error: "Content is required" });

@@ -1,7 +1,7 @@
 # Synaptica Knowledge Systems — Technical Specification
 
-**Version:** 1.0  
-**Date:** March 2026  
+**Version:** 2.0  
+**Date:** April 2026  
 **Audience:** CTOs, Engineering Leads, Development Teams
 
 ---
@@ -15,19 +15,24 @@
 5. [Database Schema](#5-database-schema)
 6. [AI Subsystems](#6-ai-subsystems)
    - 6.1 [DocAudit — Documentation Gap Analysis](#61-docaudit--documentation-gap-analysis)
-   - 6.2 [RAG Pipeline Tool](#62-rag-pipeline-tool)
-   - 6.3 [AI Sales Assistant Chat Widget](#63-ai-sales-assistant-chat-widget)
+   - 6.2 [Knowledge Architecture Suite](#62-knowledge-architecture-suite)
+   - 6.3 [RAG Pipeline Tool](#63-rag-pipeline-tool)
+   - 6.4 [AI Sales Assistant Chat Widget](#64-ai-sales-assistant-chat-widget)
 7. [Admin Platform](#7-admin-platform)
    - 7.1 [KA Sprint Tool](#71-ka-sprint-tool)
    - 7.2 [Prompt Engineering Workshop](#72-prompt-engineering-workshop)
-   - 7.3 [Pipeline CRM](#73-pipeline-crm)
-   - 7.4 [Invoicing Manager](#74-invoicing-manager)
-   - 7.5 [Analytics Dashboard](#75-analytics-dashboard)
-   - 7.6 [Blog & Content Management](#76-blog--content-management)
-   - 7.7 [Notification System](#77-notification-system)
-   - 7.8 [Autonomous AI UX Testing Agent](#78-autonomous-ai-ux-testing-agent)
-   - 7.9 [Project Management](#79-project-management)
-8. [Security Considerations](#8-security-considerations)
+   - 7.3 [DocScope Intel Engine](#73-docscope-intel-engine)
+   - 7.4 [DocForge](#74-docforge)
+   - 7.5 [SEOScope](#75-seoscope)
+   - 7.6 [DiffLens](#76-difflens)
+   - 7.7 [Pipeline CRM](#77-pipeline-crm)
+   - 7.8 [Invoicing Manager](#78-invoicing-manager)
+   - 7.9 [Analytics Dashboard](#79-analytics-dashboard)
+   - 7.10 [Blog & Content Management](#710-blog--content-management)
+   - 7.11 [Notification System](#711-notification-system)
+   - 7.12 [Autonomous AI UX Testing Agent](#712-autonomous-ai-ux-testing-agent)
+   - 7.13 [Project Management](#713-project-management)
+8. [Security Hardening](#8-security-hardening)
 9. [Deployment Model](#9-deployment-model)
 10. [Email Notifications](#10-email-notifications)
 11. [Extensibility and Integration Points](#11-extensibility-and-integration-points)
@@ -37,10 +42,12 @@
 
 ## 1. System Architecture Overview
 
-Synaptica Knowledge Systems is a full-stack monorepo application combining a React single-page application with a Node.js/Express API server, backed by PostgreSQL. The system serves two distinct user populations:
+Synaptica Knowledge Systems is a full-stack monorepo application combining a React single-page application with a Node.js/Express API server, backed by PostgreSQL (with pgvector for semantic search). The system serves two distinct user populations:
 
 - **Public visitors** interact with a marketing site, blog, free tool redirects, and a GPT-4o-powered sales chat widget.
-- **The site owner (admin)** operates a credential-protected dashboard with CRM, invoicing, analytics, internal AI tools, and content management.
+- **The site owner (admin)** operates a credential-protected dashboard with CRM, invoicing, analytics, internal AI tools, content management, and a full documentation engineering suite.
+
+All tools in the admin panel are operated exclusively by Miruna Cristiana Paun on behalf of clients. Clients provide documentation access; they do not interact with the tools directly.
 
 ### High-Level Data Flow
 
@@ -50,20 +57,23 @@ Synaptica Knowledge Systems is a full-stack monorepo application combining a Rea
 │  Wouter routing · TanStack Query · Framer Motion        │
 │  Radix UI primitives · Tailwind CSS v4                  │
 └───────────┬─────────────────────────────────────────────┘
-            │  HTTP (JSON) via /api/* proxy
+            │  HTTP (JSON + SSE) via /api/* proxy
             ▼
 ┌─────────────────────────────────────────────────────────┐
 │  Express Server (Node.js, port 3001 dev / 5000 prod)    │
+│  Middleware: Helmet · CORS · JWT auth · Rate limiters   │
+│             Zod validation · cookie-parser · multer     │
 │  Routes: audit · admin · public · blog · chat ·         │
-│          ka-sprint · rag · prompt-workshop · ux-agent    │
-│  Middleware: JWT auth · CORS · cookie-parser · multer    │
+│          ka-sprint · rag · prompt-workshop · ux-agent   │
+│          ka (Knowledge Architecture) · docscope ·       │
+│          docforge · seoscope · webhooks                 │
 └───────────┬──────────────┬──────────────────────────────┘
             │              │
             ▼              ▼
      ┌────────────┐  ┌──────────────┐
      │ PostgreSQL  │  │  OpenAI API  │
-     │  (20 tables)│  │  GPT-4o      │
-     │  via pg Pool│  │  text-emb-   │
+     │  + pgvector │  │  GPT-4o      │
+     │  (24 tables)│  │  text-emb-   │
      │             │  │  3-small     │
      └────────────┘  └──────────────┘
 ```
@@ -85,12 +95,12 @@ In development, Vite serves the frontend on port 5000 and proxies `/api` request
 | Routing | Wouter | — | Lightweight client-side routing (~1.5 KB) |
 | Data fetching | TanStack Query | 5.x | Server state management, caching, refetching |
 | Animations | Framer Motion | 12.x | Page transitions and micro-interactions |
-| UI primitives | Radix UI | — | Accessible, unstyled component primitives (dialog, dropdown, tabs, popover, select, accordion, tooltip, etc.) |
+| UI primitives | Radix UI | — | Accessible, unstyled component primitives |
 | Charts | Recharts | 2.x | Bar charts and data visualizations in admin analytics |
 | Markdown | react-markdown + remark-gfm | — | Blog article rendering with GFM support |
-| PDF export | jsPDF | 4.x | Client-side branded PDF generation (invoices, gap reports) |
+| PDF export | jsPDF | 4.x | Client-side branded PDF generation |
 | Icons | Lucide React | — | Icon library |
-| Forms | React Hook Form + Zod resolvers | — | Form validation |
+| Diff | diff | — | Client-side word-level document comparison (DiffLens) |
 
 ### Backend
 
@@ -99,12 +109,18 @@ In development, Vite serves the frontend on port 5000 and proxies `/api` request
 | Runtime | Node.js | — | Server runtime |
 | Framework | Express | 5.x | HTTP routing and middleware |
 | Database driver | pg (node-postgres) | 8.x | PostgreSQL connection pool |
+| Vector extension | pgvector | 0.8.0 | Semantic similarity search via cosine distance |
 | Authentication | jsonwebtoken | 9.x | JWT token signing and verification |
-| File parsing | pdf-parse, mammoth | — | PDF and DOCX text extraction |
+| Security headers | helmet | — | HTTP security headers, CSP, referrer policy |
+| Rate limiting | express-rate-limit | — | Per-endpoint request throttling |
+| Input validation | zod | 3.x | Schema-based request body validation |
+| File parsing | mammoth | — | DOCX text extraction |
 | HTML parsing | cheerio | 1.x | URL scraping and HTML content extraction |
 | File uploads | multer | 2.x | Multipart form data handling (memory storage) |
 | AI | openai (official SDK) | 6.x | GPT-4o completions and text-embedding-3-small |
-| Cookies | cookie-parser | — | HTTP cookie parsing for auth flow |
+| Email | resend | — | Transactional email delivery |
+| Payments | Paddle | — | Webhook-based subscription event handling |
+| Cookies | cookie-parser | — | HTTP cookie parsing |
 | CORS | cors | — | Cross-origin request support |
 
 ### Infrastructure
@@ -112,7 +128,8 @@ In development, Vite serves the frontend on port 5000 and proxies `/api` request
 | Concern | Solution |
 |---|---|
 | Hosting | Replit (containerized Linux environment) |
-| Database | Replit-managed PostgreSQL |
+| Database | Replit-managed PostgreSQL with pgvector extension |
+| Version control | Git with GitHub remote (Miru-Maria/synaptica-hub) |
 | Process management | `concurrently` runs Vite + Express in development |
 | Build | `vite build` produces optimized static assets in `dist/` |
 | Production server | Express serves `dist/` static files + API on the same port |
@@ -121,97 +138,103 @@ In development, Vite serves the frontend on port 5000 and proxies `/api` request
 
 ## 3. Application Structure
 
-The project follows a monorepo layout with clear separation between frontend and backend:
-
 ```
 ├── src/                          # Frontend (React)
-│   ├── App.tsx                   # Root component with Wouter router
-│   ├── main.tsx                  # React entry point
-│   ├── index.css                 # Global styles + Tailwind theme
-│   ├── pages/                    # Route-level page components
+│   ├── App.tsx                   # Root with Wouter router + all routes
+│   ├── pages/
 │   │   ├── Home.tsx              # Public landing page
-│   │   ├── DocAudit.tsx          # DocAudit tool page
-│   │   ├── Blog.tsx              # Blog listing
-│   │   ├── BlogArticle.tsx       # Individual article view
+│   │   ├── DocAudit.tsx          # DocAudit tool
+│   │   ├── Blog.tsx / BlogArticle.tsx
 │   │   ├── WorkWithMe.tsx        # Services/engagement page
-│   │   ├── Results.tsx           # Results/case studies page
 │   │   ├── LearningOS.tsx        # Learning OS product page
-│   │   ├── Legal.tsx             # Legal/terms
-│   │   ├── not-found.tsx         # 404 page
-│   │   └── admin/                # Admin dashboard pages
+│   │   ├── Legal.tsx             # GDPR-compliant legal / data processing
+│   │   └── admin/
 │   │       ├── AdminLogin.tsx
 │   │       ├── AdminDashboard.tsx
+│   │       ├── KnowledgeArch.tsx # 5-tool documentation engineering suite
 │   │       ├── KASprint.tsx
 │   │       ├── RAGPipeline.tsx
 │   │       ├── PromptWorkshop.tsx
+│   │       ├── DocScope.tsx
+│   │       ├── DocForge.tsx
+│   │       ├── SEOScope.tsx
+│   │       ├── DiffLensAdmin.tsx
 │   │       ├── MonthlyRetainer.tsx
-│   │       ├── ChatSessionsViewer.tsx
 │   │       ├── UXTester.tsx
+│   │       ├── ToolTester.tsx
 │   │       └── ProjectManager.tsx
-│   ├── components/               # Reusable UI components
-│   │   ├── Navbar.tsx            # Fixed top nav with scroll-spy
-│   │   ├── Hero.tsx              # Hero section
-│   │   ├── ChatWidget.tsx        # AI Sales Assistant chat bubble
-│   │   ├── docaudit/             # DocAudit-specific components
-│   │   │   ├── InputPanel.tsx    # Multi-source document ingestion
-│   │   │   ├── TaxonomyConfig.tsx # Topic taxonomy selection
-│   │   │   └── GapReport.tsx     # Results view with charts + PDF export
-│   │   └── ui/                   # Radix-based UI primitives
-│   ├── hooks/                    # Custom React hooks
-│   └── lib/                      # Utilities (cn helper, etc.)
 │
-├── server/                       # Backend (Express)
-│   ├── index.ts                  # Server entry point
+├── server/
+│   ├── index.ts                  # Server entry — Helmet, CORS, rate limiters, route mounts
 │   ├── middleware/
-│   │   └── auth.ts               # JWT auth middleware
+│   │   ├── auth.ts               # JWT auth (requireAuth, signToken, verifyToken)
+│   │   ├── security.ts           # Rate limiter instances (public, chat, AI, audit, login, embedding)
+│   │   └── validate.ts           # Zod schemas + validateBody middleware factory
 │   ├── routes/
 │   │   ├── audit.ts              # DocAudit API
-│   │   ├── admin.ts              # Protected admin routes
-│   │   ├── public.ts             # Public read-only routes
-│   │   ├── blog.ts               # Blog CRUD
-│   │   ├── chat.ts               # AI Sales Assistant
-│   │   ├── ka-sprint.ts          # KA Sprint tool
-│   │   ├── rag.ts                # RAG Pipeline tool
-│   │   ├── prompt-workshop.ts    # Prompt Workshop tool
-│   │   └── ux-agent.ts           # UX Testing Agent
+│   │   ├── admin.ts              # Protected admin routes (login with rate limit + zod)
+│   │   ├── knowledge-arch.ts     # Knowledge Architecture suite API (all 5 tools)
+│   │   ├── docscope.ts           # DocScope Intel Engine (GPT-4o SSE)
+│   │   ├── docforge.ts           # DocForge document formatter (GPT-4o SSE)
+│   │   ├── seoscope.ts           # SEOScope SEO analyzer (GPT-4o SSE)
+│   │   ├── ka-sprint.ts          # KA Sprint taxonomy tool
+│   │   ├── rag.ts                # In-memory RAG sandbox
+│   │   ├── prompt-workshop.ts    # Prompt Workshop
+│   │   ├── blog.ts               # Blog CRUD + auto-draft scheduler
+│   │   ├── chat.ts               # AI Sales Assistant (rate-limited)
+│   │   ├── ux-agent.ts           # UX Testing Agent
+│   │   ├── tool-tester.ts        # Tool testing utilities
+│   │   ├── webhooks.ts           # Paddle webhook (HMAC-SHA256 verified)
+│   │   └── public.ts             # Public read-only data
 │   ├── data/
-│   │   ├── db.ts                 # PostgreSQL pool + schema init
-│   │   ├── store.ts              # PostgreSQL-backed data store
-│   │   ├── prompt-workshop-store.ts  # JSON-persisted prompt store
-│   │   ├── sessions-store.ts     # JSON-persisted session store
-│   │   ├── ux-test-store.ts      # UX test runs and findings data access
-│   │   └── persist/              # JSON file storage directory
+│   │   ├── db.ts                 # PostgreSQL pool + main schema init
+│   │   ├── ka-db.ts              # KA schema init (pgvector + 4 KA tables) + prompt seeding
+│   │   ├── ka-store.ts           # KA data access layer
+│   │   ├── store.ts              # Main data access layer
+│   │   ├── sessions-store.ts     # JSON-persisted KA/PW session store
+│   │   ├── ux-test-store.ts      # UX test runs schema + DAL
+│   │   └── tool-test-store.ts    # Tool test runs schema + DAL
 │   └── services/
-│       ├── parser.ts             # PDF, DOCX, Markdown text extraction
+│       ├── blog-generator.ts     # Monthly draft scheduler + OpenAI generation
+│       ├── parser.ts             # PDF, DOCX, Markdown extraction
 │       ├── scraper.ts            # URL scraping with SSRF protection
-│       ├── analyzer.ts           # OpenAI embeddings + GPT-4o analysis
-│       ├── ux-agent.ts           # UX test suite orchestration service
-│       └── ux-personas.ts        # Persona definitions and test scenarios
+│       ├── analyzer.ts           # OpenAI embeddings + GPT-4o gap analysis
+│       ├── ux-agent.ts           # UX test suite orchestration
+│       └── email.ts              # Resend-based email delivery
 │
-├── public/                       # Static assets
-├── vite.config.ts                # Vite configuration
-├── package.json                  # Dependencies and scripts
-└── tsconfig.json                 # TypeScript configuration
+├── docs/
+│   ├── synaptica-technical-spec.md   # This document
+│   └── synaptica-white-paper.md      # Client-facing positioning paper
+│
+└── demo/meridian-hr/             # Demo documentation files (4 files with deliberate gaps)
 ```
 
 ### Routing Architecture
 
-**Frontend routing** uses Wouter's `<Switch>` / `<Route>` components. All public routes are client-side rendered. Admin routes (`/admin/*`) are protected by a login gate that checks for a stored JWT token. External tool routes (`/synaptica-ka`, `/docforge`, `/difflens`, `/docscope`) redirect to separate Replit-hosted applications.
+**Frontend routing** — all admin routes (`/admin/*`) are client-side auth-gated via JWT token check before render.
 
-**Backend routing** is organized by domain with Express routers:
+**Backend routing** — organized by domain with Express routers:
 
-| Mount Point | Router | Auth | Purpose |
-|---|---|---|---|
-| `/api/audit/*` | `auditRouter` | None (tool-enable check) | DocAudit ingestion and analysis |
-| `/api/admin/*` | `adminRouter` | JWT required | Admin CRUD operations |
-| `/api/admin/ka-sprint/*` | `kaSprintRouter` | JWT required | KA Sprint sessions |
-| `/api/admin/rag/*` | `ragRouter` | JWT required | RAG Pipeline ingestion and chat |
-| `/api/admin/prompt-workshop/*` | `promptWorkshopRouter` | JWT required | Prompt template management |
-| `/api/admin/ux-agent/*` | `uxAgentRouter` | JWT required | UX test suite runs and findings |
-| `/api/admin/projects/*` | `adminRouter` | JWT required | Project and task management |
-| `/api/blog/*` | `blogRouter` | Mixed | Public listing + admin CRUD |
-| `/api/chat/*` | `chatRouter` | None (rate-limited) | AI Sales Assistant |
-| `/api/public/*` | `publicRouter` | None | Public data reads, discovery forms |
+| Mount Point | Router | Auth | Rate Limit | Purpose |
+|---|---|---|---|---|
+| `/api/audit/*` | `auditRouter` | None | 10/10min | DocAudit ingestion and analysis |
+| `/api/admin/login` | `adminRouter` | None | 10 attempts/15min | Admin authentication |
+| `/api/admin/*` | `adminRouter` | JWT required | public (120/min) | Admin CRUD operations |
+| `/api/admin/ka/*` | `kaRouter` | JWT required | varies by endpoint | Knowledge Architecture suite |
+| `/api/admin/ka/search` | `kaRouter` | JWT required | 8/min | Embedding search |
+| `/api/admin/ka/kb/:id/ingest` | `kaRouter` | JWT required | 8/min | Document ingestion + embedding |
+| `/api/admin/ka/gaps` | `kaRouter` | JWT required | 15/min | AI gap analysis (SSE) |
+| `/api/admin/ka/faq` | `kaRouter` | JWT required | 15/min | AI FAQ generation (SSE) |
+| `/api/admin/ka/onboarding/:id/chat` | `kaRouter` | JWT required | 15/min | RAG chat (SSE) |
+| `/api/admin/docscope/*` | `docscopeRouter` | JWT required | 15/min | Content analysis (SSE) |
+| `/api/admin/docforge/*` | `docforgeRouter` | JWT required | 15/min | Document generation (SSE) |
+| `/api/admin/seoscope/*` | `seoscopeRouter` | JWT required | 15/min | SEO analysis (SSE) |
+| `/api/admin/ka-sprint/*` | `kaSprintRouter` | JWT required | public | KA Sprint taxonomy |
+| `/api/admin/rag/*` | `ragRouter` | JWT required | public | In-memory RAG sandbox |
+| `/api/blog/*` | `blogRouter` | Mixed | public | Public listing + admin CRUD |
+| `/api/chat/*` | `chatRouter` | None | 12/min | AI Sales Assistant |
+| `/api/webhooks/*` | `webhookRouter` | HMAC-SHA256 | skipped | Paddle webhooks |
+| `/api/public/*` | `publicRouter` | None | public | Public data reads |
 
 ---
 
@@ -219,501 +242,267 @@ The project follows a monorepo layout with clear separation between frontend and
 
 ### Auth Model
 
-The application uses a single-admin authentication model. There is one admin user whose credentials are defined via environment variables (`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
+Single-admin authentication model. One admin user whose credentials are defined via environment variables (`ADMIN_USERNAME`, `ADMIN_PASSWORD`).
 
 ### JWT Implementation
 
-- **Token signing:** `jsonwebtoken.sign()` with the `JWT_SECRET` environment variable. Tokens contain a `sub` claim (the admin username) and expire after 8 hours.
-- **Token delivery:** The frontend sends the JWT via `Authorization: Bearer <token>` header on admin API requests.
-- **Token verification:** The `requireAuth` middleware extracts the Bearer token from the `Authorization` header, verifies it with `jwt.verify()`, and attaches the admin username to the request object. Invalid or expired tokens return a `401` response.
-- **Server startup gate:** The server exits immediately (`process.exit(1)`) if `JWT_SECRET` is not set, preventing operation without proper auth configuration.
+- **Token signing:** `jsonwebtoken.sign()` with the `JWT_SECRET` environment variable. Tokens contain a `sub` claim and expire after 8 hours.
+- **Token delivery:** Frontend sends JWT via `Authorization: Bearer <token>` header.
+- **Token verification:** `requireAuth` middleware verifies and attaches admin username to the request. Invalid/expired tokens return `401`.
+- **Server startup gate:** Server exits immediately if `JWT_SECRET` is not set.
 
-### Cookie and CORS Configuration
+### Brute-Force Protection
 
-`cookie-parser` middleware is mounted for cookie reading. CORS is configured with `credentials: true` and `origin: true`. In development, the Vite dev server proxies `/api` requests to the Express backend on a different port, so these settings ensure cross-origin API calls work during development. In production, Express serves both static files and API on a single port, making cross-origin less relevant. Note: the current auth implementation uses Bearer tokens in the `Authorization` header rather than httpOnly cookies for token transport. The cookie-parser middleware is available for future use or supplementary session data.
+The login endpoint (`POST /api/admin/login`) is protected by a dedicated rate limiter: 10 failed attempts per 15-minute window per IP, with `skipSuccessfulRequests: true`. Successful logins do not count against the limit.
 
-### Authorization Boundaries
+### Webhook Authentication
 
-- **Public routes:** No authentication required. DocAudit endpoints check whether the tool is admin-enabled before processing.
-- **Admin routes:** All admin API requests require a valid JWT, with the exception of `POST /api/admin/login` (which authenticates credentials and issues a token) and `POST /api/admin/logout`. Unauthorized requests receive `401 Not authenticated` or `401 Invalid or expired session`.
-- **Chat endpoint:** No authentication, but IP-based rate limiting (10 messages/minute) and an admin-controlled on/off toggle.
+Paddle webhook events are verified using HMAC-SHA256 signature verification against the `PADDLE_WEBHOOK_SECRET` environment variable before any processing occurs. Invalid signatures return `400`.
 
 ---
 
 ## 5. Database Schema
 
-The application uses a single PostgreSQL database initialized on server startup via `initDb()` in `server/data/db.ts`. The original schema comprised 14 tables; subsequent feature additions (the AI Sales Assistant chat widget, UX Testing Agent, and Project Management) added `chat_sessions`, `chat_messages`, `ux_test_runs`, `ux_test_findings`, `projects`, and `project_tasks`, bringing the current total to 20 tables. The schema uses `CREATE TABLE IF NOT EXISTS` statements, making initialization idempotent. A `seedDefaults()` function populates initial data for packages, tools, blog articles, and admin settings on first run.
+The application uses a single PostgreSQL database with the `vector` extension (pgvector 0.8.0) for semantic search. The schema is initialized on server startup via `initDb()`, `initUXTestTables()`, `initToolTestTables()`, and `initKATables()`. All initialization is idempotent (`CREATE TABLE IF NOT EXISTS`).
 
-### Table Overview
+### Core Tables (initialized by `initDb`)
 
-| Table | Purpose | Key Columns |
+| Table | Purpose |
+|---|---|
+| `service_packages` | Consulting service offerings |
+| `client_tools` | Public-facing tool registry |
+| `retainer_clients` | Monthly retainer client tracking |
+| `discovery_inquiries` | Inbound discovery call submissions |
+| `testimonials` | Client testimonials |
+| `case_studies` | Case study summaries |
+| `outcome_stats` | Social proof statistics |
+| `blog_articles` | Blog posts (Markdown body, published flag) |
+| `invoices` | Client invoices |
+| `notifications` | Admin notification feed |
+| `admin_settings` | Singleton config (email, Calendly URL, chat toggle) |
+| `email_leads` | Email capture records |
+| `tool_runs` | Tool usage tracking |
+| `pipeline_contacts` | CRM contacts with pipeline stage |
+| `chat_sessions` | AI chat conversations |
+| `chat_messages` | Individual chat messages (FK → chat_sessions, cascade delete) |
+| `projects` | Client and internal projects |
+| `project_tasks` | Tasks within projects (FK → projects, cascade delete) |
+
+### UX Test Tables (initialized by `initUXTestTables`)
+
+| Table | Purpose |
+|---|---|
+| `ux_test_runs` | UX test suite executions (status, persona IDs, summary) |
+| `ux_test_findings` | Individual test findings (severity: good/needs_attention/issue) |
+
+### Knowledge Architecture Tables (initialized by `initKATables`)
+
+| Table | Purpose | Notes |
 |---|---|---|
-| `service_packages` | Consulting service offerings | `id` (PK), name, tagline, price range, duration, type, features (JSONB), ideal client, highlighted flag, sort order |
-| `client_tools` | Public-facing tool registry | `slug` (PK), name, enabled toggle, onboarding copy, sort order |
-| `retainer_clients` | Monthly retainer client tracking | `id` (PK), name, start date, monthly rate, health checks / support sessions / priority requests (all JSONB) |
-| `discovery_inquiries` | Inbound discovery call submissions | `id` (PK), name, company, challenge, timeline, created_at |
-| `testimonials` | Client testimonials | `id` (PK), name, role, company, quote, photo URL |
-| `case_studies` | Case study summaries | `id` (PK), title, industry, challenge, outcome |
-| `outcome_stats` | Social proof statistics | `id` (PK), label, value |
-| `blog_articles` | Blog posts | `id` (PK), title, slug (unique), excerpt, body (Markdown), category, featured image, publish date, published flag, reading time, timestamps |
-| `invoices` | Client invoices | `id` (PK), client name, contact_id (FK to pipeline_contacts), description, amount, currency, dates, status (Draft/Sent/Paid/Overdue), timestamps |
-| `notifications` | Admin notification feed | `id` (PK), type, title, description, link, read flag, created_at |
-| `admin_settings` | Singleton config row | `id` (always 1), email notification toggle, admin email, Calendly URL, chat widget toggle, chat system prompt |
-| `email_leads` | Email capture records | `id` (PK), email, first name, tool source, document type, captured_at |
-| `tool_runs` | Tool usage tracking | `id` (PK), tool name/slug, timestamp, input type, email captured flag, document size category, gap categories (JSONB) |
-| `pipeline_contacts` | CRM contacts | `id` (PK), name, email, company, source, service interest, stage (New Lead → Closed), estimated value, next action, notes, timestamps |
-| `chat_sessions` | AI chat conversations | `id` (PK), visitor name/email, lead captured flag, pipeline contact ID, timestamps |
-| `chat_messages` | Individual chat messages | `id` (PK), session_id (FK, cascading delete), role (user/assistant), content, created_at |
-| `ux_test_runs` | UX test suite executions | `id` (PK), triggered_at, status (running/completed/failed), persona_ids (JSONB), total_scenarios, completed_scenarios, summary |
-| `ux_test_findings` | Individual UX test findings | `id` (PK), run_id (FK to ux_test_runs), persona, area, scenario, severity (`good` / `needs_attention` / `issue`), summary, raw_input, raw_output, evaluated_at |
-| `projects` | Client and internal projects | `id` (PK), name, description, status (active/on-hold/complete), start_date, due_date, archived flag, timestamps |
-| `project_tasks` | Tasks within projects | `id` (PK), project_id (FK to projects, cascading delete), title, description, status (todo/in-progress/done), owner, priority (low/medium/high), due_date, timestamps |
+| `ka_knowledge_bases` | Named KB containers | id UUID, name, description, chunk_count |
+| `ka_chunks` | Text chunks with vector embeddings | `embedding vector(1536)` column; HNSW/IVFFlat compatible |
+| `ka_onboarding_sessions` | Persisted conversation history | messages stored as JSONB array |
+| `ka_prompt_templates` | Reusable prompt library | 10 built-in prompts seeded on first init |
 
-### Data Storage Notes
-
-- Primary data storage is PostgreSQL via `pg.Pool`.
-- Two subsystems (Prompt Workshop templates and KA Sprint / Prompt Workshop sessions) still use JSON file persistence in `server/data/persist/`. This is a legacy pattern that predates the PostgreSQL migration; both stores are isolated behind their own modules (`prompt-workshop-store.ts`, `sessions-store.ts`).
-- The `withTransaction` helper provides explicit `BEGIN` / `COMMIT` / `ROLLBACK` semantics for multi-statement operations.
-- IDs are application-generated strings (typically UUIDs or slugs), not database-generated sequences.
+**pgvector usage:** Cosine similarity search is performed using the `<=>` distance operator. Queries use `ORDER BY embedding <=> $query_vector LIMIT K` with the index on `ka_chunks(kb_id)`.
 
 ---
 
 ## 6. AI Subsystems
 
-All AI features use the OpenAI API via the official `openai` Node.js SDK (v6). Two models are used:
+All AI features use OpenAI via the official `openai` Node.js SDK. Two models are used:
 
-- **text-embedding-3-small** — For vector embeddings (1536 dimensions). Used in DocAudit gap analysis and the RAG Pipeline.
-- **GPT-4o** — For natural language generation. Used in DocAudit recommendations, RAG chat answers, and the Sales Assistant.
+- **text-embedding-3-small** — 1536-dimension embeddings. Used in DocAudit and the Knowledge Architecture semantic search.
+- **GPT-4o** — Used in DocAudit recommendations, all KA tools, DocScope, DocForge, SEOScope, RAG chat, and the Sales Assistant.
 
-The `OPENAI_API_KEY` environment variable is required for all AI features. The SDK is lazily instantiated per-request, and each service throws an explicit error if the key is missing.
+The `OPENAI_API_KEY` environment variable is required for all AI features. The SDK is instantiated per-request with an explicit error if the key is missing.
+
+All AI response endpoints use **Server-Sent Events (SSE)** for real-time streaming, with a consistent protocol:
+- `data: {"text": "..."}` — content chunk
+- `data: {"error": "..."}` — error message
+- `data: [DONE]` — stream complete
 
 ### 6.1 DocAudit — Documentation Gap Analysis
 
-DocAudit is the primary client-facing AI tool: a multi-format documentation ingestion and gap analysis pipeline that produces severity-ranked findings and branded PDF reports.
+Client-facing multi-format documentation ingestion and gap analysis pipeline. Produces severity-ranked findings and branded PDF reports.
 
-#### Ingestion Pipeline
+**Ingestion:** Four input methods — file upload (PDF/DOCX/MD/TXT), pasted text, URL scraping, Notion API. Outputs sentence-boundary chunks (default 1000 chars), max 500 chunks.
 
-Content enters the system through four input methods, each with its own API endpoint:
+**Analysis:** Embeds chunks + topic queries → cosine similarity → severity levels (critical/high/medium/low) → GPT-4o recommendations → structured result with overall score.
 
-| Input | Endpoint | Parser | Limits |
-|---|---|---|---|
-| File upload (PDF, DOCX, MD, TXT) | `POST /api/audit/parse-files` | `pdf-parse`, `mammoth`, regex strip, raw UTF-8 | 20 files, 10 MB each |
-| Pasted text | `POST /api/audit/parse-text` | Direct pass-through | — |
-| URL scraping | `POST /api/audit/parse-url` | `cheerio` HTML extraction | 10 URLs, 5 MB response limit, 15s timeout |
-| Notion API | `POST /api/audit/parse-notion` | Notion API block-level extraction | 20 pages |
+**URL Scraping Security (SSRF):** Protocol whitelist, hostname blocklist, private IP detection (RFC 1918), DNS resolution re-validation, redirect re-validation (up to 5 hops), 5 MB response cap, 15s timeout.
 
-All ingestion endpoints produce an array of text chunks using a sentence-boundary chunking algorithm (default 1000-character chunks, split at sentence endings). Maximum 500 chunks are forwarded to analysis.
+**Rate limiting:** 10 requests per 10-minute window.
 
-#### Analysis Pipeline
+### 6.2 Knowledge Architecture Suite
 
-The analysis endpoint (`POST /api/audit/analyze`) executes the following steps:
+Admin-only documentation engineering platform at `/admin/knowledge-arch`. Five tools sharing a common knowledge base layer:
 
-1. **Embed document chunks:** Batch-embed all content chunks using `text-embedding-3-small` (batches of 20, each chunk truncated to 800 characters).
-2. **Embed topic queries:** Embed each user-selected topic as `"Documentation about: {topic}"` for semantic alignment.
-3. **Compute coverage scores:** For each topic, find the maximum cosine similarity against all chunk embeddings. Normalize the raw similarity score from a `[0.15, 0.70]` range to `[0, 1]`.
-4. **Assign severity levels:** Based on the normalized score — critical (<0.2), high (<0.4), medium (<0.6), low (≥0.6).
-5. **Generate recommendations:** For all topics scoring below 0.7, send the gap list to GPT-4o with a JSON response format to get specific, actionable recommendations per topic.
-6. **Return structured result:** Overall score (percentage), per-topic coverages with severity and recommendations, and a summary string.
+#### Knowledge Base Management
+Documents are ingested via file upload (DOCX/TXT/MD) or paste. Text is chunked using sentence-boundary algorithm (≈400 tokens per chunk), each chunk embedded with `text-embedding-3-small` and stored in `ka_chunks` with a `vector(1536)` column. Re-ingesting a knowledge base replaces all existing chunks.
 
-**Topic taxonomies:** The frontend offers 4 preset taxonomies (not hardcoded on the backend — passed by the client) plus support for custom user-defined topics. Maximum 30 topics per analysis.
+#### Tool 1 — Semantic Search
+User submits a query → embedded via `text-embedding-3-small` → pgvector cosine similarity search → top-K results returned with similarity scores. Configurable top-K (1–10). Color-coded confidence badges (>80% emerald, >60% yellow, else neutral).
 
-**Rate limiting:** One analysis per IP per 10 seconds, enforced via an in-memory map with LRU-style cleanup.
+#### Tool 2 — Gap Analyzer
+Retrieves all chunks from the selected KB → concatenates (up to 60 chunks) → sends to GPT-4o with the user's support tickets/questions → SSE-streamed structured gap report (executive summary, critical/medium/low gaps, content to retire, writing queue).
 
-#### PDF Export
+#### Tool 3 — FAQ Builder
+Retrieves all chunks → GPT-4o prompt with target audience → SSE-streamed Markdown FAQ (minimum 15 Q&A pairs, grouped under headings, calibrated to audience vocabulary).
 
-Gap reports are exportable as branded PDFs generated client-side via `jsPDF`. The PDF includes:
+#### Tool 4 — Onboarding Assistant
+RAG-powered chat agent with full conversation persistence in `ka_onboarding_sessions`. Each user message triggers:
+1. `text-embedding-3-small` embedding of the message
+2. pgvector search for top-4 relevant chunks
+3. GPT-4o completion with the retrieved context + last 12 conversation messages
+4. Response streamed via SSE, both user and assistant messages persisted to DB immediately
 
-- Dark-themed header with Synaptica branding and logo
-- Overall score and severity breakdown
-- Section-by-section findings with per-topic scores and recommendations
-- Priority recommendations
-- Paginated footer
+#### Tool 5 — Prompt Toolkit
+Reusable prompt library (10 built-in templates + user-created) with category filtering and live sandbox. Variables in prompts use `{{variable_name}}` syntax. Sandbox sends the filled prompt directly to GPT-4o and streams the response. Built-in prompts cannot be deleted.
 
-#### URL Scraping Security (SSRF Protection)
+### 6.3 RAG Pipeline Tool
 
-The URL scraper (`server/services/scraper.ts`) implements defense-in-depth against SSRF:
+Admin-only in-memory RAG sandbox for prototyping retrieval strategies. No persistence — resets on server restart. Uses sliding-window character chunking with configurable overlap.
 
-1. **Protocol whitelist:** Only `http:` and `https:` schemes are allowed.
-2. **Hostname blocklist:** Blocks `localhost`, `127.0.0.1`, `0.0.0.0`, `169.254.169.254`, `[::1]`, and `metadata.google.internal`.
-3. **Private IP detection:** Checks resolved IP addresses against RFC 1918 (10.x, 172.16-31.x, 192.168.x), loopback (127.x), link-local (169.254.x), and IPv6 equivalents (::1, fc/fd, fe80, ::ffff: mapped).
-4. **DNS resolution validation:** After hostname-level checks, resolves via `dns.lookup()` and re-validates the resolved IP.
-5. **Redirect following:** Manual redirect handling (up to 5 hops) with re-validation at each hop to prevent DNS rebinding via redirects.
-6. **Response size cap:** 5 MB maximum response body.
-7. **Timeout:** 15-second abort signal per request.
+### 6.4 AI Sales Assistant Chat Widget
 
-### 6.2 RAG Pipeline Tool
-
-An admin-only tool (`/admin/rag-pipeline`) providing a self-contained Retrieval-Augmented Generation sandbox for testing document retrieval strategies.
-
-#### Architecture
-
-The RAG Pipeline uses an in-memory vector store (no external vector database). This is intentional — the tool is designed for prototyping and demonstrating RAG concepts within a session, not for production-scale retrieval.
-
-#### Ingestion (`POST /api/admin/rag/ingest`)
-
-1. Accept raw text input with configurable chunk size (100–5000 characters, default 500) and overlap (0 to chunk_size - 1, default 50).
-2. Split text using a sliding-window character chunking strategy with overlap.
-3. Embed all chunks via `text-embedding-3-small` in a single batch request.
-4. Store chunks with their embeddings in an in-memory array (`chunkStore`), assigning sequential IDs.
-5. Return the count of newly ingested chunks and total store size.
-
-#### Retrieval and Chat (`POST /api/admin/rag/chat`)
-
-1. Embed the user's question using `text-embedding-3-small`.
-2. Compute cosine similarity between the query vector and every stored chunk embedding.
-3. Select the top-K most similar chunks (default K=3, max 20).
-4. Construct a GPT-4o prompt with the retrieved chunks as context, instructing the model to ground answers in the provided context and cite chunk IDs.
-5. Return the model's answer along with source chunk metadata (chunk ID, similarity score, text preview).
-
-#### Status (`GET /api/admin/rag/status`)
-
-Returns the current chunk count in the in-memory store. Resets to zero on server restart.
-
-### 6.3 AI Sales Assistant Chat Widget
-
-A GPT-4o-powered conversational widget embedded on all public pages, acting as a knowledgeable sales assistant for Synaptica's services.
-
-#### Frontend Component (`ChatWidget.tsx`)
-
-- Floating emerald bubble on all public pages, hidden on `/admin/*` routes.
-- Checks widget enabled status via `GET /api/chat/widget-status` on mount.
-- Expandable chat panel with message history, typing indicator, and session persistence.
-
-#### Backend (`POST /api/chat`)
-
-1. **Rate limiting:** 10 messages per minute per IP, enforced via in-memory sliding window.
-2. **Widget toggle check:** Respects the `chat_widget_enabled` admin setting; returns `503` when disabled.
-3. **Session management:** Creates or resumes a chat session (stored in `chat_sessions` table). Each message is persisted to `chat_messages`.
-4. **Conversation context:** Sends the last 20 messages as conversation history to GPT-4o (each truncated to 2000 characters). User input is capped at 2000 characters.
-5. **System prompt:** Uses a detailed system prompt encoding Synaptica's full service catalog, pricing tiers, Learning OS product details, free tool availability, lead capture instructions, and conversational boundaries. The system prompt is editable by the admin via the Settings panel.
-6. **Lead capture:** The system prompt instructs GPT-4o to emit a `<<<LEAD_CAPTURE:{"name":"...","email":"..."}>>>` marker when it detects buying intent and collects contact information. The backend parses this marker, strips it from the visible reply, creates a `pipeline_contacts` record with source `ai_chat`, updates the chat session with visitor details, and triggers an admin notification.
-7. **Model settings:** GPT-4o, temperature 0.7, max 800 tokens per response.
-
-#### Admin Controls
-
-- **Chat Sessions Viewer:** Browse all conversations, see which resulted in lead capture, read full transcripts.
-- **Settings:** Chat widget on/off toggle and system prompt editor in the admin Settings tab.
+GPT-4o-powered chat widget on all public pages. Rate-limited to 12 messages/minute. Admin can toggle on/off and configure the system prompt via admin settings. Conversations persisted to `chat_sessions` + `chat_messages`.
 
 ---
 
 ## 7. Admin Platform
 
-The admin dashboard (`/admin`) provides a comprehensive back-office for the site owner. It is a single-page application within the React app, protected by JWT authentication.
+All admin pages live under `/admin/*` and require a valid JWT stored in `localStorage`. The admin dashboard provides navigation cards to all tools.
 
 ### 7.1 KA Sprint Tool
-
-An AI-powered knowledge architecture design tool at `/admin/ka-sprint`.
-
-- Guides the user through taxonomy design, retrieval logic mapping, and document structure planning.
-- Session persistence: save, list, reopen, continue, and delete sessions with client name and date metadata.
-- Export completed sessions as structured Markdown documents formatted as "Knowledge Architecture Deliverable" handover documents.
-- API: `GET/POST/PUT/DELETE /api/admin/ka-sprint/sessions/*` plus an export endpoint.
-- Data storage: JSON files in `server/data/persist/`.
+Taxonomy design assistant. Generates structured taxonomies, tagging conventions, and design rationale for knowledge architecture projects. Sessions persisted as JSON.
 
 ### 7.2 Prompt Engineering Workshop
+Prompt template library with category management, variable filling, and live sandbox. Persisted as JSON files.
 
-A prompt template design, testing, and documentation tool at `/admin/prompt-workshop`.
+### 7.3 DocScope Intel Engine
+Content intelligence tool. Analyzes pasted content (emails, Slack threads, docs, meeting notes) using GPT-4o to surface gaps, inconsistencies, structure problems, or performs a comprehensive full analysis. Four modes. SSE streaming. Rate-limited to 15 req/min. Validated with Zod.
 
-- **Prompt library:** Full CRUD for prompt templates with search and category filtering.
-- **Variable substitution:** `{{variable}}` placeholder syntax with auto-detection. The UI generates labeled input fields for each detected variable.
-- **Live testing:** Runs assembled prompts (with variable substitution applied) against the OpenAI API directly from the UI.
-- **Style guide:** Global style guide editor that can be auto-appended to prompts for consistent tone and formatting.
-- **Session management:** Save/load sessions with client name, session name, version, and tags.
-- **Export:** Generates structured Markdown "Prompt Library" deliverable documents. Supports clipboard copy.
-- **API:** `GET/POST/PUT/DELETE /api/admin/prompt-workshop/prompts`, `POST /api/admin/prompt-workshop/test`, style guide CRUD, category listing, session CRUD + export.
-- **Data storage:** JSON files in `server/data/persist/`.
+### 7.4 DocForge
+Document formatter. Accepts file uploads (DOCX/TXT/MD) or pasted content. Transforms raw material into structured professional documents — report, brief, guide, audit, or proposal format. Supports custom branding/tone notes. Download as `.md`. SSE streaming. Rate-limited to 15 req/min.
 
-### 7.3 Pipeline CRM
+### 7.5 SEOScope
+SEO analysis tool. Analyzes page content against optional target keywords. Four analysis modes: full audit, keyword analysis, content quality, technical elements. GPT-4o SSE streaming. Rate-limited to 15 req/min. Validated with Zod.
 
-A lightweight sales pipeline manager embedded in the admin dashboard.
+### 7.6 DiffLens
+Client-side word-level document comparison using the `diff` npm library. No server call — runs entirely in the browser. Supports paste or file upload (TXT/MD/DOCX/JSON/CSV). Displays color-coded additions (emerald) and deletions (red strikethrough) with word-count statistics.
 
-- **Lead stages:** Tracks contacts through a defined pipeline — New Lead → Contacted → Proposal Sent → Active Client → Closed (defined as `PipelineStage` union type in `store.ts`).
-- **Contact sources:** `discovery_call`, `tool_email_capture`, `manual`, `ai_chat` (defined as `ContactSource` union type in `store.ts`).
-- **Lead creation triggers:** Contacts are automatically created from discovery call form submissions and AI chat lead captures. Manual creation is also supported.
-- **Contact fields:** Name, email, company, source, service interest, stage, estimated value, next action, notes, timestamps.
-- **Filtering:** Filter by stage, source, service interest, and text search.
-- **Pipeline value:** Aggregated estimated value across active contacts.
-- **API:** Full CRUD at `/api/admin/pipeline/*`.
+### 7.7 Pipeline CRM
+Contact management with pipeline stages (New Lead → Discovery → Proposal → Negotiation → Closed Won/Lost). Full CRUD. Estimated deal value tracking. Notes and next-action fields.
 
-### 7.4 Invoicing Manager
+### 7.8 Invoicing Manager
+Invoice creation and tracking with status workflow (Draft → Sent → Paid → Overdue). Client-side PDF generation via jsPDF with Synaptica branding.
 
-A full invoice management system within the admin dashboard.
+### 7.9 Analytics Dashboard
+Aggregated metrics: tool run counts, lead capture rates, document type breakdown, pipeline summary, retainer health.
 
-- **Invoice lifecycle:** Draft → Sent → Paid → Overdue.
-- **Financial summary header:** Total invoiced, total collected, total outstanding, overdue count — calculated from invoice data.
-- **CRM integration:** Invoices can be linked to pipeline contacts via `contact_id`.
-- **Filtering:** By status, date range, and free-text search.
-- **PDF export:** Client-side generation via jsPDF with Synaptica branding, clean formatting, and structured layout.
-- **Fields:** Client name, description, amount, currency (default USD), invoice date, due date, status, timestamps.
+### 7.10 Blog & Content Management
+Full blog CRUD with Markdown editor, category management, and publish/unpublish toggle. Monthly auto-draft scheduler: checks every 24 hours, generates a new AI-drafted post if 30 days have elapsed since last draft, notifies via email.
 
-### 7.5 Analytics Dashboard
+### 7.11 Notification System
+Admin notification feed with read/unread states. Notifications generated for new discovery inquiries, chat leads captured, retainer check-in reminders.
 
-A metrics and analytics tab in the admin dashboard, powered by Recharts visualizations.
+### 7.12 Autonomous AI UX Testing Agent
+Simulates multiple user personas navigating the application and evaluating UX quality. Runs scenarios in parallel, produces structured findings with severity ratings (good/needs_attention/issue).
 
-- **Tool usage metrics:** Total runs across all tools, 30-day trend bar charts, per-tool breakdowns.
-- **Email capture tracking:** Count and source of captured email leads.
-- **DocAudit-specific analytics:** Input type breakdown (file upload, paste, URL, Notion), document size distribution, top gap categories.
-- **Data source:** Queries the `tool_runs` and `email_leads` tables. Each DocAudit analysis and tool usage logs a record to `tool_runs` with metadata about the input type, document size, and gap categories (stored as JSONB).
-
-### 7.6 Blog & Content Management
-
-- **Public blog:** Listing page with article cards (title, date, reading time, category, excerpt) and category filtering. Individual article pages render full Markdown via `react-markdown` with `remark-gfm` for GitHub Flavored Markdown support.
-- **SEO:** Per-article meta tags (title, description, Open Graph) via a custom Helmet component.
-- **Admin management:** Create, edit, publish/unpublish, and delete articles. Markdown editor with slug auto-generation, category, featured image, and publish date fields.
-- **Seeded content:** 3 pre-loaded articles (2 published, 1 draft) demonstrating the blog format.
-- **API:** Public `GET /api/blog/public` and `GET /api/blog/public/:slug`; admin `GET/POST /api/blog` and `PUT/DELETE /api/blog/:id`.
-
-### 7.7 Notification System
-
-- **In-app notifications:** Bell icon in the admin header with unread count badge. Popover panel showing recent events in reverse chronological order.
-- **Notification types:** `discovery_call`, `email_capture`, `new_subscriber`, `cancellation`, `retainer_checkin`.
-- **Automatic triggers:** Discovery call form submissions, email captures, and AI chat lead captures generate notifications. Retainer check-in proximity alerts run every 6 hours and notify 3 days before a monthly check-in is due.
-- **Read state management:** Individual mark-read and "Mark all read" operations.
-- **Storage cap:** 200 notification entries maximum, persisted to the `notifications` table.
-
-### 7.8 Autonomous AI UX Testing Agent
-
-An admin-only tool at `/admin/ux-tester` that replaces manual test checklists with a fully autonomous AI agent. When triggered, the agent inhabits user personas, exercises the platform's tools and public-facing features, evaluates every response, and produces a structured findings report — all without human interaction.
-
-#### Personas and Scenarios
-
-The agent ships with 5 predefined personas, each defined as a structured TypeScript constant in `server/services/ux-personas.ts`. Each persona has a name, background, intent, and tone descriptor, along with 6–10 scenario definitions. Scenarios specify the area under test (Chat Assistant, Lab Tools, Navigation, Lead Capture), the action type (chat message, tool input, route check), sample inputs appropriate for that persona's background, and the criteria for a passing evaluation.
-
-Example personas include a skeptical Technical Director evaluating AI vendors, a Content Strategist comparing tools, and a first-time visitor unfamiliar with knowledge architecture concepts.
-
-#### Agent Orchestration Service (`server/services/ux-agent.ts`)
-
-When a test run is triggered via `POST /api/admin/ux-agent/run`, the server-side `UXAgentService` executes the following flow:
-
-1. **Create a run record** in the `ux_test_runs` table with status `running`.
-2. **Iterate through all personas and their scenarios** sequentially. A run lock prevents concurrent test runs.
-3. **For each scenario**, the agent calls the relevant internal endpoint as that persona's inputs:
-   - **Chat scenarios:** Sends multi-turn messages to `POST /api/chat` from the persona's viewpoint (curious questions, buying intent, confusion, off-topic requests, edge cases like short or empty inputs).
-   - **DocAudit scenarios:** Submits persona-appropriate document samples and topic lists to the DocAudit analysis endpoint and evaluates the returned analysis.
-   - **KA Sprint scenarios:** Sends inputs to the KA Sprint taxonomy endpoint and evaluates output quality.
-   - **Prompt Workshop scenarios:** Sends test prompts to the Prompt Workshop test endpoint and evaluates response quality.
-   - **Route checks:** Verifies that all major public routes return correct HTTP responses with non-empty content.
-   - **Email gate scenarios:** Tests email capture gate behavior and form validation.
-4. **After each test**, a second GPT-4o call acts as an evaluator — judging the interaction from the persona's perspective for coherence, helpfulness, accuracy, and persona-appropriateness. The evaluation produces a severity tag: `good`, `needs_attention`, or `issue`.
-5. **Write a finding record** to the `ux_test_findings` table with the persona, area, scenario name, severity, summary, raw input/output, and evaluation timestamp.
-6. **Update run progress** (completed scenario count) after each scenario, enabling live progress reporting.
-7. **On completion**, update the run status to `completed` with a summary. Errors and timeouts for individual scenarios are handled gracefully — the scenario is marked as failed without stopping the entire run.
-
-#### API Endpoints
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/admin/ux-agent/personas` | GET | Returns available personas and their scenario definitions |
-| `/api/admin/ux-agent/run` | POST | Starts a new test suite run (locked to prevent concurrent runs) |
-| `/api/admin/ux-agent/runs` | GET | Lists all historical test runs |
-| `/api/admin/ux-agent/runs/:id` | GET | Returns detailed findings for a specific run |
-| `/api/admin/ux-agent/runs/:id/export` | GET | Generates a Markdown export of the findings report |
-
-#### Database Tables
-
-- **`ux_test_runs`:** Stores run metadata — ID, trigger timestamp, status (running/completed/failed), persona IDs (JSONB), total and completed scenario counts, and a summary string.
-- **`ux_test_findings`:** Stores individual findings — ID, run ID (FK), persona name, area, scenario name, severity, plain-English summary, raw input, raw output, and evaluation timestamp.
-
-Table initialization is handled by `initUXTestTables()` in `server/data/ux-test-store.ts`.
-
-#### Frontend (`UXTester.tsx`)
-
-The admin page provides:
-
-- A persona overview grid showing each persona's name, background, and scenario count.
-- A "Run Test Suite" button that triggers a run and polls for progress.
-- A live feed of findings as they arrive, color-coded by severity (green for `good`, amber for `needs_attention`, red for `issue`).
-- Area-based filtering (Chat Assistant, Lab Tools, Navigation, Lead Capture).
-- A final summary section once the run completes.
-- A run history list for revisiting past reports.
-- A Markdown export button for the full findings report.
-
-### 7.9 Project Management
-
-A project and task management system embedded in the admin dashboard, accessible via a "Projects" tab alongside Pipeline and Invoicing. Designed for tracking client engagements and internal projects with progress visibility and deadline management.
-
-#### Data Model
-
-Two PostgreSQL tables, defined in `server/data/db.ts`:
-
-- **`projects`:** `id` (PK), name, description, status (`active` / `on-hold` / `complete`), start_date, due_date, archived flag, created_at, updated_at.
-- **`project_tasks`:** `id` (PK), project_id (FK to projects, cascading delete), title, description, status (`todo` / `in-progress` / `done`), owner, priority (`low` / `medium` / `high`), due_date, created_at, updated_at.
-
-Data access functions follow the existing pattern in `server/data/store.ts`: `getProjects()`, `getProject()`, `createProject()`, `updateProject()`, `deleteProject()`, `getProjectTasks()`, `createProjectTask()`, `updateProjectTask()`, `deleteProjectTask()`.
-
-#### API Endpoints
-
-All endpoints are nested under `/api/admin/projects` and protected by `requireAuth` middleware, defined in `server/routes/admin.ts`:
-
-| Endpoint | Method | Purpose |
-|---|---|---|
-| `/api/admin/projects` | GET | List all projects with computed progress (completed tasks / total tasks) |
-| `/api/admin/projects/:id` | GET | Get a single project with full details |
-| `/api/admin/projects` | POST | Create a new project |
-| `/api/admin/projects/:id` | PUT | Update a project (including archiving) |
-| `/api/admin/projects/:id` | DELETE | Delete a project and all its tasks (cascade) |
-| `/api/admin/projects/:id/tasks` | GET | List all tasks for a project |
-| `/api/admin/projects/:id/tasks` | POST | Create a task within a project |
-| `/api/admin/projects/:projectId/tasks/:taskId` | PUT | Update a task |
-| `/api/admin/projects/:projectId/tasks/:taskId` | DELETE | Delete a task |
-
-#### Frontend (`ProjectManager.tsx`)
-
-The projects UI provides:
-
-- **Projects list view:** Displays each project's name, status, deadline, and a progress bar computed from task completion ratio. Overdue projects are visually flagged.
-- **Project creation and editing:** Form with name, description, status, start date, and due date fields.
-- **Project detail view:** Shows project metadata and a full task list grouped by status (To Do, In Progress, Done). Includes an overall completion progress bar.
-- **Task management:** Inline creation, editing, and deletion of tasks. Each task has a title, description, owner, priority, due date, and status.
-- **Overdue flagging:** Tasks and projects past their due date are visually highlighted.
-- **Archiving:** Projects can be archived to remove them from the active view without deletion.
+### 7.13 Project Management
+Full project and task management with status, priority, owner, and due date fields. Nested tasks under projects.
 
 ---
 
-## 8. Security Considerations
+## 8. Security Hardening
 
-### Authentication
+### HTTP Security Headers (Helmet)
 
-- Single-admin credential model via environment variables. No user registration or multi-tenancy.
-- JWT tokens expire after 8 hours. No refresh token mechanism — the admin re-authenticates after expiry.
-- The server will not start without `JWT_SECRET` configured, preventing accidental unprotected operation.
+All responses include security headers via `helmet`:
+- `Content-Security-Policy` — restricts script, style, font, image, connect, frame, and object sources
+- `X-Content-Type-Options: nosniff`
+- `X-Frame-Options: SAMEORIGIN`
+- `Strict-Transport-Security` (production)
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `X-Powered-By` removed
 
-### Input Validation and Limits
+### Rate Limiting (express-rate-limit)
 
-- File uploads are limited to 10 MB via multer's memory storage (no disk writes for uploaded files).
-- JSON request bodies are limited to 10 MB (`express.json({ limit: "10mb" })`).
-- URL scraping has SSRF protections including protocol whitelisting, hostname blocklisting, private IP detection (IPv4 and IPv6), DNS resolution validation, redirect re-validation, response size caps, and request timeouts (see Section 6.1 for details).
-- Chat messages are truncated to 2000 characters. Conversation history is limited to the last 20 messages.
-- DocAudit analysis is rate-limited to one request per IP per 10 seconds. Chat is rate-limited to 10 messages per IP per minute.
-- Topic count is capped at 30 per DocAudit analysis; URL count at 10; Notion pages at 20; chunks at 500.
+| Limiter | Window | Max Requests | Applied To |
+|---|---|---|---|
+| `publicLimiter` | 1 min | 120 | All routes (global baseline) |
+| `loginLimiter` | 15 min | 10 (skip successful) | `POST /api/admin/login` only |
+| `chatLimiter` | 1 min | 12 | `/api/chat/*` |
+| `auditLimiter` | 10 min | 10 | `/api/audit/*` |
+| `aiToolLimiter` | 1 min | 15 | DocScope, DocForge, SEOScope, KA gaps/faq/onboarding/prompts |
+| `embeddingLimiter` | 1 min | 8 | KA search + ingest (embedding API calls) |
 
-### Environment Variables
+All limiters use `standardHeaders: true` (RateLimit-* headers) and return `429` with a JSON error message.
 
-All sensitive configuration is managed via environment variables, never hardcoded:
+### Input Validation (Zod)
 
-| Variable | Purpose | Required |
-|---|---|---|
-| `JWT_SECRET` | JWT token signing key | Yes (server exits without it) |
-| `ADMIN_USERNAME` | Admin login username | Yes |
-| `ADMIN_PASSWORD` | Admin login password | Yes |
-| `OPENAI_API_KEY` | OpenAI API access | Yes (for AI features) |
-| `DATABASE_URL` | PostgreSQL connection string | Yes |
+Request bodies for sensitive endpoints are validated with Zod schemas before reaching handler logic. Schema enforcement covers: type checking, string length limits, enum values, UUID format, and cross-field refinements (e.g. SEOScope requires either content or URL).
 
-### Data Isolation
+Validated endpoints: admin login, all KA POST routes (kb create, search, gaps, faq, onboarding create, onboarding chat, prompt create), DocScope analyze, SEOScope analyze.
 
-- Admin routes are uniformly gated behind `requireAuth` middleware.
-- Public routes are read-only (packages, tools, blog articles) or create-only (discovery inquiries, email captures).
-- The DocAudit tool respects its admin-controlled enabled/disabled state — requests to a disabled tool return `503`.
+### CORS Configuration
 
-### CORS
+In production, CORS is restricted to `*.replit.app` and `*.replit.dev` patterns plus an optional `ALLOWED_ORIGIN` environment variable. In development, `origin: true` is used for convenience.
 
-CORS is configured permissively (`origin: true`, `credentials: true`) to support the development proxy setup. In production, the single-origin deployment (Express serves both static files and API) mitigates cross-origin risks.
+### SSRF Protection
+
+The DocAudit URL scraper implements defense-in-depth: protocol whitelist, hostname blocklist, RFC 1918 private IP detection, DNS resolution validation, redirect re-validation (up to 5 hops), 5 MB response cap, 15s timeout.
+
+### File Upload Security
+
+- Multer is configured with `memoryStorage()` — no files are written to disk
+- File size limited to 10 MB (DocAudit) / 20 MB (KA ingest)
+- Allowed MIME types and extensions are checked before processing
+- DOCX parsing via mammoth isolates untrusted content extraction
+
+### Webhook Security
+
+Paddle webhooks are verified using HMAC-SHA256 signature verification before any event processing. The raw request body is preserved for verification using `express.raw()` middleware. Invalid signatures return `400` immediately.
+
+### Secrets Management
+
+All credentials are stored as Replit-managed environment variable secrets. The server performs explicit checks for required secrets on startup (`JWT_SECRET`) and per-request (`OPENAI_API_KEY`, `ADMIN_USERNAME`, `ADMIN_PASSWORD`). Missing required credentials result in an error rather than silent fallback.
 
 ---
 
 ## 9. Deployment Model
 
-### Development
+The application is deployed on Replit. In production (`NODE_ENV=production`), Express serves both the built static assets from `dist/` and all API routes on a single port (default 5000, configurable via `PORT`). The `trust proxy: 1` setting is enabled in production to ensure rate limiters correctly identify client IPs behind Replit's proxy layer.
 
-```bash
-npm run dev
-# Runs concurrently:
-#   vite --host 0.0.0.0      (port 5000, frontend + HMR)
-#   npx tsx server/index.ts   (port 3001, API server)
-```
-
-Vite proxies `/api` requests to `localhost:3001`. HMR WebSocket uses `clientPort: 443` for compatibility with Replit's HTTPS proxy. File watching excludes `.cache/`, `.local/`, and `node_modules/`.
-
-### Production
-
-```bash
-npm run build   # vite build → dist/ + copy index.html to 404.html
-npm start       # NODE_ENV=production npx tsx server/index.ts
-```
-
-In production, Express serves the Vite-built static assets from `dist/` and handles API routes on the same port. The `/{*splat}` catch-all route serves `index.html` for client-side routing support.
-
-### Build Optimization
-
-Vite is configured with manual chunk splitting to optimize bundle size:
-
-- `vendor-react`: React and ReactDOM
-- `vendor-motion`: Framer Motion
-- `vendor-radix`: Core Radix UI primitives (dialog, dropdown, tooltip, popover, select, tabs, accordion)
-
-### Replit-Specific Configuration
-
-- `server.host: "0.0.0.0"` — Binds to all interfaces for Replit's container networking.
-- `server.allowedHosts: true` — Accepts requests from Replit's proxy domain.
-- `server.hmr.clientPort: 443` — Routes HMR WebSocket through Replit's HTTPS proxy.
-- The `@replit/vite-plugin-runtime-error-modal` plugin provides runtime error overlay in development.
-- Path aliases: `@` maps to `src/` for clean imports.
+Static assets are served with `Cache-Control: max-age=86400` and ETag support.
 
 ---
 
 ## 10. Email Notifications
 
-The platform includes configuration infrastructure for email notifications, though the actual email sending provider is not yet integrated:
+Email delivery uses the Resend API (`RESEND_API_KEY` environment variable). Notifications are sent for:
+- Monthly blog draft generation (sent to admin email configured in admin settings)
 
-- **Toggle:** `email_notifications_enabled` in `admin_settings` table, configurable from the Settings tab.
-- **Admin email:** Stored in `admin_settings.admin_email`, configurable from Settings.
-- **Current state:** The configuration surface (toggle + admin email address) is implemented and persisted in the database. The in-app notification system is fully operational. Wiring to an external email sending provider (e.g., Resend, SendGrid, or SES) would require adding an API integration in the notification creation flow to dispatch emails when `email_notifications_enabled` is true.
-- **Intended scope:** High-priority events (discovery calls, new subscribers) would trigger email notifications to the configured admin email once a provider is connected.
+The `sendBlogDraftNotification` function in `server/services/email.ts` handles email composition and delivery.
 
 ---
 
 ## 11. Extensibility and Integration Points
 
-### API Surface for External Integration
-
-The Express API is organized into clearly separated routers, making it straightforward to add new routes or consume existing ones from external systems:
-
-- **Public data endpoints** (`/api/public/*`) return service packages and tool listings as JSON. These can be consumed by external marketing sites, landing pages, or partner integrations.
-- **Blog API** (`/api/blog/public`, `/api/blog/public/:slug`) provides a headless CMS-style interface. External frontends could render Synaptica blog content by consuming these endpoints.
-- **Pipeline CRM** (`/api/admin/pipeline/*`) exposes full CRUD for contact management. An external webhook handler could push leads from third-party forms, CRMs, or marketing automation platforms into the Synaptica pipeline.
-- **Chat API** (`POST /api/chat`) could be embedded in external sites by pointing a custom chat widget at this endpoint (respecting rate limits and CORS configuration).
-
-### Extending the AI Pipeline
-
-- **New document parsers:** The ingestion pipeline's modular parser design (`parser.ts`) makes it straightforward to add new file format support. Add a new parse function, register the file extension in the audit route's switch statement, and the existing chunking and analysis pipeline handles the rest.
-- **Custom embeddings:** The `getEmbeddings` function in `analyzer.ts` is a clear abstraction point. Swapping to a different embedding model or a self-hosted model requires changing the model name and potentially adjusting the normalization range.
-- **Additional AI tools:** New admin tools can follow the pattern established by KA Sprint, RAG Pipeline, and Prompt Workshop: create a new Express router, gate it behind `requireAuth`, add a frontend page, and register the route in `App.tsx` and `server/index.ts`.
-
-### Database Extension
-
-- The `initDb()` function uses `CREATE TABLE IF NOT EXISTS`, so new tables can be added to the initialization block without affecting existing data.
-- The `withTransaction` helper supports multi-table operations with rollback safety.
-- Application-generated string IDs (rather than auto-increment) simplify potential future data migration or multi-instance scenarios.
-
-### Webhook and Event Hooks
-
-The notification system provides natural hook points for external integrations. Currently, notifications are stored in PostgreSQL and surfaced via the admin UI. The `admin_settings` table includes `email_notifications_enabled` and `admin_email` fields, providing the configuration surface for an email notification channel (not yet wired to a sending provider). Additional notification channels (email via Resend/SendGrid, Slack webhook, Microsoft Teams, custom webhooks) could be added by extending the notification creation flow in `store.ts`.
-
-### External Tool Redirects
-
-The platform already demonstrates an integration pattern for external tools via redirect routes (`/difflens`, `/docscope`, `/docforge`, `/synaptica-ka`). Each redirects to a separately deployed Replit application. This pattern can be extended for additional tools or partner services.
+- **New AI tools:** Follow the pattern in `server/routes/docscope.ts` (Zod validation + `requireAuth` + SSE streaming). Mount in `server/index.ts` with appropriate rate limiter.
+- **New knowledge bases:** The KA store is fully abstracted — `ka-store.ts` provides typed functions for all KB/chunk/session/prompt operations.
+- **Payments:** Paddle webhooks are handled at `/api/webhooks/paddle`. Additional event types can be added to the switch statement in `server/routes/webhooks.ts`.
+- **New admin pages:** Add route to `App.tsx`, create page component in `src/pages/admin/`, add dashboard card in `AdminDashboard.tsx`.
 
 ---
 
 ## 12. Known Trade-Offs and Technical Debt
 
-### Intentional Design Decisions
-
-1. **In-memory RAG store:** The RAG Pipeline uses an in-memory vector store that resets on server restart. This is a deliberate choice for a prototyping and demonstration tool — not a production retrieval system. It avoids the operational complexity of a dedicated vector database for what is an internal admin utility.
-
-2. **Single-admin model:** The JWT auth system supports only one admin user, defined by environment variables. This is appropriate for a solo consultancy. Multi-user support would require a users table, password hashing, role-based access control, and invitation flow.
-
-3. **JSON file persistence for sessions:** KA Sprint and Prompt Workshop sessions use JSON file storage rather than PostgreSQL. This predates the database migration and works reliably for low-volume admin usage. Moving these to PostgreSQL would provide consistency and enable querying.
-
-4. **Permissive CORS:** CORS is configured as `origin: true` to support the development proxy. In production, same-origin serving neutralizes this, but a stricter CORS policy would be appropriate if the API were exposed to third-party consumers.
-
-### Operational Notes
-
-- **pg v9 SSL warning:** On startup, the `pg` library prints a cosmetic SSL deprecation warning. The database connects and initializes correctly. No action required until upgrading to pg v9.
-- **Analytics double query:** The analytics overview endpoint fetches tool runs twice (once inside `getMetrics()` and once directly for date filtering). At current data volumes this is imperceptible. At scale, refactor to pass runs into `getMetrics()`.
-- **Rate limit state:** Both DocAudit and chat rate limiters use in-memory maps. These reset on server restart and do not share state across instances. Acceptable for single-instance deployment; would need Redis or similar for horizontal scaling.
-- **Notification cap:** Notifications are capped at 200 entries. There is no archival or pagination strategy beyond this cap.
-
----
-
-*This document describes the Synaptica Knowledge Systems platform as of March 2026. It is intended for technical evaluation and due diligence by engineering teams considering integration with, extension of, or investment in the platform.*
+| Item | Description | Mitigation Plan |
+|---|---|---|
+| JSON file persistence | KA Sprint sessions and Prompt Workshop templates use JSON files in `server/data/persist/` rather than PostgreSQL | Migrate to PostgreSQL tables when volume justifies |
+| In-memory RAG store | The RAG Pipeline tool's vector store resets on server restart | Acceptable — tool is a prototyping sandbox, not production retrieval |
+| Single-admin model | Only one admin user; no role system | Sufficient for current solo-operator use case |
+| No CSRF tokens | Auth uses Bearer tokens in headers, not cookies — CSRF attacks require cookie-based auth, so this is not exploitable with the current architecture | Monitor if auth model changes |
+| CSP `unsafe-inline` / `unsafe-eval` | Required by Vite in development; tighten in production via nonce-based CSP if needed | Accept current risk; tighten if moving to strict production CSP |

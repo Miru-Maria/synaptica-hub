@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { validateBody, schemas } from "../middleware/validate.js";
 import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask, getProcessingCertificates, getProcessingCertificate } from "../data/store.js";
 import type { ServicePackage, ClientTool, RetainerClient, Testimonial, CaseStudy, OutcomeStat, PipelineContact, PipelineStage, ContactSource, Invoice, InvoiceStatus, AdminSettings, ProjectStatus, ProjectTaskStatus, ProjectTaskPriority } from "../data/store.js";
 import { getKASessions } from "../data/sessions-store.js";
@@ -7,7 +8,7 @@ import { getPWSessions } from "../data/sessions-store.js";
 
 export const adminRouter = Router();
 
-adminRouter.post("/login", (req: Request, res: Response) => {
+adminRouter.post("/login", validateBody(schemas.login), (req: Request, res: Response) => {
   const { username, password } = req.body;
   const adminUser = process.env.ADMIN_USERNAME;
   const adminPass = process.env.ADMIN_PASSWORD;
