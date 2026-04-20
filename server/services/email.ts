@@ -1,6 +1,23 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const FROM_ADDRESS = "Synaptica Knowledge Systems <onboarding@resend.dev>";
+function getTransporter() {
+  const user = process.env.GMAIL_USER;
+  const pass = process.env.GMAIL_APP_PASSWORD;
+  if (!user || !pass) {
+    throw new Error(
+      "GMAIL_USER and GMAIL_APP_PASSWORD environment variables must be set to send email"
+    );
+  }
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: { user, pass },
+  });
+}
+
+function fromAddress(): string {
+  const user = process.env.GMAIL_USER || "";
+  return `Synaptica Knowledge Systems <${user}>`;
+}
 
 export async function sendBlogDraftNotification(opts: {
   toEmail: string;
@@ -9,10 +26,11 @@ export async function sendBlogDraftNotification(opts: {
   articleId: string;
 }): Promise<void> {
   const { toEmail, title, category, articleId } = opts;
-  const resend = getResendClient();
   const adminUrl = `https://synaptica-knowledge-systems.replit.app/admin?tab=blog&draft=${articleId}`;
-  const { error } = await resend.emails.send({
-    from: FROM_ADDRESS,
+
+  const transporter = getTransporter();
+  await transporter.sendMail({
+    from: fromAddress(),
     to: toEmail,
     subject: `New blog draft ready for review: "${title}"`,
     html: `
@@ -41,17 +59,6 @@ export async function sendBlogDraftNotification(opts: {
   </p>
 </div>`,
   });
-
-  if (error) {
-    console.error("[email] Failed to send blog draft notification:", error);
-    throw error;
-  }
-}
-
-function getResendClient(): Resend {
-  const key = process.env.RESEND_API_KEY;
-  if (!key) throw new Error("RESEND_API_KEY environment variable is not set");
-  return new Resend(key);
 }
 
 export async function sendInquiryNotification(opts: {
@@ -62,9 +69,9 @@ export async function sendInquiryNotification(opts: {
   timeline: string;
 }): Promise<void> {
   const { toEmail, name, company, challenge, timeline } = opts;
-  const resend = getResendClient();
-  const { error } = await resend.emails.send({
-    from: FROM_ADDRESS,
+  const transporter = getTransporter();
+  await transporter.sendMail({
+    from: fromAddress(),
     to: toEmail,
     subject: `New inquiry from ${name} (${company})`,
     html: `
@@ -97,9 +104,4 @@ export async function sendInquiryNotification(opts: {
   </p>
 </div>`,
   });
-
-  if (error) {
-    console.error("[email] Failed to send inquiry notification:", error);
-    throw error;
-  }
 }
