@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM_ADDRESS = "Synaptica <notifications@synapticaks.dev>";
+const FROM_ADDRESS = "Synaptica Knowledge Systems <onboarding@resend.dev>";
 
 export async function sendBlogDraftNotification(opts: {
   toEmail: string;
