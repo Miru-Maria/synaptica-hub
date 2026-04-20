@@ -1,18 +1,26 @@
 import { Router, Response } from "express";
 import multer from "multer";
 import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 
 export const docforgeRouter = Router();
 docforgeRouter.use(requireAuth);
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
-function getAnthropic() {
-  const key = process.env.ANTHROPIC_API_KEY;
-  if (!key) throw new Error("ANTHROPIC_API_KEY is not set");
-  return new Anthropic({ apiKey: key });
+function getOpenAI() {
+  const key = process.env.OPENAI_API_KEY;
+  if (!key) throw new Error("OPENAI_API_KEY is not set");
+  return new OpenAI({ apiKey: key });
 }
+
+const formatInstructions: Record<string, string> = {
+  report: "Format this as a professional consulting report with: Executive Summary, Key Findings, Detailed Analysis, and Recommendations sections.",
+  brief: "Format this as a concise executive brief with: Overview, Key Points, and Next Steps.",
+  guide: "Format this as a structured guide with: Introduction, step-by-step sections with clear headings, and a Summary.",
+  audit: "Format this as a documentation audit report with: Scope, Current State Assessment, Gap Analysis, and Prioritized Recommendations.",
+  proposal: "Format this as a professional proposal with: Background, Proposed Approach, Deliverables, Timeline, and Investment.",
+};
 
 docforgeRouter.post("/generate", upload.single("file"), async (req: AuthenticatedRequest, res: Response) => {
   const { rawText, outputFormat, documentTitle, brandingNotes } = req.body;
@@ -43,14 +51,6 @@ docforgeRouter.post("/generate", upload.single("file"), async (req: Authenticate
     return;
   }
 
-  const formatInstructions: Record<string, string> = {
-    report: "Format this as a professional consulting report with: Executive Summary, Key Findings, Detailed Analysis, and Recommendations sections.",
-    brief: "Format this as a concise executive brief with: Overview, Key Points, and Next Steps.",
-    guide: "Format this as a structured guide with: Introduction, step-by-step sections with clear headings, and a Summary.",
-    audit: "Format this as a documentation audit report with: Scope, Current State Assessment, Gap Analysis, and Prioritized Recommendations.",
-    proposal: "Format this as a professional proposal with: Background, Proposed Approach, Deliverables, Timeline, and Investment.",
-  };
-
   const formatInstruction = formatInstructions[outputFormat as string] || formatInstructions.report;
 
   const systemPrompt = `You are a professional document formatter and editor. Your job is to take raw content and transform it into a polished, well-structured document.
@@ -71,25 +71,20 @@ ${documentTitle ? `- Document title: ${documentTitle}` : ""}`;
   res.setHeader("Connection", "keep-alive");
 
   try {
-    const client = getAnthropic();
-    const stream = await client.messages.stream({
-      model: "claude-sonnet-4-5",
+    const client = getOpenAI();
+    const stream = await client.chat.completions.create({
+      model: "gpt-4o",
       max_tokens: 4096,
+      stream: true,
       messages: [
-        {
-          role: "user",
-          content: `${systemPrompt}\n\n---\n\nRAW CONTENT:\n\n${content.slice(0, 20000)}`,
-        },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: `Format this content:\n\n${content.slice(0, 20000)}` },
       ],
     });
 
     for await (const chunk of stream) {
-      if (
-        chunk.type === "content_block_delta" &&
-        chunk.delta.type === "text_delta"
-      ) {
-        res.write(`data: ${JSON.stringify({ text: chunk.delta.text })}\n\n`);
-      }
+      const text = chunk.choices[0]?.delta?.content;
+      if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
     }
 
     res.write("data: [DONE]\n\n");
