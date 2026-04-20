@@ -1,6 +1,6 @@
 # Synaptica Knowledge Systems
 
-A personal portfolio/landing page for Synaptica Knowledge Systems — an AI knowledge architecture consultancy. Includes the DocAudit documentation gap analysis tool.
+Consulting/product landing site for Synaptica Knowledge Systems (Miruna Cristiana Paun PFA). Full admin suite with AI tools, blog, Paddle billing, and a documentation engineering platform.
 
 ## Stack
 

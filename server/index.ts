@@ -19,11 +19,13 @@ import { webhookRouter } from "./routes/webhooks.js";
 import { docscopeRouter } from "./routes/docscope.js";
 import { docforgeRouter } from "./routes/docforge.js";
 import { seoscopeRouter } from "./routes/seoscope.js";
+import { kaRouter } from "./routes/knowledge-arch.js";
 import { checkRetainerCheckins } from "./data/store.js";
 import { generateBlogDraft, shouldGenerateDraft } from "./services/blog-generator.js";
 import { initDb } from "./data/db.js";
 import { initUXTestTables } from "./data/ux-test-store.js";
 import { initToolTestTables } from "./data/tool-test-store.js";
+import { initKATables } from "./data/ka-db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const isProd = process.env.NODE_ENV === "production";
@@ -49,6 +51,7 @@ app.use("/api/blog", blogRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/admin/ux-agent", uxAgentRouter);
 app.use("/api/admin/tool-tester", toolTesterRouter);
+app.use("/api/admin/ka", kaRouter);
 app.use("/api/admin/docscope", docscopeRouter);
 app.use("/api/admin/docforge", docforgeRouter);
 app.use("/api/admin/seoscope", seoscopeRouter);
@@ -79,6 +82,7 @@ async function start() {
     await initDb();
     await initUXTestTables();
     await initToolTestTables();
+    await initKATables();
     console.log("Database initialized");
   } catch (err) {
     console.error("Failed to initialize database:", err);

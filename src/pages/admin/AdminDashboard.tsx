@@ -971,20 +971,18 @@ export default function AdminDashboard() {
             <Card className="bg-neutral-900 border-neutral-800">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                  <span className="text-emerald-400">SKA</span> Synaptica Knowledge Architecture
+                  <span className="text-emerald-400">KA</span> Knowledge Architecture
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-neutral-400 mb-4">
-                  Semantic knowledge architecture search and exploration tool for mapping and navigating complex knowledge domains.
+                  Documentation engineering suite. Five tools in one pipeline: pgvector semantic search, documentation gap analysis, audience-tailored FAQ generation, RAG-powered onboarding assistant, and a reusable prompt library with live sandbox.
                 </p>
                 <a
-                  href="/synaptica-ka"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/admin/knowledge-arch"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
-                  Open Tool
+                  Launch Suite
                   <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </CardContent>

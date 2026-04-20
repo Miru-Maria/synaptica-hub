@@ -22,6 +22,7 @@ import DocScopePage from "@/pages/admin/DocScope";
 import DocForgePage from "@/pages/admin/DocForge";
 import SEOScopePage from "@/pages/admin/SEOScope";
 import DiffLensPage from "@/pages/admin/DiffLensAdmin";
+import KnowledgeArchPage from "@/pages/admin/KnowledgeArch";
 import ChatWidget from "@/components/ChatWidget";
 
 const queryClient = new QueryClient();
@@ -80,6 +81,7 @@ function Router() {
       <Route path="/admin/docforge" component={DocForgePage} />
       <Route path="/admin/seoscope" component={SEOScopePage} />
       <Route path="/admin/difflens" component={DiffLensPage} />
+      <Route path="/admin/knowledge-arch" component={KnowledgeArchPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
