@@ -478,14 +478,14 @@ export default function AdminDashboard() {
             {navBtn("internal", Hammer, "Internal Tools")}
             {navBtn("metrics", Activity, "Metrics")}
             {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
-            <button onClick={() => setLocation("/admin/ux-tester")} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+            <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
               <FlaskConical className="w-4 h-4 flex-shrink-0" />
               <span className="flex-1 truncate">UX Tester</span>
-            </button>
-            <button onClick={() => setLocation("/admin/tool-tester")} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+            </a>
+            <a href="/admin/tool-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/tool-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
               <Microscope className="w-4 h-4 flex-shrink-0" />
               <span className="flex-1 truncate">Tool Tester</span>
-            </button>
+            </a>
 
             <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Account</p>
             {navBtn("settings", Settings, "Settings")}
@@ -508,14 +508,14 @@ export default function AdminDashboard() {
           {mobileNavBtn("internal", Hammer, "Tools")}
           {mobileNavBtn("metrics", Activity, "Metrics")}
           {mobileNavBtn("sessions", FolderOpen, "Sessions")}
-          <button onClick={() => setLocation("/admin/ux-tester")} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
+          <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
             <FlaskConical className="w-4 h-4" />
             <span className="whitespace-nowrap">UX Test</span>
-          </button>
-          <button onClick={() => setLocation("/admin/tool-tester")} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
+          </a>
+          <a href="/admin/tool-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/tool-tester"); } }} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
             <Microscope className="w-4 h-4" />
             <span className="whitespace-nowrap">Tool Test</span>
-          </button>
+          </a>
           {mobileNavBtn("settings", Settings, "Settings")}
         </div>
 
@@ -919,13 +919,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   SEO analysis tool. Paste a page's content, enter a URL, and set target keywords to get a structured Claude-powered report covering keyword usage, content quality, heading structure, and actionable recommendations.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/seoscope")}
+                <a
+                  href="/admin/seoscope"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/seoscope"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -939,13 +940,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Documentation engineering suite. Five tools in one pipeline: pgvector semantic search, documentation gap analysis, audience-tailored FAQ generation, RAG-powered onboarding assistant, and a reusable prompt library with live sandbox.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/knowledge-arch")}
+                <a
+                  href="/admin/knowledge-arch"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/knowledge-arch"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Suite
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -959,13 +961,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Word-level document comparison. Upload or paste two versions of any document and get a clear, colour-coded diff highlighting every addition, deletion, and change — with word-count stats.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/difflens")}
+                <a
+                  href="/admin/difflens"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/difflens"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -979,13 +982,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Transform raw notes, bullet points, or rough drafts into polished, structured documents. Choose a format (report, brief, guide, audit, proposal), add branding notes, upload a file or paste content — Claude does the rest.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/docforge")}
+                <a
+                  href="/admin/docforge"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/docforge"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -999,13 +1003,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Paste any content — emails, Slack threads, meeting notes, or documents — and get a structured AI analysis of gaps, inconsistencies, structure problems, and coverage issues.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/docscope")}
+                <a
+                  href="/admin/docscope"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/docscope"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -1021,8 +1026,7 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/ka-sprint"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ka-sprint"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -1043,8 +1047,7 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/rag-pipeline"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/rag-pipeline"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -1065,8 +1068,7 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/prompt-workshop"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/prompt-workshop"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -1087,8 +1089,7 @@ export default function AdminDashboard() {
                 </p>
                 <a
                   href="/admin/monthly-retainer"
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/monthly-retainer"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-teal-500 hover:bg-teal-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
@@ -1108,13 +1109,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Run autonomous AI-driven UX tests across the platform. Multiple personas exercise the chat assistant, lab tools, navigation, and lead capture — then an evaluator grades every interaction and produces a structured report.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/ux-tester")}
+                <a
+                  href="/admin/ux-tester"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-400 text-neutral-950 font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
@@ -1129,13 +1131,14 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Autonomous AI evaluation across 23 hypothetical use cases — DocAudit functionality, external tool health (with response time and content checks), KA Sprint, RAG Pipeline, Prompt Workshop, and chat knowledge accuracy. Produces a downloadable Markdown report stored for 60 days, max 10 kept.
                 </p>
-                <button
-                  onClick={() => setLocation("/admin/tool-tester")}
+                <a
+                  href="/admin/tool-tester"
+                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/tool-tester"); } }}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-violet-600 hover:bg-violet-500 text-white font-medium text-sm rounded-lg transition-colors"
                 >
                   Launch Tool
                   <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                </a>
               </CardContent>
             </Card>
 
