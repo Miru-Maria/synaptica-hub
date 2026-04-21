@@ -27,6 +27,7 @@ import { initDb } from "./data/db.js";
 import { initUXTestTables } from "./data/ux-test-store.js";
 import { initToolTestTables } from "./data/tool-test-store.js";
 import { initKATables } from "./data/ka-db.js";
+import { initRagTables } from "./data/rag-store.js";
 import {
   publicLimiter,
   chatLimiter,
@@ -137,6 +138,7 @@ async function start() {
     await initUXTestTables();
     await initToolTestTables();
     await initKATables();
+    await initRagTables();
     console.log("Database initialized");
   } catch (err) {
     console.error("Failed to initialize database:", err);
