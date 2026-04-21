@@ -247,8 +247,8 @@ export default function DiffLensAdmin() {
     const name = f.name.toLowerCase();
     if (name.endsWith(".docx")) {
       const mammoth = await import("mammoth");
-      const buf = Buffer.from(await f.arrayBuffer());
-      return (await mammoth.extractRawText({ buffer: buf })).value;
+      const arrayBuffer = await f.arrayBuffer();
+      return (await mammoth.extractRawText({ arrayBuffer })).value;
     }
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
