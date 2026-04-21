@@ -56,7 +56,6 @@ interface ClientTool {
   name: string;
   slug: string;
   enabled: boolean;
-  onboardingCopy?: string;
 }
 
 interface Testimonial {
@@ -881,47 +880,6 @@ export default function AdminDashboard() {
 
           <div className={activeTab === "internal" ? "mt-6 space-y-4" : "hidden"}>
 
-            <Card className="bg-neutral-900 border-neutral-800 border-emerald-500/30">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
-                    <MessageSquare className="w-4 h-4 text-emerald-400" />
-                    Public Tool Onboarding Copy
-                  </CardTitle>
-                  <Button size="sm" onClick={saveToolSettings} disabled={savingTools}>
-                    <Save className="w-4 h-4 mr-1" />
-                    Save Copy
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-neutral-400">
-                  Edit the plain-English introduction shown on each public tool card and embedded tool page. This helps visitors understand what each tool does before they use it.
-                </p>
-                {tools.map((tool, idx) => (
-                  <div key={tool.slug} className="space-y-2 border border-neutral-800 rounded-lg p-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-neutral-300 text-sm font-medium">{tool.name}</Label>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={tool.enabled}
-                          onCheckedChange={(val) => updateTool(idx, "enabled", val)}
-                        />
-                        <span className="text-xs text-neutral-500">{tool.enabled ? "Enabled" : "Disabled"}</span>
-                      </div>
-                    </div>
-                    <textarea
-                      value={tool.onboardingCopy || ""}
-                      onChange={(e) => updateTool(idx, "onboardingCopy", e.target.value)}
-                      placeholder="Write a 2-3 sentence plain-English introduction for this tool..."
-                      rows={3}
-                      className="w-full bg-neutral-800 border border-neutral-700 text-neutral-100 rounded-md px-3 py-2 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
-                    />
-                    <p className="text-xs text-neutral-600">{(tool.onboardingCopy || "").length} characters</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
 
             <div className="flex items-center gap-6 my-6">
               <div className="flex-1 h-px bg-neutral-800" />
