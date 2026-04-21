@@ -143,13 +143,13 @@ export default function RAGPipeline() {
       <header className="border-b border-[#1e2d4a] bg-[#0d1b30]/80 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a
-              href="/admin"
+            <button
+              onClick={() => setLocation("/admin")}
               className="flex items-center gap-2 text-neutral-400 hover:text-neutral-100 transition-colors text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               Dashboard
-            </a>
+            </button>
             <div className="w-px h-6 bg-[#1e2d4a]" />
             <h1 className="font-semibold text-lg">
               <span className="text-[#00c8a0]">RAG</span> Pipeline

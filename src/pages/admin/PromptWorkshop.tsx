@@ -544,13 +544,13 @@ export default function PromptWorkshop() {
       <header className="border-b border-neutral-800 bg-neutral-900/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <a
-              href="/admin"
+            <button
+              onClick={() => setLocation("/admin")}
               className="flex items-center gap-2 text-neutral-400 hover:text-neutral-100 transition-colors text-sm"
             >
               <ArrowLeft className="w-4 h-4" />
               Dashboard
-            </a>
+            </button>
             <div className="w-px h-6 bg-neutral-700" />
             <h1 className="font-semibold text-lg">
               <span className="text-purple-400">PE</span> Prompt Workshop

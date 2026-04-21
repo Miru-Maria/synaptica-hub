@@ -429,9 +429,9 @@ export default function ToolTester() {
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
       <header className="border-b border-neutral-800 px-4 sm:px-6 py-4 flex items-center gap-4">
-        <a href="/admin" className="text-neutral-400 hover:text-neutral-200 transition-colors">
+        <button onClick={() => setLocation("/admin")} className="text-neutral-400 hover:text-neutral-200 transition-colors">
           <ArrowLeft className="w-5 h-5" />
-        </a>
+        </button>
         <div className="flex-1">
           <h1 className="text-base font-semibold flex items-center gap-2">
             <FlaskConical className="w-4 h-4 text-violet-400" />
