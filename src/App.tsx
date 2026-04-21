@@ -14,6 +14,7 @@ import AdminLogin from "@/pages/admin/AdminLogin";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import KASprint from "@/pages/admin/KASprint";
 import RAGPipeline from "@/pages/admin/RAGPipeline";
+import RAGGuide from "@/pages/admin/RAGGuide";
 import PromptWorkshop from "@/pages/admin/PromptWorkshop";
 import MonthlyRetainer from "@/pages/admin/MonthlyRetainer";
 import UXTester from "@/pages/admin/UXTester";
@@ -73,6 +74,7 @@ function Router() {
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/ka-sprint" component={KASprint} />
       <Route path="/admin/rag-pipeline" component={RAGPipeline} />
+      <Route path="/admin/rag-guide" component={RAGGuide} />
       <Route path="/admin/prompt-workshop" component={PromptWorkshop} />
       <Route path="/admin/monthly-retainer" component={MonthlyRetainer} />
       <Route path="/admin/ux-tester" component={UXTester} />

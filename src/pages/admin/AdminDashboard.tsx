@@ -1045,14 +1045,23 @@ export default function AdminDashboard() {
                 <p className="text-sm text-neutral-400 mb-4">
                   Ingest internal documentation, configure chunking and embedding settings, and chat with an AI that answers questions grounded in your uploaded documents — a live demo of the core RAG product offering.
                 </p>
-                <a
-                  href="/admin/rag-pipeline"
-                  onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/rag-pipeline"); } }}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-                >
-                  Launch Tool
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </a>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <a
+                    href="/admin/rag-pipeline"
+                    onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/rag-pipeline"); } }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                  >
+                    Launch Tool
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                  <a
+                    href="/admin/rag-guide"
+                    onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/rag-guide"); } }}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-medium text-sm rounded-lg transition-colors border border-neutral-700"
+                  >
+                    Read Guide
+                  </a>
+                </div>
               </CardContent>
             </Card>
 
