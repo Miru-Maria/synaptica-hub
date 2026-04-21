@@ -248,7 +248,15 @@ export default function DiffLensAdmin() {
     if (name.endsWith(".docx")) {
       const mammoth = await import("mammoth");
       const arrayBuffer = await f.arrayBuffer();
-      return (await mammoth.extractRawText({ arrayBuffer })).value;
+      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
+      return html
+        .replace(/<h[1-6][^>]*>(.*?)<\/h[1-6]>/gi, (_: string, t: string) => t.replace(/<[^>]+>/g, "") + "\n\n")
+        .replace(/<p[^>]*>(.*?)<\/p>/gi, (_: string, t: string) => t.replace(/<[^>]+>/g, "") + "\n\n")
+        .replace(/<li[^>]*>(.*?)<\/li>/gi, (_: string, t: string) => "• " + t.replace(/<[^>]+>/g, "") + "\n")
+        .replace(/<br\s*\/?>/gi, "\n")
+        .replace(/<[^>]+>/g, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim();
     }
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -310,7 +318,12 @@ export default function DiffLensAdmin() {
     inp.accept = ".txt,.md,.docx,.json,.csv";
     inp.onchange = (e) => {
       const f = (e.target as HTMLInputElement).files?.[0];
-      if (f) { side === "left" ? setLeftFile(f) : setRightFile(f); }
+      if (!f) return;
+      side === "left" ? setLeftFile(f) : setRightFile(f);
+      if (f.name.toLowerCase().endsWith(".docx") || f.name.toLowerCase().endsWith(".txt") || f.name.toLowerCase().endsWith(".md")) {
+        setProse(true);
+        setLightBg(true);
+      }
     };
     inp.click();
   };
