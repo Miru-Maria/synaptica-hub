@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
-import { ArrowLeft, Loader2, Copy, Check, Trash2, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Copy, Check, Trash2, Search, Download } from "lucide-react";
 
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
@@ -25,6 +25,8 @@ export default function SEOScope() {
   const [analysisType, setAnalysisType] = useState<AnalysisType>("full");
   const [result, setResult] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [statusMsg, setStatusMsg] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
@@ -34,10 +36,34 @@ export default function SEOScope() {
     setAuthed(true);
   }, [setLocation]);
 
+  const fetchPage = async () => {
+    if (!url.trim()) return;
+    setFetching(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/seoscope/fetch-url", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ url: url.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || "Failed to fetch page");
+      } else {
+        setContent(data.content);
+      }
+    } catch {
+      setError("Network error while fetching page");
+    } finally {
+      setFetching(false);
+    }
+  };
+
   const analyze = async () => {
     if (!content.trim() && !url.trim()) { setError("Paste page content or enter a URL."); return; }
     setError(null);
     setResult("");
+    setStatusMsg("");
     setLoading(true);
 
     try {
@@ -72,7 +98,8 @@ export default function SEOScope() {
           if (data === "[DONE]") break;
           try {
             const parsed = JSON.parse(data);
-            if (parsed.text) setResult((prev) => prev + parsed.text);
+            if (parsed.status) setStatusMsg(parsed.status);
+            if (parsed.text) { setStatusMsg(""); setResult((prev) => prev + parsed.text); }
             if (parsed.error) setError(parsed.error);
           } catch { }
         }
@@ -81,6 +108,7 @@ export default function SEOScope() {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+      setStatusMsg("");
     }
   };
 
@@ -91,6 +119,9 @@ export default function SEOScope() {
   };
 
   if (!authed) return null;
+
+  const canAnalyze = !loading && (content.trim().length > 0 || url.trim().length > 0);
+  const isValidUrl = (() => { try { new URL(url); return true; } catch { return false; } })();
 
   return (
     <div className="min-h-screen bg-neutral-950 text-neutral-100">
@@ -107,7 +138,9 @@ export default function SEOScope() {
       </header>
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        <p className="text-neutral-400 text-sm">Analyze a page for SEO opportunities. Paste the page content, add a URL for context, set your target keywords, and get a structured analysis with actionable recommendations.</p>
+        <p className="text-neutral-400 text-sm">
+          Analyze any page for SEO opportunities. Enter a URL to auto-fetch and extract content, or paste content directly. Add target keywords for a more focused report.
+        </p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-4">
@@ -128,14 +161,27 @@ export default function SEOScope() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-neutral-300">Page URL <span className="text-neutral-600 font-normal">(optional, for context)</span></label>
-              <input
-                type="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example.com/page"
-                className="w-full bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder:text-neutral-600"
-              />
+              <label className="text-sm font-medium text-neutral-300">Page URL</label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && isValidUrl) fetchPage(); }}
+                  placeholder="https://example.com/page"
+                  className="flex-1 bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder:text-neutral-600"
+                />
+                <button
+                  onClick={fetchPage}
+                  disabled={fetching || !isValidUrl}
+                  title="Fetch page content from URL"
+                  className="flex items-center gap-1.5 px-3 py-2.5 bg-neutral-800 hover:bg-neutral-700 disabled:opacity-40 disabled:cursor-not-allowed border border-neutral-700 rounded-lg text-sm text-neutral-300 transition-colors whitespace-nowrap"
+                >
+                  {fetching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  {fetching ? "Fetching…" : "Fetch Page"}
+                </button>
+              </div>
+              <p className="text-xs text-neutral-600">Enter a URL and click Fetch Page to auto-extract all SEO-relevant content, or paste content manually below.</p>
             </div>
 
             <div className="space-y-2">
@@ -151,15 +197,22 @@ export default function SEOScope() {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-neutral-300">Page Content</label>
-                {content && <button onClick={() => setContent("")} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1"><Trash2 className="w-3 h-3" /> Clear</button>}
+                <label className="text-sm font-medium text-neutral-300">
+                  Page Content
+                  {content && <span className="ml-2 text-xs font-normal text-emerald-500">✓ ready</span>}
+                </label>
+                {content && (
+                  <button onClick={() => setContent("")} className="text-xs text-neutral-500 hover:text-neutral-300 flex items-center gap-1">
+                    <Trash2 className="w-3 h-3" /> Clear
+                  </button>
+                )}
               </div>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                placeholder="Paste the full page content — title, headings, body text, meta description if you have it..."
-                rows={12}
-                className="w-full bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-lg px-4 py-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder:text-neutral-600"
+                placeholder="Content will appear here after fetching, or paste it manually — title, headings, body text, meta description..."
+                rows={10}
+                className="w-full bg-neutral-900 border border-neutral-700 text-neutral-100 rounded-lg px-4 py-3 text-sm resize-y focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 placeholder:text-neutral-600 font-mono"
               />
               <p className="text-xs text-neutral-600">{content.length.toLocaleString()} characters</p>
             </div>
@@ -168,10 +221,10 @@ export default function SEOScope() {
 
             <button
               onClick={analyze}
-              disabled={loading || (!content.trim() && !url.trim())}
+              disabled={!canAnalyze}
               className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed text-neutral-950 font-semibold rounded-lg transition-colors"
             >
-              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing...</> : <><Search className="w-4 h-4" /> Run SEO Analysis</>}
+              {loading ? <><Loader2 className="w-4 h-4 animate-spin" /> Analyzing…</> : <><Search className="w-4 h-4" /> Run SEO Analysis</>}
             </button>
           </div>
 
@@ -188,7 +241,13 @@ export default function SEOScope() {
               {loading && !result && (
                 <div className="flex items-center gap-2 text-neutral-500">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Running SEO analysis...</span>
+                  <span>{statusMsg || "Running SEO analysis…"}</span>
+                </div>
+              )}
+              {loading && result && statusMsg && (
+                <div className="flex items-center gap-2 text-neutral-500 mb-3 text-xs">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>{statusMsg}</span>
                 </div>
               )}
               {!loading && !result && <p className="text-neutral-600">SEO analysis will appear here.</p>}
