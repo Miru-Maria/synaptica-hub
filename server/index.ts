@@ -105,6 +105,9 @@ app.use("/api/admin/docforge", aiToolLimiter, docforgeRouter);
 app.use("/api/admin/seoscope", aiToolLimiter, seoscopeRouter);
 
 app.use("/api/admin/ka-sprint", kaSprintRouter);
+app.use("/api/admin/rag/ingest", embeddingLimiter);
+app.use("/api/admin/rag/upload", embeddingLimiter);
+app.use("/api/admin/rag/chat", aiToolLimiter);
 app.use("/api/admin/rag", ragRouter);
 app.use("/api/admin/prompt-workshop", promptWorkshopRouter);
 app.use("/api/admin/ux-agent", uxAgentRouter);
