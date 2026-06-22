@@ -26,78 +26,84 @@ I am **not** a generalist AI consultant. I specialise in one domain — making o
 
 ## 3. Services
 
-### 3.1 Knowledge Architecture Sprint
-**Format:** Fixed-scope engagement · typically 2–3 weeks
+### 3.1 Documentation Audit
+**Format:** Fixed-price · 1 week
+**Price:** $1,500 – $2,000
+**Client trigger:** *"We don't know what our knowledge base is missing."*
 
-A structured, AI-assisted sprint to design and document a complete knowledge architecture for a client's domain. Deliverables include:
+I analyse an existing knowledge base against a defined topic taxonomy and produce a structured gap report. Deliverables include:
 
-- Topic taxonomy (hierarchical, with definitions and examples)
-- Metadata schema (fields, types, controlled vocabularies)
-- Retrieval logic design (what gets surfaced for which query type)
-- Content gap analysis (what exists vs. what is needed)
-- Governance model (ownership, update cadence, deprecation policy)
-- Full knowledge architecture document — client-ready, formatted for handover
+- Gap analysis across existing documentation
+- Semantic search audit of coverage holes
+- Prioritised gap report with action recommendations
 
-**Best for:** Organisations starting a knowledge base, building a RAG system, or migrating from an unstructured wiki to a structured system.
-
----
-
-### 3.2 RAG Pipeline Design & Implementation
-**Format:** Project engagement · scope varies by data volume and complexity
-
-Full design and build of a Retrieval-Augmented Generation pipeline. I handle everything from document ingestion through to the chat interface:
-
-- Document ingestion pipeline (PDF, DOCX, Notion, SharePoint, web scraping)
-- Chunking strategy (fixed-size, recursive paragraph, semantic — chosen per content type)
-- Embedding with OpenAI `text-embedding-3-small` or `text-embedding-3-large`
-- Vector storage (pgvector in PostgreSQL, Pinecone, Weaviate, or Chroma depending on scale)
-- Retrieval strategy (cosine similarity, hybrid BM25 + vector, reranking)
-- GPT-4o generation layer with source citation and hallucination guardrails
-- Admin interface for document management, re-ingestion, and monitoring
-
-**What I deliver:** A working system, a technical handover document, and — if required — training for the team who will maintain it.
-
-**Best for:** SaaS companies building internal knowledge assistants, professional services firms with large documentation libraries, compliance-heavy sectors where answers must be traceable to source.
+**Best for:** Teams preparing for an AI initiative or post-merger knowledge consolidation. Also available as a self-service tool at [synapticaknowledge.com/docaudit](https://synapticaknowledge.com/docaudit).
 
 ---
 
-### 3.3 Documentation Gap Analysis (DocAudit)
-**Format:** Standalone engagement or discovery phase of larger project
+### 3.2 Knowledge Architecture Sprint
+**Format:** Fixed-price · 1–2 weeks
+**Price:** $2,500 – $4,000
+**Client trigger:** *"Our AI can't find anything useful in our docs."*
 
-I analyse an existing knowledge base against a defined topic taxonomy and produce a structured gap report showing:
+A structured, AI-assisted sprint to design and document a complete knowledge architecture. Deliverables include:
 
-- Coverage scores per topic area (0–100%)
-- Severity-ranked gaps (critical / moderate / minor)
-- Actionable recommendations per gap
-- Radar chart visualisation of coverage distribution
-- Priority recommendation list ordered by business impact
+- Taxonomy and knowledge structure design
+- Retrieval logic mapping and metadata schema
+- Content hierarchy design
+- Structured knowledge architecture document — client-ready, formatted for handover
 
-This is also available as a self-service tool at [synapticaknowledge.com/docaudit](https://synapticaknowledge.com/docaudit) for organisations that want an initial assessment before committing to a full engagement.
-
----
-
-### 3.4 Monthly Knowledge Retainer
-**Format:** Ongoing · monthly rolling contract
-
-For clients who need continuous knowledge architecture support after the initial build:
-
-- Monthly knowledge health checks
-- Ongoing gap monitoring as the organisation's content evolves
-- Priority support for new content areas, product launches, or team expansions
-- Quarterly architecture reviews
+**Best for:** SaaS companies preparing for a RAG build, or teams rebuilding a knowledge base from scratch.
 
 ---
 
-### 3.5 Prompt Engineering & AI Workflow Design
-**Format:** Workshop or project engagement
+### 3.3 Prompt Engineering Workshop
+**Format:** Fixed-price · 1–2 weeks
+**Price:** $2,000 – $3,000
+**Client trigger:** *"Our team wastes hours writing the same kinds of content."*
 
 Design of structured prompt libraries for teams using AI in their daily workflows:
 
-- Prompt template design with `{{variable}}` substitution patterns
-- Style guide creation and enforcement
-- Live testing against OpenAI API
-- Handover documentation for team-wide adoption
-- Version control and governance for prompt libraries
+- Prompt library design, testing, and documentation
+- Variable-template system for consistent team output (`{{variable}}` syntax)
+- Style-guide enforcement prompts
+- Full team handover with usage documentation
+
+**Best for:** Marketing, support, and content teams with repetitive writing workflows.
+
+---
+
+### 3.4 RAG Pipeline Design & Build
+**Format:** Project-based · 4–8 weeks
+**Price:** Custom — quoted on scope
+**Client trigger:** *"We need a chatbot trained on our internal documentation."*
+
+Full design and build of a Retrieval-Augmented Generation pipeline. I handle everything from document ingestion through to the chat interface:
+
+- End-to-end retrieval-augmented generation pipeline
+- Document ingestion and chunking strategy (PDF, DOCX, Notion, SharePoint, web scraping)
+- Embedding and vector store setup (pgvector, Pinecone, Weaviate, or Chroma)
+- Conversational interface grounded in your documentation with source citation
+- GPT-4o generation layer with hallucination guardrails
+- Admin interface for document management, re-ingestion, and monitoring
+
+**What I deliver:** A working system, a technical handover document, and training for the team who will maintain it.
+
+**Best for:** Companies with existing documentation that is ready for AI-powered retrieval.
+
+---
+
+### 3.5 Monthly Knowledge Retainer
+**Format:** Ongoing · monthly
+**Price:** $800 – $1,200 / month · minimum 3-month commitment
+**Client trigger:** *"We need ongoing knowledge architecture support as we scale."*
+
+For clients who need continuous knowledge architecture support after the initial build:
+
+- Dedicated async support and review cycles
+- Monthly knowledge health check and recommendations
+- Priority access for new requests and scope expansions
+- Continuity across documentation, prompts, and architecture
 
 ---
 
