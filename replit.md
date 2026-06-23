@@ -201,6 +201,70 @@ An admin-only tool at `/admin/tool-tester` for running autonomous AI evaluation 
 - **DB tables**: `tool_test_runs`, `tool_test_findings` in PostgreSQL
 - **Files**: `server/routes/tool-tester.ts`, `server/services/tool-tester.ts`, `server/data/tool-test-store.ts`, `src/pages/admin/ToolTester.tsx`
 
+## Practice Kit
+
+An admin-only demo preparation tool at `/admin/practice-kit` covering all 9 internal tools. Features:
+- **Hub page**: curated practice scenarios for every tool — narration guide, exact inputs, expected output, and a "wow moment" to anchor the demo
+- **Launch & Load**: each scenario card has a button that opens the target tool with content pre-filled via the `?practice=N` URL parameter — no copy-pasting needed
+- **9 tools covered**: DocAudit (3 scenarios), KA Sprint (3), Prompt Workshop (seed + sequence), RAG Pipeline (3), SEOScope (3), DocScope (3), DocForge (3), DiffLens (3), Knowledge Architecture suite (3)
+- **`?practice=N` pre-fill mechanism**: each tool page has a `useEffect` that detects the `practice` URL param after auth confirms and pre-populates all relevant form fields (content, mode, keywords, document title, left/right text, active tab, etc.)
+- **questionLabel field**: ScenarioCard supports an optional `questionLabel` prop to rename the "Suggested questions" section (used for sample tickets, queries, etc. in KA scenarios)
+- **Sidebar link**: GraduationCap icon + "Practice Kit" entry in the AdminDashboard sidebar and mobile nav
+- **API route**: `POST /api/admin/practice/seed-prompts` — seeds 4 consulting-grade Prompt Workshop templates + Synaptica style guide
+- **Files**: `src/pages/admin/PracticeKit.tsx`, `server/routes/practice.ts`
+
+## SEOScope
+
+An admin-only content and SEO analysis tool at `/admin/seoscope`. Features:
+- **Three analysis modes**: Full SEO Audit (keyword density + content quality + E-E-A-T + technical elements), Keyword Analysis only, Content Quality only
+- **URL fetch**: optionally fetches and extracts page content from a URL before analysis
+- **AI analysis**: GPT-4o evaluates content against target keywords and selected mode, returning structured scores and actionable recommendations
+- **Export**: copy analysis output to clipboard as Markdown
+- **Practice mode**: `?practice=1/2/3` pre-fills content, target keywords, and analysis type
+- **File**: `src/pages/admin/SEOScope.tsx`
+
+## DocScope — Intel Engine
+
+An admin-only document intelligence tool at `/admin/docscope`. Features:
+- **Three analysis modes**: Full Intelligence Scan (gaps + inconsistencies + structure + quality combined), Inconsistencies (contradictions and conflicts only), Structure & Flow (organisational and hierarchy issues only)
+- **AI analysis**: GPT-4o performs deep structured analysis of pasted document content, returning categorised findings with severity and direct quotes
+- **Export**: copy findings to clipboard as Markdown
+- **Practice mode**: `?practice=1/2/3` pre-fills document content and analysis mode
+- **File**: `src/pages/admin/DocScope.tsx`
+
+## DocForge — Document Generation
+
+An admin-only document transformation tool at `/admin/docforge`. Features:
+- **Four output formats**: Executive Brief, Consulting Report, Proposal, Technical Specification
+- **Input sources**: paste raw text/notes, or upload .docx/.txt/.md files (parsed server-side)
+- **Configuration**: document title, branding/voice notes, and per-format PDF layout options (fonts, colours, margins, headers, footers, page numbers, date)
+- **AI generation**: GPT-4o transforms raw input into a structured document matching the selected format and branding
+- **Export**: copy as Markdown, or generate a styled PDF (client-side via jsPDF) with Synaptica branding
+- **Practice mode**: `?practice=1/2/3` pre-fills raw text, output format, document title, and branding notes
+- **File**: `src/pages/admin/DocForge.tsx`
+
+## DiffLens — Document Comparison
+
+An admin-only side-by-side document diff tool at `/admin/difflens`. Features:
+- **Inputs**: paste text directly or upload .docx/.txt/.md files for either side
+- **Diff engine**: line-level comparison with added (green) / removed (red) / unchanged highlighting; change count summary (added, removed, unchanged lines)
+- **Navigation**: previous/next change arrows to jump between diff regions; light/dark background toggle; prose mode for readability
+- **Practice mode**: `?practice=1/2/3` pre-fills both left and right document text boxes
+- **File**: `src/pages/admin/DiffLensAdmin.tsx`
+
+## Knowledge Architecture Suite
+
+An admin-only 5-tool documentation engineering suite at `/admin/knowledge-arch`. Features:
+- **Knowledge Base Manager**: create named KBs, ingest content (paste text, URL scrape, or file upload), view chunk counts; persistent across sessions via PostgreSQL
+- **Semantic Search tab**: natural-language search across all chunks in a selected KB, with ranked results and similarity scores
+- **Gap Analyzer tab**: paste support tickets, user questions, or topic lists — GPT-4o identifies which knowledge areas are missing or under-covered
+- **FAQ Builder tab**: generate audience-specific FAQ documents from a selected KB with configurable audience description and context
+- **Prompts tab**: manage and run knowledge-architecture-specific prompt templates
+- **Onboarding tab**: configure onboarding copy for the tool's public-facing card
+- **Practice mode**: `?practice=1/2/3` switches the active tab (gaps/faq/search) on load
+- **API routes**: `/api/admin/ka/*` (KB CRUD, ingest, search, gap analysis, FAQ generation)
+- **File**: `src/pages/admin/KnowledgeArch.tsx`
+
 ## Known Notes (Non-Critical)
 
 - **Production SSL deprecation warning** — On startup, the `pg` library prints a "SECURITY WARNING" about SSL mode changes coming in pg v9. This is cosmetic. The database connects and initializes correctly ("Database initialized" always follows). No action needed until upgrading to pg v9.
