@@ -9,6 +9,27 @@ function authHeaders(): Record<string, string> {
 
 type Step = "input" | "taxonomy" | "retrieval" | "document";
 
+const KASPRINT_SCENARIOS = [
+  {
+    domain: "Customer onboarding and product knowledge for a B2B project management SaaS platform targeting marketing teams. Covers product features, workflow guides, integrations, FAQs, and best practices for teams of 10–200 people.",
+    currentStructure: "Confluence wiki with ~200 pages, Loom video tutorial library, and PDF getting-started guides. No consistent naming conventions, minimal tagging, no cross-referencing between sources.",
+    primaryUseCase: "AI-powered support chatbot to answer new customer questions during the 30-day onboarding window. Goal: reduce L1 support ticket volume by 40% and improve time-to-first-value for new accounts.",
+    targetSystem: "Pinecone for vector storage, LangChain for orchestration, Intercom integration for handoff to human agents. End users are new customers and L1 support agents handling onboarding calls.",
+  },
+  {
+    domain: "Internal compliance documentation, regulatory guidelines, and audit checklists for a Series B fintech startup operating across EU markets. Covers GDPR, PSD2, AML/KYC requirements, and internal compliance procedures.",
+    currentStructure: "Shared Google Drive organized by regulation (GDPR/, PSD2/, AML/). Outdated and current document versions mixed together, no version control, no tagging, no full-text search.",
+    primaryUseCase: "Employee self-service so non-legal business staff can find compliance answers independently. Target: 60% reduction in routine legal team interruptions, with audit trail for queries that inform business decisions.",
+    targetSystem: "Internal Slack bot using OpenAI GPT-4o with a custom retrieval layer. Audience is non-legal staff (finance, product, ops) who need plain-language answers to compliance questions.",
+  },
+  {
+    domain: "DevOps runbooks, incident response playbooks, and infrastructure documentation for a 40-person engineering team running Kubernetes microservices on AWS. Covers service runbooks, on-call procedures, post-mortem templates, and architecture decision records.",
+    currentStructure: "Three disconnected systems: Notion (SOPs and runbooks), GitHub READMEs (service-level docs), legacy Confluence (historical architecture decisions). All three used inconsistently with no cross-referencing or unified search.",
+    primaryUseCase: "Faster incident response — engineers must find the correct runbook within 2 minutes during an active outage. Current average search time is 8–12 minutes. Secondary: onboarding new engineers to service boundaries.",
+    targetSystem: "PagerDuty integration triggers runbook retrieval on alert creation. Slack slash command /runbook [service] [issue-type] for direct queries. Audience is on-call engineers under pressure needing precise, step-by-step guidance.",
+  },
+];
+
 const stepLabels: Record<Step, string> = {
   input: "Knowledge Base Input",
   taxonomy: "Taxonomy Design",
@@ -83,6 +104,21 @@ export default function KASprint() {
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const num = parseInt(p, 10);
+    const scenario = KASPRINT_SCENARIOS[num - 1];
+    if (scenario) {
+      setDomain(scenario.domain);
+      setCurrentStructure(scenario.currentStructure);
+      setPrimaryUseCase(scenario.primaryUseCase);
+      setTargetSystem(scenario.targetSystem);
+    }
+  }, [authed]);
 
   const loadSessions = async () => {
     setSessionsLoading(true);

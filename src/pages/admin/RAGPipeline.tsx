@@ -87,6 +87,106 @@ function ScoreBar({ percent }: { percent: number }) {
   );
 }
 
+const RAG_PRACTICE_SCENARIOS = [
+  {
+    name: "Synaptica KA Sprint Methodology v2.0",
+    chunkSize: 300,
+    overlap: 50,
+    text: `Synaptica KA Sprint Methodology v2.0
+
+The KA Sprint is Synaptica's flagship knowledge architecture service, designed to produce a complete, implementation-ready knowledge architecture blueprint in 2 weeks.
+
+Phase 1: Discovery (Days 1–3)
+The engagement begins with a 90-minute discovery session with key stakeholders. We document knowledge domain boundaries, existing content inventory, primary use cases, and target systems. Output: a signed-off Discovery Brief guiding all subsequent work.
+
+Phase 2: Taxonomy Design (Days 4–7)
+Using the Discovery Brief, our team designs a hierarchical taxonomy specific to your domain. This includes primary categories, subcategories, tagging conventions, and content type definitions. Iterated up to twice with the client before finalisation.
+
+Phase 3: Retrieval Architecture (Days 8–11)
+We design the complete retrieval system: metadata schema (field names, types, required vs. optional), chunking strategy (target chunk size, overlap, splitting rules), embedding model recommendations, and query pattern specifications for all primary use cases.
+
+Phase 4: Deliverable (Days 12–14)
+All work is compiled into the Knowledge Architecture Deliverable — a structured Markdown document including the Executive Summary, full Taxonomy, Retrieval Schema, Implementation Recommendations, and Quick Reference tables. A handover session is included.
+
+Pricing
+Standard KA Sprint: $2,500 (single domain, up to 2 revision rounds)
+Extended KA Sprint: $4,000 (multiple domains or complex systems, up to 4 revision rounds)
+Rush delivery (1 week): add $800
+
+Engagement Requirements
+Client must provide: access to existing documentation, availability for a 90-minute discovery session, and a designated point of contact for review rounds.`,
+  },
+  {
+    name: "Auth System Overhaul v3.0 Spec",
+    chunkSize: 400,
+    overlap: 80,
+    text: `Feature Specification: Authentication System Overhaul v3.0
+Author: Platform Engineering Team
+Status: Approved for Q2 development
+
+Problem Statement
+Current username/password authentication does not meet enterprise security requirements. 23% of enterprise prospect deals cite lack of SSO as a blocker.
+
+Scope
+In scope: SAML 2.0 SSO integration, OAuth 2.0/OIDC support, MFA enforcement policy per workspace, session management improvements, admin audit log for all auth events.
+Out of scope: Biometric authentication, hardware security keys (deferred to v3.1).
+
+Acceptance Criteria
+1. Workspace admins can configure SAML SSO via the Settings panel
+2. SSO users are provisioned automatically on first login (JIT provisioning)
+3. MFA can be enforced as mandatory for all workspace members
+4. All authentication events are logged with timestamp, IP address, and result
+5. Existing password-based accounts continue working during transition (minimum 90 days)
+
+User Roles Affected
+- Workspace Admin: configures SSO, sets MFA policy, reviews audit logs
+- Member: may be required to enroll in MFA; can use SSO login if configured
+- Super Admin (internal): can override SSO settings for troubleshooting
+
+Rollback Plan
+If critical authentication failures occur post-deployment, the feature flag AUTH_V3_ENABLED can be set to false in environment configuration. This reverts all auth flows to the legacy system within 5 minutes (cache TTL). No database migration rollback required — all schema changes are additive.
+
+Testing Requirements
+Unit tests: auth service functions (target: 90% coverage)
+Integration tests: SAML handshake with Okta, Azure AD, and Google Workspace
+End-to-end tests: full SSO login flow, MFA enrollment, audit log verification
+Security review: required before deployment — book with security team at least 2 weeks prior
+
+Timeline
+Development: 6 weeks. Security review: 2 weeks. Beta (10 enterprise customers): 2 weeks. GA: Week 10 from kickoff.`,
+  },
+  {
+    name: "Northstar Technologies Onboarding Handbook",
+    chunkSize: 500,
+    overlap: 100,
+    text: `Northstar Technologies — Employee Onboarding Handbook
+
+Welcome to Northstar. This handbook covers everything you need in your first 30 days.
+
+Benefits & Time Off
+Health Insurance: Coverage begins on your first day. You will receive an email from HR with login details for our benefits portal (Zenefits). Three plan tiers: Basic, Standard, and Premium. Premium covers 80% of family premiums.
+
+Vacation Policy: You start with 20 days of PTO per year, accrued at 1.67 days per month. No waiting period — you can use PTO from day one. Submit requests in Gusto at least 5 business days in advance for absences of 3 or more days.
+
+Sick Leave: 10 days per year, non-accruing. Sick leave does not roll over. No advance notice required — message your manager and update your calendar.
+
+Equipment & Tools
+Laptop Request: Submit equipment requests through the IT portal (it.northstar.internal) under "New Employee Setup". Standard issue is a MacBook Pro 14". Custom configurations require manager approval. Allow 3 business days for setup.
+
+Software Access: Your Google Workspace account is created on your start date. For other tools (Notion, Figma, GitHub), submit an access request via the IT portal with a business justification.
+
+IT Support: Contact it-support@northstar.internal or Slack #it-help. Response time: 4 business hours for standard requests, 1 hour for urgent (system down) issues.
+
+Office & Remote Work
+Northstar is fully remote-first. Core hours are 10am–3pm in your local timezone. Expected Slack response time during core hours: within 2 hours.
+
+The Portland office is available for in-person work and team gatherings. Badge access is configured automatically — collect your badge from reception on your first visit.
+
+Performance & Reviews
+Your first formal review is at 90 days, conducted by your manager. A two-way conversation covering initial impressions, role clarity, and goal-setting for your first 6 months. Annual reviews are held in November for all employees.`,
+  },
+];
+
 export default function RAGPipeline() {
   const [, setLocation] = useLocation();
   const [authed, setAuthed] = useState(false);
@@ -147,6 +247,22 @@ export default function RAGPipeline() {
   }, []);
 
   useEffect(() => { checkAuth(); }, [checkAuth]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const num = parseInt(p, 10);
+    const scenario = RAG_PRACTICE_SCENARIOS[num - 1];
+    if (scenario) {
+      setInputMode("paste");
+      setDocText(scenario.text);
+      setDocName(scenario.name);
+      setChunkSize(scenario.chunkSize);
+      setOverlap(scenario.overlap);
+    }
+  }, [authed]);
   useEffect(() => { if (authed) { fetchStatus(); fetchDocuments(); } }, [authed, fetchStatus, fetchDocuments]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
   useEffect(() => { if (activeTab === "index") fetchDocuments(); }, [activeTab, fetchDocuments]);

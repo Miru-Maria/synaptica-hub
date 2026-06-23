@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Upload, FileText, Globe, Database, X, Plus, Loader2, Search, Check } from "lucide-react";
 
@@ -13,6 +13,7 @@ interface InputPanelProps {
   onChunksReady: (chunks: string[], inputType: string) => void;
   isLoading: boolean;
   setIsLoading: (loading: boolean) => void;
+  practiceText?: string;
 }
 
 type TabId = "upload" | "paste" | "url" | "notion";
@@ -26,7 +27,7 @@ async function safeJsonParse(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
-export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPanelProps) {
+export function InputPanel({ onChunksReady, isLoading, setIsLoading, practiceText }: InputPanelProps) {
   const [activeTab, setActiveTab] = useState<TabId>("upload");
   const [files, setFiles] = useState<File[]>([]);
   const [pasteText, setPasteText] = useState("");
@@ -38,6 +39,13 @@ export function InputPanel({ onChunksReady, isLoading, setIsLoading }: InputPane
   const [notionConnected, setNotionConnected] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (practiceText) {
+      setActiveTab("paste");
+      setPasteText(practiceText);
+    }
+  }, [practiceText]);
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
     { id: "upload", label: "File Upload", icon: <Upload className="w-4 h-4" /> },

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope, ChevronRight, Link } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope, ChevronRight, Link, GraduationCap } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
@@ -518,6 +518,10 @@ export default function AdminDashboard() {
                 {navBtn("metrics", Activity, "Metrics")}
                 {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
                 {navBtn("demo-links", Link, "Demo Links")}
+                <a href="/admin/practice-kit" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/practice-kit"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+                  <GraduationCap className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">Practice Kit</span>
+                </a>
                 <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
                   <FlaskConical className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1 truncate">UX Tester</span>
@@ -561,6 +565,10 @@ export default function AdminDashboard() {
           {mobileNavBtn("metrics", Activity, "Metrics")}
           {mobileNavBtn("sessions", FolderOpen, "Sessions")}
           {mobileNavBtn("demo-links", Link, "Demos")}
+          <a href="/admin/practice-kit" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/practice-kit"); } }} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
+            <GraduationCap className="w-4 h-4" />
+            <span className="whitespace-nowrap">Practice</span>
+          </a>
           <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
             <FlaskConical className="w-4 h-4" />
             <span className="whitespace-nowrap">UX Test</span>

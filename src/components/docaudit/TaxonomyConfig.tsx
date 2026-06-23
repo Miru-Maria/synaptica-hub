@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Settings, Plus, X, ChevronRight, Loader2 } from "lucide-react";
 
@@ -8,6 +8,7 @@ interface TaxonomyConfigProps {
   onStartAnalysis: (topics: string[]) => void;
   isAnalyzing: boolean;
   chunkCount: number;
+  practicePreset?: string;
 }
 
 const PRESETS: Record<string, string[]> = {
@@ -67,8 +68,15 @@ export function TaxonomyConfig({
   onStartAnalysis,
   isAnalyzing,
   chunkCount,
+  practicePreset,
 }: TaxonomyConfigProps) {
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (practicePreset && PRESETS[practicePreset]) {
+      setSelectedPreset(practicePreset);
+    }
+  }, [practicePreset]);
   const [customTopics, setCustomTopics] = useState<string[]>([]);
   const [newTopic, setNewTopic] = useState("");
 

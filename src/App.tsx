@@ -14,6 +14,7 @@ import AdminLogin from "@/pages/admin/AdminLogin";
 import DemoPortal from "@/pages/DemoPortal";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import KASprint from "@/pages/admin/KASprint";
+import PracticeKit from "@/pages/admin/PracticeKit";
 import RAGPipeline from "@/pages/admin/RAGPipeline";
 import RAGGuide from "@/pages/admin/RAGGuide";
 import PromptWorkshop from "@/pages/admin/PromptWorkshop";
@@ -86,6 +87,7 @@ function Router() {
       <Route path="/admin/seoscope" component={SEOScopePage} />
       <Route path="/admin/difflens" component={DiffLensPage} />
       <Route path="/admin/knowledge-arch" component={KnowledgeArchPage} />
+      <Route path="/admin/practice-kit" component={PracticeKit} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

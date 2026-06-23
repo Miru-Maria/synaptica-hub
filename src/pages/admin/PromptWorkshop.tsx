@@ -638,13 +638,23 @@ export default function PromptWorkshop() {
                   ))}
                 </select>
               </div>
-              <button
-                onClick={() => openEditor()}
-                className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                New Prompt
-              </button>
+              <div className="flex gap-2">
+                <a
+                  href="/admin/practice-kit"
+                  className="flex items-center gap-2 px-3 py-2 bg-neutral-800 hover:bg-neutral-700 border border-neutral-700 text-neutral-300 font-medium text-sm rounded-lg transition-colors"
+                  title="Open Practice Kit to seed templates"
+                >
+                  <BookOpen className="w-4 h-4" />
+                  <span className="hidden sm:inline">Practice Kit</span>
+                </a>
+                <button
+                  onClick={() => openEditor()}
+                  className="flex items-center gap-2 px-4 py-2 bg-purple-500 hover:bg-purple-400 text-white font-medium text-sm rounded-lg transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                  New Prompt
+                </button>
+              </div>
             </div>
 
             {filteredPrompts.length === 0 ? (

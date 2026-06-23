@@ -29,10 +29,78 @@ interface AuditResult {
   summary: string;
 }
 
+const DOCAUDIT_SCENARIOS = [
+  {
+    kbName: "AI Startup Knowledge Base — Practice Audit",
+    preset: "AI Readiness Checklist",
+    text: `AI Strategy Overview
+
+We are building an AI-powered product recommendation engine. Our team uses machine learning to improve user outcomes. We plan to integrate large language models into our core product workflow in Q3.
+
+Team & Tools
+
+Our engineering team has 8 people. We use Python and TensorFlow, deployed on AWS EC2. We are evaluating several vendors for embeddings and inference.
+
+Current Status
+
+A prototype is running in staging. We expect to reach production by end of year.`,
+  },
+  {
+    kbName: "Advanced Search v2.1 — Launch Package",
+    preset: "Feature Launch Docs",
+    text: `Advanced Search v2.1 — Product Requirements Document
+
+Overview
+Advanced Search v2.1 introduces semantic search to our document management platform. Users can search by meaning rather than exact keywords, with results ranked by relevance score.
+
+Target Users
+Primary: Power users managing 500+ document libraries. Secondary: Team administrators configuring search behavior for their workspace.
+
+Acceptance Criteria
+- Search results return within 1.5 seconds for libraries up to 10,000 documents
+- Semantic relevance score displayed alongside each result
+- Filter options: document type, date range, author, custom tags
+- Saved search presets accessible via bookmark icon
+
+API Documentation
+GET /api/v2/search
+Parameters: q (string, required), type (enum: document|folder|all), from/to (ISO8601), limit (int, 1-100, default 20), semantic (bool, default true)
+Response: { results: [...], total: int, took_ms: int }
+
+User Guide
+Click the search bar at the top of your workspace. Type naturally — "budget documents from last quarter" works as well as specific keywords. Use the left filter panel to narrow by type, date, or author. Save any search configuration as a named preset with the bookmark icon.`,
+  },
+  {
+    kbName: "Consulting Knowledge Base — General Audit",
+    preset: "General Technical Docs",
+    text: `Getting Started
+
+Welcome to the documentation hub. This guide covers our consulting methodology and how to work with us.
+
+Engagement Process
+Our typical engagement begins with a discovery call to understand your knowledge management challenges. We then conduct a structured 4-stage process producing a complete knowledge architecture blueprint.
+
+Stage 1: Domain Mapping — we define knowledge domain boundaries and inventory existing content.
+Stage 2: Taxonomy Design — we create a categorization hierarchy tailored to your content and use cases.
+Stage 3: Retrieval Architecture — we design the metadata schema, chunking strategy, and retrieval patterns.
+Stage 4: Deliverable — a comprehensive architecture document ready for your engineering team.
+
+Working With Our Team
+Your primary contact is your Knowledge Architect. Weekly check-ins are scheduled throughout. All deliverables are provided in Markdown format.
+
+Frequently Asked Questions
+How long does a typical engagement take? Approximately 2 weeks from kickoff to deliverable.
+What document formats do you accept? PDF, DOCX, Markdown, Notion exports, and web URLs.
+Do you offer ongoing support? Yes — retainer clients receive monthly reviews and priority support.`,
+  },
+];
+
 export default function DocAudit() {
   const [toolEnabled, setToolEnabled] = useState(true);
   const [checkingTool, setCheckingTool] = useState(true);
   const [onboardingCopy, setOnboardingCopy] = useState<string>("");
+  const [practiceText, setPracticeText] = useState("");
+  const [practicePreset, setPracticePreset] = useState("");
 
   useEffect(() => {
     fetch("/api/public/tools")
@@ -47,6 +115,20 @@ export default function DocAudit() {
       .catch(() => {})
       .finally(() => setCheckingTool(false));
   }, []);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (p) {
+      const num = parseInt(p, 10);
+      const scenario = DOCAUDIT_SCENARIOS[num - 1];
+      if (scenario) {
+        setPracticeText(scenario.text);
+        setPracticePreset(scenario.preset);
+        setKbName(scenario.kbName);
+      }
+    }
+  }, []);
+
   const [step, setStep] = useState<Step>("input");
   const [chunks, setChunks] = useState<string[]>([]);
   const [kbName, setKbName] = useState("");
@@ -232,6 +314,7 @@ export default function DocAudit() {
                 onChunksReady={handleChunksReady}
                 isLoading={isLoading}
                 setIsLoading={setIsLoading}
+                practiceText={practiceText || undefined}
               />
             </>
           )}
@@ -243,6 +326,7 @@ export default function DocAudit() {
               onStartAnalysis={handleStartAnalysis}
               isAnalyzing={isAnalyzing}
               chunkCount={chunks.length}
+              practicePreset={practicePreset || undefined}
             />
           )}
 
