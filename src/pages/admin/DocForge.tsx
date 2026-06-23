@@ -224,6 +224,102 @@ const DEFAULT_PDF_OPTIONS: PdfOptions = {
   showPageNumbers: false,
 };
 
+const DOCFORGE_PRACTICE_SCENARIOS = [
+  {
+    rawText: `Client: Vertex Logistics Solutions
+Meeting: Discovery call 14 June
+Attendees: Miruna (Synaptica), Tom Chen (CTO), Priya Nair (Head of Ops)
+
+Key problems:
+- 300 drivers, each with paper SOP packets. Updates are a nightmare — different drivers have different versions
+- Ops team spent ~12 hrs/week answering the same driver questions (route exceptions, fuel card policy, incident reporting)
+- New driver onboarding takes 3 weeks. Most of that is learning who to ask, not learning the job
+- Tried Confluence 2 years ago — nobody maintained it, now outdated, nobody uses it
+
+Tech stack: Salesforce, Samsara (fleet tracking), Slack (sort of), WhatsApp (mostly), Google Workspace
+
+Biggest pain: incident reporting inconsistency. Different regional managers have different thresholds for what counts as reportable. Has caused compliance issues.
+
+What they want:
+- Chatbot drivers can actually use (WhatsApp or SMS — not everyone has smartphones)
+- Single source of truth for SOPs
+- Something the ops team can maintain without tech help
+
+Budget signals: "we've spent more than that on compliance issues this quarter"
+Timeline: board presentation in 8 weeks, want to show something working
+
+Next steps agreed:
+- Synaptica to send KA Sprint proposal by Friday
+- Tom to pull list of top 20 driver questions from Slack history
+- Follow-up call week of 22 June`,
+    outputFormat: "brief" as OutputFormat,
+    documentTitle: "Vertex Logistics — Discovery Call Summary",
+    brandingNotes: "Synaptica Knowledge Systems. Professional but plain-English tone — this goes to a non-technical CTO.",
+  },
+  {
+    rawText: `Audit findings: Northstar Tech internal KB (June 2024)
+
+Overall score: 31%
+
+Topic breakdown:
+- Getting Started & Setup: 68% (Low) — decently covered, setup guide exists
+- API Reference: 4% (Critical) — outdated since v2 API launch 8 months ago
+- Security Best Practices: 0% (Critical) — nothing exists
+- Error Handling: 8% (Critical) — one buried page, no examples
+- Troubleshooting & FAQ: 22% (High) — exists but disorganized
+- Architecture Overview: 41% (Medium) — exists but not linked from anywhere useful
+- Performance Optimization: 0% (Critical) — absent entirely
+- Contributing Guidelines: 15% (High) — exists but outdated
+- Changelog / Release Notes: 0% (Critical) — no versioning documentation
+- Deployment & CI/CD: 35% (Medium) — ok for internal team, not accessible to external devs
+
+Recommendations from AI analysis:
+Priority 1: API Reference — immediate revenue risk (external devs can't self-serve)
+Priority 2: Security documentation — compliance and trust issue
+Priority 3: Error handling — support ticket driver
+Priority 4: Changelog — every enterprise customer asks for this during procurement
+
+Client goal: reduce developer support tickets by 50% and pass SOC 2 audit in Q4`,
+    outputFormat: "report" as OutputFormat,
+    documentTitle: "Northstar Technologies — Documentation Gap Analysis Report",
+    brandingNotes: "Synaptica Knowledge Systems. Include executive summary. Professional tone suitable for a VP of Engineering.",
+  },
+  {
+    rawText: `Project: KA Sprint for Meridian Health Network
+Client: Meridian Health Network — internal IT team
+Contact: Sandra Wu (Director, Digital Health)
+
+Scope:
+- Domain: Clinical staff onboarding docs and internal HR policies
+- Use case: Self-service chatbot for 1,200 clinical staff across 4 hospital locations
+- Existing content: 180-page PDF employee handbook, SharePoint wiki (partially maintained), ~80 Loom videos (mostly outdated)
+- Target system: Microsoft Copilot Studio + SharePoint (already licensed)
+
+Deliverables:
+1. Content taxonomy — primary and secondary classification framework
+2. Retrieval metadata schema — field definitions, types, required/optional, query patterns
+3. Chunking strategy — for the PDF handbook and wiki content
+4. Implementation recommendations — SharePoint + Copilot Studio integration
+5. Executive summary — for the Chief Nursing Officer
+
+Timeline: 3 weeks (extended sprint due to compliance review)
+Start: 1 July | Deliverable: 21 July
+
+Investment:
+Extended KA Sprint: $4,000
+Travel (if site visit required): TBD
+Payment: 50% on project start, 50% on deliverable acceptance
+
+Assumptions:
+- Client provides all source documents by July 3
+- One 90-min discovery session with Sandra and a clinical department lead
+- Two revision rounds included; additional rounds at $400/round`,
+    outputFormat: "proposal" as OutputFormat,
+    documentTitle: "Knowledge Architecture Sprint — Meridian Health Network",
+    brandingNotes: "Synaptica Knowledge Systems, Miruna Cristiana Paun PFA. Formal tone suitable for a healthcare organization.",
+  },
+];
+
 export default function DocForge() {
   const [, setLocation] = useLocation();
   const [authed, setAuthed] = useState(false);
@@ -249,6 +345,19 @@ export default function DocForge() {
     if (!token) { setLocation("/admin/login"); return; }
     setAuthed(true);
   }, [setLocation]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const scenario = DOCFORGE_PRACTICE_SCENARIOS[parseInt(p, 10) - 1];
+    if (!scenario) return;
+    setRawText(scenario.rawText);
+    setOutputFormat(scenario.outputFormat);
+    setDocumentTitle(scenario.documentTitle);
+    if (scenario.brandingNotes) setBrandingNotes(scenario.brandingNotes);
+  }, [authed]);
 
   const handleFile = (f: File) => {
     const allowed = [".docx", ".txt", ".md"];

@@ -764,6 +764,12 @@ function PromptsTab() {
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
+const KA_PRACTICE_SCENARIOS: { tab: Tab; showKBManager: boolean }[] = [
+  { tab: "gaps", showKBManager: false },
+  { tab: "faq", showKBManager: false },
+  { tab: "search", showKBManager: false },
+];
+
 export default function KnowledgeArch() {
   const [, setLocation] = useLocation();
   const [authed, setAuthed] = useState(false);
@@ -784,6 +790,17 @@ export default function KnowledgeArch() {
   }, []);
 
   useEffect(() => { if (authed) loadKbs(); }, [authed, loadKbs]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const scenario = KA_PRACTICE_SCENARIOS[parseInt(p, 10) - 1];
+    if (!scenario) return;
+    setActiveTab(scenario.tab);
+    if (scenario.showKBManager) setShowKBManager(true);
+  }, [authed]);
 
   if (!authed) return null;
 

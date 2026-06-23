@@ -16,6 +16,76 @@ const TYPES: { value: AnalysisType; label: string; description: string }[] = [
   { value: "technical", label: "Technical Elements", description: "Title tags, meta, headings, image alt text, schema markup" },
 ];
 
+const SEOSCOPE_PRACTICE_SCENARIOS = [
+  {
+    content: `Knowledge Management Software for Growing Teams
+
+Tired of losing track of critical information? Our platform helps teams organize, share, and retrieve knowledge at the speed of thought.
+
+What We Do
+We build intelligent documentation systems that connect your team's knowledge to the workflows they use every day. Whether you're onboarding new hires, documenting processes, or building a customer-facing knowledge base, our platform makes it searchable, maintainable, and actionable.
+
+Key Features
+Smart search powered by AI — find any piece of information in seconds, not minutes. Automatic content suggestions based on what your team is currently working on. Version history and change tracking for every document. Role-based access controls and audit logs. Integration with Slack, Notion, Confluence, and 30+ other tools.
+
+Pricing
+Starter: $29/month for up to 10 users. Growth: $79/month for up to 50 users. Enterprise: custom pricing for unlimited users and dedicated support.
+
+Customers
+Used by over 1,200 teams including engineering, product, legal, and customer success departments. Average onboarding time reduced by 47%. Support ticket volume decreased by 32% within 90 days.`,
+    targetKeywords: "knowledge management software, team documentation platform, internal knowledge base",
+    analysisType: "full" as AnalysisType,
+    url: "",
+  },
+  {
+    content: `How to Build a Retrieval-Augmented Generation (RAG) Pipeline: A Complete Guide
+
+Introduction
+Retrieval-Augmented Generation (RAG) combines the power of large language models with a searchable knowledge base to produce accurate, grounded answers. Unlike pure LLM generation, RAG grounds every response in specific retrieved documents, reducing hallucinations and improving accuracy.
+
+Step 1: Prepare Your Documents
+Before building your pipeline, prepare your source documents by chunking them into smaller pieces (typically 200–500 tokens), cleaning up formatting, and ensuring each chunk is self-contained enough to answer a question on its own.
+
+Step 2: Generate Embeddings
+Use an embedding model (OpenAI text-embedding-3-small for cost efficiency) to convert each chunk into a dense vector representation. Store vectors in a vector database like Pinecone, Weaviate, or pgvector.
+
+Step 3: Build the Retrieval Layer
+When a user asks a question, embed the query using the same model, then perform a cosine similarity search to retrieve the top-K most relevant chunks. K=3 to K=5 is a good starting point.
+
+Step 4: Generate the Response
+Combine retrieved chunks with the user question in a prompt template and send to your LLM. Include chunk citations for transparency.
+
+Step 5: Evaluate and Iterate
+Measure retrieval accuracy, response quality, and latency. Adjust chunk size, overlap, and K as needed.`,
+    targetKeywords: "RAG pipeline tutorial, retrieval augmented generation guide, build RAG system",
+    analysisType: "keywords" as AnalysisType,
+    url: "",
+  },
+  {
+    content: `Knowledge Architecture Consulting | Synaptica Knowledge Systems
+
+We help AI-forward teams build knowledge bases that actually work at retrieval time.
+
+The Problem
+Most teams build their knowledge bases for humans to browse, not for AI to retrieve from. That's why your chatbot hallucinates, your search returns irrelevant results, and your support team still gets the same questions every day.
+
+Our Solution
+Synaptica runs a structured 2-week engagement — the KA Sprint — that produces a complete knowledge architecture blueprint: taxonomy design, retrieval schema, chunking strategy, and metadata framework. Everything your engineering team needs to build a knowledge base that performs at production scale.
+
+What You Get
+A hierarchical content taxonomy tailored to your domain. A retrieval metadata schema with field names, types, and query patterns. A chunking strategy with target sizes, overlap rules, and edge case handling. An executive summary for stakeholders explaining why the architecture works.
+
+Who This Is For
+Engineering teams building RAG applications who want to get the knowledge layer right the first time. Product teams launching AI assistants who need structured content before they can ship. Knowledge managers inheriting a legacy content library that doesn't scale to AI.
+
+Pricing
+KA Sprint Standard: $2,500 — 2-week engagement, one domain, two revision rounds. KA Sprint Extended: $4,000 — multi-domain or complex systems.`,
+    targetKeywords: "knowledge architecture consulting, RAG consulting, AI knowledge base design",
+    analysisType: "content" as AnalysisType,
+    url: "",
+  },
+];
+
 export default function SEOScope() {
   const [, setLocation] = useLocation();
   const [authed, setAuthed] = useState(false);
@@ -35,6 +105,19 @@ export default function SEOScope() {
     if (!token) { setLocation("/admin/login"); return; }
     setAuthed(true);
   }, [setLocation]);
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const scenario = SEOSCOPE_PRACTICE_SCENARIOS[parseInt(p, 10) - 1];
+    if (!scenario) return;
+    setContent(scenario.content);
+    setTargetKeywords(scenario.targetKeywords);
+    setAnalysisType(scenario.analysisType);
+    if (scenario.url) setUrl(scenario.url);
+  }, [authed]);
 
   const fetchPage = async () => {
     if (!url.trim()) return;

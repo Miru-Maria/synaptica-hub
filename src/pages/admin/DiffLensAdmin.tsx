@@ -200,6 +200,169 @@ function LineContent({
 
 type InputMode = "text" | "file";
 
+const DIFFLENS_PRACTICE_SCENARIOS = [
+  {
+    name: "SLA Document — Annual Revision",
+    leftText: `Service Level Agreement — Support Tiers
+Effective: January 1, 2024
+
+Standard Support
+Response time: 8 business hours for all priority levels.
+Coverage: Monday to Friday, 9am–5pm customer local time.
+Contact: Email only.
+Resolution target: 5 business days.
+
+Premium Support
+Response time: 4 business hours for P1/P2 issues.
+Coverage: Monday to Friday, 8am–6pm EST.
+Contact: Email and phone.
+Resolution target: 2 business days for P1, 3 business days for P2.
+Dedicated account manager: Not included.
+
+Enterprise Support
+Response time: 1 hour for P1, 2 hours for P2, 4 hours for P3.
+Coverage: 24/7 for P1 incidents.
+Contact: Email, phone, and dedicated Slack channel.
+Resolution target: 4 hours for P1, 24 hours for P2.
+Dedicated account manager: Included.
+Uptime guarantee: 99.5% monthly.`,
+    rightText: `Service Level Agreement — Support Tiers
+Effective: January 1, 2025
+
+Standard Support
+Response time: 8 business hours for P3/P4, 4 business hours for P1/P2.
+Coverage: Monday to Friday, 9am–5pm customer local time.
+Contact: Email and support portal.
+Resolution target: 5 business days for P3/P4, 3 business days for P1/P2.
+
+Premium Support
+Response time: 2 business hours for P1, 4 business hours for P2.
+Coverage: Monday to Friday, 8am–8pm EST.
+Contact: Email, phone, and support portal.
+Resolution target: 1 business day for P1, 2 business days for P2.
+Dedicated account manager: Included for accounts over $50k ARR.
+
+Enterprise Support
+Response time: 30 minutes for P1, 1 hour for P2, 4 hours for P3.
+Coverage: 24/7 for P1 and P2 incidents.
+Contact: Email, phone, dedicated Slack channel, and video bridge for P1.
+Resolution target: 2 hours for P1, 8 hours for P2.
+Dedicated account manager: Included.
+Uptime guarantee: 99.9% monthly.
+Credits: Prorated service credits for SLA misses above threshold.`,
+  },
+  {
+    name: "API Endpoint Docs — v1 to v2 Upgrade",
+    leftText: `POST /api/v1/analyze
+
+Analyzes a document and returns gap analysis results.
+
+Authentication: Bearer token required.
+
+Request Body (application/json):
+{
+  "content": string,       // Document text to analyze
+  "topics": string[],      // Topic names to check coverage for
+  "kb_name": string        // Label for the knowledge base
+}
+
+Response:
+{
+  "gaps": [
+    {
+      "topic": string,
+      "coverage_score": number,   // 0-100
+      "severity": string          // "low" | "medium" | "high" | "critical"
+    }
+  ],
+  "summary": string,
+  "overall_score": number
+}
+
+Errors:
+400: Invalid request body
+401: Missing or expired token
+500: Analysis failed`,
+    rightText: `POST /api/v2/analyze
+
+Analyzes a document and returns a comprehensive gap analysis with recommendations.
+
+Authentication: Bearer token required. Rate limit: 10 requests/minute per token.
+
+Request Body (application/json):
+{
+  "content": string,               // Document text to analyze (required)
+  "topics": string[],              // Topic names to check coverage (required, max 20)
+  "kb_name": string,               // Knowledge base label (required)
+  "include_recommendations": boolean,  // Default: true
+  "language": string               // ISO 639-1 code, default: "en"
+}
+
+Response:
+{
+  "gaps": [
+    {
+      "topic": string,
+      "coverage_score": number,       // 0-100
+      "severity": "low" | "medium" | "high" | "critical",
+      "chunk_count": number,          // Chunks covering this topic
+      "recommendations": string[]     // Actionable next steps (if requested)
+    }
+  ],
+  "summary": string,
+  "overall_score": number,
+  "processing_time_ms": number,
+  "model": string
+}
+
+Errors:
+400: Invalid request body (includes field-level validation errors)
+401: Missing, expired, or revoked token
+429: Rate limit exceeded (Retry-After header included)
+500: Internal analysis error`,
+  },
+  {
+    name: "Remote Work Policy — 2023 to 2025 Update",
+    leftText: `Remote Work Policy
+Last updated: March 2023
+
+Eligibility
+All full-time employees who have completed their 90-day probation period are eligible for remote work. Part-time employees and contractors are not eligible.
+
+Expectations
+Remote employees must be available during core hours: 10am–3pm in their team's primary timezone. Video must be on during all team meetings.
+
+Equipment
+The company provides a laptop. Employees are responsible for their own internet connection and home office setup. No stipend provided.
+
+Security
+Remote employees must use the company VPN at all times when accessing internal systems. Personal devices may not be used for company work.
+
+Communication
+Respond to Slack messages within 2 hours during core hours. Daily standup attendance is required. All work must be documented in the relevant project management tool.`,
+    rightText: `Remote Work Policy
+Last updated: January 2025
+
+Eligibility
+All employees — full-time, part-time, and contractors on engagements longer than 3 months — are eligible for remote work after completing onboarding. No probation period required.
+
+Expectations
+Remote employees must be available during core hours: 10am–4pm in their team's primary timezone. Video is encouraged but not required for internal meetings. Client-facing meetings require video.
+
+Equipment
+The company provides a laptop and a one-time home office stipend of $500. Employees are responsible for their internet connection. IT support is available remotely for all equipment issues.
+
+Security
+Remote employees must use the company VPN when accessing internal systems on networks other than their home network. Personal devices require explicit IT approval and MDM enrollment.
+
+Communication
+Respond to Slack messages within 2 hours during core hours. Async-first communication is encouraged — document decisions in Notion. Employees are not expected to respond outside their stated working hours.
+
+Mental Health & Boundaries
+All employees are encouraged to set clear working hours in Slack and block focus time in their calendars. No expectation of after-hours availability.`,
+  },
+];
+
 export default function DiffLensAdmin() {
   const [, setLocation] = useLocation();
   const authed = useAuthed();
@@ -216,6 +379,17 @@ export default function DiffLensAdmin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"input" | "compare">("input");
+
+  useEffect(() => {
+    if (!authed) return;
+    const params = new URLSearchParams(window.location.search);
+    const p = params.get("practice");
+    if (!p) return;
+    const scenario = DIFFLENS_PRACTICE_SCENARIOS[parseInt(p, 10) - 1];
+    if (!scenario) return;
+    setLeftText(scenario.leftText);
+    setRightText(scenario.rightText);
+  }, [authed]);
   const [currentChange, setCurrentChange] = useState(0);
   const [lightBg, setLightBg] = useState(false);
   const [prose, setProse] = useState(false);
