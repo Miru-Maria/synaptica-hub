@@ -17,6 +17,7 @@ import { chatRouter } from "./routes/chat.js";
 import { uxAgentRouter } from "./routes/ux-agent.js";
 import { toolTesterRouter } from "./routes/tool-tester.js";
 import { webhookRouter } from "./routes/webhooks.js";
+import { demoRouter } from "./routes/demo.js";
 import { docscopeRouter } from "./routes/docscope.js";
 import { docforgeRouter } from "./routes/docforge.js";
 import { seoscopeRouter } from "./routes/seoscope.js";
@@ -116,6 +117,7 @@ app.use("/api/admin/ka", kaRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/blog", blogRouter);
 app.use("/api/public", publicRouter);
+app.use("/api", demoRouter);
 
 app.get("/difflens", (_req, res) => {
   res.redirect(302, "https://diff-lens.replit.app/");

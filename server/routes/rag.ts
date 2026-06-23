@@ -4,7 +4,7 @@ import { createRequire } from "module";
 import mammoth from "mammoth";
 const _require = createRequire(import.meta.url);
 const pdfParse = _require("pdf-parse/lib/pdf-parse.js");
-import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { requireAdminOrDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import OpenAI from "openai";
 import {
   saveDocument,
@@ -116,7 +116,7 @@ async function ingestText(
 }
 
 export const ragRouter = Router();
-ragRouter.use(requireAuth);
+ragRouter.use(requireAdminOrDemo("rag"));
 
 ragRouter.get("/status", async (_req: AuthenticatedRequest, res: Response) => {
   try {

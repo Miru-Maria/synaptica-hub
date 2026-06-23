@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope, ChevronRight, Link } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
@@ -16,6 +16,7 @@ import ChatSessionsViewer from "./ChatSessionsViewer";
 import ProjectManager from "./ProjectManager";
 import NotificationBell from "@/components/NotificationBell";
 import AnalyticsOverview from "./AnalyticsOverview";
+import DemoLinksManager from "./DemoLinksManager";
 
 interface DiscoveryInquiry {
   id: string;
@@ -116,6 +117,16 @@ export default function AdminDashboard() {
   const [generatingDraft, setGeneratingDraft] = useState(false);
   const [draftGenResult, setDraftGenResult] = useState<{ title?: string; error?: string } | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set());
+
+  const toggleSection = (section: string) => {
+    setCollapsedSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  };
 
   const checkAuth = useCallback(async () => {
     try {
@@ -459,36 +470,77 @@ export default function AdminDashboard() {
           <nav className="py-3 px-2 space-y-0.5">
             {navBtn("overview", LayoutDashboard, "Overview")}
 
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Content</p>
-            {navBtn("packages", Package, "Packages")}
-            {navBtn("blog", PenLine, "Blog")}
-            {navBtn("testimonials", MessageSquare, "Testimonials")}
-            {navBtn("case-studies", Briefcase, "Case Studies")}
-            {navBtn("stats", BarChart3, "Statistics")}
+            <button
+              onClick={() => toggleSection("content")}
+              className="w-full flex items-center justify-between px-3 pt-5 pb-1 group"
+            >
+              <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest">Content</span>
+              <ChevronRight className={cn("w-3 h-3 text-neutral-600 transition-transform", !collapsedSections.has("content") && "rotate-90")} />
+            </button>
+            {!collapsedSections.has("content") && (
+              <>
+                {navBtn("packages", Package, "Packages")}
+                {navBtn("blog", PenLine, "Blog")}
+                {navBtn("testimonials", MessageSquare, "Testimonials")}
+                {navBtn("case-studies", Briefcase, "Case Studies")}
+                {navBtn("stats", BarChart3, "Statistics")}
+              </>
+            )}
 
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Business</p>
-            {navBtn("pipeline", Users, "Pipeline")}
-            {navBtn("inquiries", Inbox, "Inquiries", inquiries.length || undefined)}
-            {navBtn("leads", Mail, "Email Leads", leads.length || undefined)}
-            {navBtn("chat-sessions", Bot, "Chat Sessions")}
-            {navBtn("invoicing", Receipt, "Invoicing")}
-            {navBtn("projects", ClipboardList, "Projects")}
+            <button
+              onClick={() => toggleSection("business")}
+              className="w-full flex items-center justify-between px-3 pt-5 pb-1 group"
+            >
+              <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest">Business</span>
+              <ChevronRight className={cn("w-3 h-3 text-neutral-600 transition-transform", !collapsedSections.has("business") && "rotate-90")} />
+            </button>
+            {!collapsedSections.has("business") && (
+              <>
+                {navBtn("pipeline", Users, "Pipeline")}
+                {navBtn("inquiries", Inbox, "Inquiries", inquiries.length || undefined)}
+                {navBtn("leads", Mail, "Email Leads", leads.length || undefined)}
+                {navBtn("chat-sessions", Bot, "Chat Sessions")}
+                {navBtn("invoicing", Receipt, "Invoicing")}
+                {navBtn("projects", ClipboardList, "Projects")}
+              </>
+            )}
 
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Tools</p>
-            {navBtn("internal", Hammer, "Internal Tools")}
-            {navBtn("metrics", Activity, "Metrics")}
-            {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
-            <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
-              <FlaskConical className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 truncate">UX Tester</span>
-            </a>
-            <a href="/admin/tool-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/tool-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
-              <Microscope className="w-4 h-4 flex-shrink-0" />
-              <span className="flex-1 truncate">Tool Tester</span>
-            </a>
+            <button
+              onClick={() => toggleSection("tools")}
+              className="w-full flex items-center justify-between px-3 pt-5 pb-1 group"
+            >
+              <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest">Tools</span>
+              <ChevronRight className={cn("w-3 h-3 text-neutral-600 transition-transform", !collapsedSections.has("tools") && "rotate-90")} />
+            </button>
+            {!collapsedSections.has("tools") && (
+              <>
+                {navBtn("internal", Hammer, "Internal Tools")}
+                {navBtn("metrics", Activity, "Metrics")}
+                {navBtn("sessions", FolderOpen, "Sessions", undefined, () => { if (sessions.length === 0) loadSessions(); })}
+                {navBtn("demo-links", Link, "Demo Links")}
+                <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+                  <FlaskConical className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">UX Tester</span>
+                </a>
+                <a href="/admin/tool-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/tool-tester"); } }} className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/50">
+                  <Microscope className="w-4 h-4 flex-shrink-0" />
+                  <span className="flex-1 truncate">Tool Tester</span>
+                </a>
+              </>
+            )}
 
-            <p className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest px-3 pt-5 pb-1">Account</p>
-            {navBtn("settings", Settings, "Settings")}
+            <button
+              onClick={() => toggleSection("account")}
+              className="w-full flex items-center justify-between px-3 pt-5 pb-1 group"
+            >
+              <span className="text-[10px] font-semibold text-neutral-500 uppercase tracking-widest">Account</span>
+              <ChevronRight className={cn("w-3 h-3 text-neutral-600 transition-transform", !collapsedSections.has("account") && "rotate-90")} />
+            </button>
+            {!collapsedSections.has("account") && (
+              <>
+                {navBtn("settings", Settings, "Settings")}
+              </>
+            )}
           </nav>
         </aside>
 
@@ -508,6 +560,7 @@ export default function AdminDashboard() {
           {mobileNavBtn("internal", Hammer, "Tools")}
           {mobileNavBtn("metrics", Activity, "Metrics")}
           {mobileNavBtn("sessions", FolderOpen, "Sessions")}
+          {mobileNavBtn("demo-links", Link, "Demos")}
           <a href="/admin/ux-tester" onClick={(e) => { if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) { e.preventDefault(); setLocation("/admin/ux-tester"); } }} className="flex flex-col items-center gap-0.5 px-3 py-1 rounded-md text-[10px] flex-shrink-0 transition-colors text-neutral-500 hover:text-neutral-300">
             <FlaskConical className="w-4 h-4" />
             <span className="whitespace-nowrap">UX Test</span>
@@ -1333,6 +1386,15 @@ export default function AdminDashboard() {
 
           <div className={activeTab === "projects" ? "mt-6" : "hidden"}>
             <ProjectManager />
+          </div>
+
+          <div className={activeTab === "demo-links" ? "mt-6 space-y-4" : "hidden"}>
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-100">Demo Links</h2>
+              </div>
+            </div>
+            <DemoLinksManager />
           </div>
 
           <div className={activeTab === "settings" ? "mt-6 space-y-4" : "hidden"}>

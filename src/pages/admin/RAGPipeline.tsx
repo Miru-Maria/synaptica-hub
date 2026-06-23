@@ -19,12 +19,12 @@ import {
 } from "lucide-react";
 
 function authHeaders(): Record<string, string> {
-  const token = localStorage.getItem("admin_token");
+  const token = localStorage.getItem("admin_token") || sessionStorage.getItem("demo_token");
   return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : { "Content-Type": "application/json" };
 }
 
 function authHeadersMultipart(): Record<string, string> {
-  const token = localStorage.getItem("admin_token");
+  const token = localStorage.getItem("admin_token") || sessionStorage.getItem("demo_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 

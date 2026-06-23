@@ -1,10 +1,10 @@
 import { Router, Response } from "express";
 import multer from "multer";
-import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { requireAdminOrDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import OpenAI from "openai";
 
 export const docforgeRouter = Router();
-docforgeRouter.use(requireAuth);
+docforgeRouter.use(requireAdminOrDemo("docforge"));
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 

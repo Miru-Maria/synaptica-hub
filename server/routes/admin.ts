@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import { signToken, requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { signToken, requireAuth, requireAdminOrAnyDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import { validateBody, schemas } from "../middleware/validate.js";
 import { getPackages, savePackages, getTools, saveTools, getRetainerClients, saveRetainerClients, getDiscoveryInquiries, getTestimonials, saveTestimonials, getCaseStudies, saveCaseStudies, getOutcomeStats, saveOutcomeStats, getEmailLeads, getMetrics, getPipelineContacts, addPipelineContact, updatePipelineContact, deletePipelineContact, getInvoices, saveInvoices, getNotifications, markNotificationRead, markAllNotificationsRead, getAdminSettings, saveAdminSettings, getToolRuns, getChatSessions, getChatSessionWithMessages, deleteChatSession, getProjects, getProject, createProject, updateProject, deleteProject, getProjectTasks, createProjectTask, updateProjectTask, deleteProjectTask, getProcessingCertificates, getProcessingCertificate } from "../data/store.js";
 import { sendBlogDraftNotification } from "../services/email.js";
@@ -30,8 +30,12 @@ adminRouter.post("/logout", (_req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-adminRouter.get("/me", requireAuth, (req: AuthenticatedRequest, res: Response) => {
-  res.json({ username: req.adminUser });
+adminRouter.get("/me", requireAdminOrAnyDemo as any, (req: AuthenticatedRequest, res: Response) => {
+  if (req.demoSession) {
+    res.json({ username: "demo", isDemo: true, tools: req.demoSession.tools, label: req.demoSession.label });
+  } else {
+    res.json({ username: req.adminUser });
+  }
 });
 
 adminRouter.get("/packages", requireAuth, async (_req: Request, res: Response) => {

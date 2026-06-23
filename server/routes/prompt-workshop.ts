@@ -1,5 +1,5 @@
 import { Router, Response } from "express";
-import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { requireAdminOrDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import {
   getPrompts,
   getPromptById,
@@ -29,7 +29,7 @@ function getOpenAI(): OpenAI {
 
 export const promptWorkshopRouter = Router();
 
-promptWorkshopRouter.use(requireAuth);
+promptWorkshopRouter.use(requireAdminOrDemo("prompt-workshop"));
 
 promptWorkshopRouter.get("/prompts", async (_req: AuthenticatedRequest, res: Response) => {
   try {

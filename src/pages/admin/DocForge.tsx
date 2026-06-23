@@ -7,7 +7,7 @@ import {
 import ReactMarkdown from "react-markdown";
 
 function authToken(): string | null {
-  return localStorage.getItem("admin_token");
+  return localStorage.getItem("admin_token") || sessionStorage.getItem("demo_token");
 }
 
 type OutputFormat = "report" | "brief" | "guide" | "audit" | "proposal";

@@ -11,6 +11,7 @@ import Blog from "@/pages/Blog";
 import BlogArticle from "@/pages/BlogArticle";
 import NotFound from "@/pages/not-found";
 import AdminLogin from "@/pages/admin/AdminLogin";
+import DemoPortal from "@/pages/DemoPortal";
 import AdminDashboard from "@/pages/admin/AdminDashboard";
 import KASprint from "@/pages/admin/KASprint";
 import RAGPipeline from "@/pages/admin/RAGPipeline";
@@ -71,6 +72,7 @@ function Router() {
       <Route path="/docscope">
         <ExternalRedirect url="https://intel-engine-scope.replit.app/" />
       </Route>
+      <Route path="/demo" component={DemoPortal} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin/ka-sprint" component={KASprint} />
       <Route path="/admin/rag-pipeline" component={RAGPipeline} />

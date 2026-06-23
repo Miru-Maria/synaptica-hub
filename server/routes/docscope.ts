@@ -1,10 +1,10 @@
 import { Router, Response } from "express";
-import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { requireAdminOrDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import { validateBody, schemas } from "../middleware/validate.js";
 import OpenAI from "openai";
 
 export const docscopeRouter = Router();
-docscopeRouter.use(requireAuth);
+docscopeRouter.use(requireAdminOrDemo("docscope"));
 
 function getOpenAI() {
   const key = process.env.OPENAI_API_KEY;

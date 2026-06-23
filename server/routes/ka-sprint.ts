@@ -1,5 +1,5 @@
 import { Router, Response } from "express";
-import { requireAuth, AuthenticatedRequest } from "../middleware/auth.js";
+import { requireAdminOrDemo, AuthenticatedRequest } from "../middleware/auth.js";
 import OpenAI from "openai";
 import {
   getKASessions,
@@ -19,7 +19,7 @@ function getOpenAI(): OpenAI {
 
 export const kaSprintRouter = Router();
 
-kaSprintRouter.use(requireAuth);
+kaSprintRouter.use(requireAdminOrDemo("ka-sprint"));
 
 kaSprintRouter.post("/taxonomy", async (req: AuthenticatedRequest, res: Response) => {
   try {

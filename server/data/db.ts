@@ -24,6 +24,17 @@ export async function withTransaction<T>(
 
 export async function initDb(): Promise<void> {
   await pool.query(`
+    CREATE TABLE IF NOT EXISTS demo_tokens (
+      id SERIAL PRIMARY KEY,
+      token VARCHAR(64) UNIQUE NOT NULL,
+      label VARCHAR(255) NOT NULL,
+      tools TEXT[] NOT NULL DEFAULT '{}',
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      used_count INTEGER DEFAULT 0,
+      last_used_at TIMESTAMPTZ
+    );
+
     CREATE TABLE IF NOT EXISTS service_packages (
       id VARCHAR(100) PRIMARY KEY,
       name TEXT NOT NULL,
