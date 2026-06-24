@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope, ChevronRight, Link, GraduationCap } from "lucide-react";
+import { LogOut, Save, Package, Plus, Trash2, GripVertical, ExternalLink, Hammer, Download, FileText, Inbox, FolderOpen, Clock, Loader2, MessageSquare, Briefcase, BarChart3, PenLine, Mail, Activity, Users, Receipt, Settings, LayoutDashboard, Bot, ClipboardList, FlaskConical, Microscope, ChevronRight, Link, GraduationCap, Shield } from "lucide-react";
 import BlogManager from "./BlogManager";
 import MetricsPanel from "./MetricsPanel";
 import PipelineManager from "./PipelineManager";
@@ -94,6 +94,136 @@ interface EmailLead {
 function authHeaders(): Record<string, string> {
   const token = localStorage.getItem("admin_token");
   return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+interface DpcRequest {
+  id: string;
+  cert_ref: string;
+  client_name: string;
+  client_company: string;
+  client_email: string;
+  issued_at: string;
+  issued_by: string;
+}
+
+function AdminCertificatePanel() {
+  const [form, setForm] = useState({ clientName: "", clientCompany: "", clientEmail: "", services: "" });
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; certRef?: string; error?: string } | null>(null);
+  const [history, setHistory] = useState<DpcRequest[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+
+  const loadHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch("/api/certificates/admin/list", { headers: authHeaders() });
+      if (res.ok) setHistory(await res.json());
+    } catch { }
+    setHistoryLoading(false);
+  };
+
+  useEffect(() => { loadHistory(); }, []);
+
+  const handleIssue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setResult(null);
+    try {
+      const res = await fetch("/api/certificates/admin/issue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        setResult({ ok: true, certRef: data.certRef });
+        setForm({ clientName: "", clientCompany: "", clientEmail: "", services: "" });
+        loadHistory();
+      } else {
+        setResult({ ok: false, error: data.error || "Failed to issue certificate." });
+      }
+    } catch {
+      setResult({ ok: false, error: "Network error." });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Card className="bg-neutral-900 border-neutral-800">
+        <CardHeader>
+          <CardTitle className="text-base text-neutral-100 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-emerald-400" />
+            Issue Certificate
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleIssue} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-neutral-300 text-sm">Client full name <span className="text-emerald-400">*</span></Label>
+              <Input required value={form.clientName} onChange={(e) => setForm((f) => ({ ...f, clientName: e.target.value }))} placeholder="Jane Smith" className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-neutral-300 text-sm">Company / organisation</Label>
+              <Input value={form.clientCompany} onChange={(e) => setForm((f) => ({ ...f, clientCompany: e.target.value }))} placeholder="Acme Ltd (optional)" className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-neutral-300 text-sm">Client email <span className="text-emerald-400">*</span></Label>
+              <Input required type="email" value={form.clientEmail} onChange={(e) => setForm((f) => ({ ...f, clientEmail: e.target.value }))} placeholder="client@company.com" className="bg-neutral-800 border-neutral-700 text-neutral-100" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-neutral-300 text-sm">Processing activities <span className="text-neutral-500 font-normal">(leave blank for default)</span></Label>
+              <Textarea value={form.services} onChange={(e) => setForm((f) => ({ ...f, services: e.target.value }))} placeholder="Leave blank to use the standard description covering all Synaptica services…" rows={3} className="bg-neutral-800 border-neutral-700 text-neutral-100 text-xs" />
+            </div>
+            {result?.ok && (
+              <div className="flex items-center gap-2 bg-emerald-950/40 border border-emerald-500/30 rounded-lg px-3 py-2">
+                <Shield className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <div>
+                  <p className="text-emerald-300 text-xs font-medium">Certificate sent</p>
+                  <p className="text-neutral-400 text-xs font-mono">{result.certRef}</p>
+                </div>
+              </div>
+            )}
+            {result?.error && (
+              <p className="text-red-400 text-xs bg-red-950/30 border border-red-800/40 rounded-lg px-3 py-2">{result.error}</p>
+            )}
+            <Button type="submit" disabled={loading} size="sm" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white">
+              {loading ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Issuing…</> : <><Shield className="w-3 h-3 mr-1.5" />Issue & Email Certificate</>}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-neutral-900 border-neutral-800">
+        <CardHeader>
+          <CardTitle className="text-base text-neutral-100">Certificate History</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {historyLoading ? (
+            <div className="flex items-center gap-2 text-neutral-500 text-sm py-4">
+              <Loader2 className="w-4 h-4 animate-spin" />Loading…
+            </div>
+          ) : history.length === 0 ? (
+            <p className="text-neutral-500 text-sm py-4">No certificates issued yet.</p>
+          ) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {history.map((cert) => (
+                <div key={cert.id} className="bg-neutral-800 rounded-lg px-3 py-2.5 space-y-0.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-mono text-emerald-400">{cert.cert_ref}</span>
+                    <span className="text-[10px] text-neutral-500 capitalize">{cert.issued_by}</span>
+                  </div>
+                  <p className="text-sm text-neutral-200">{cert.client_name}{cert.client_company ? ` — ${cert.client_company}` : ""}</p>
+                  <p className="text-xs text-neutral-400">{cert.client_email}</p>
+                  <p className="text-[10px] text-neutral-600">{new Date(cert.issued_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
 }
 
 export default function AdminDashboard() {
@@ -542,6 +672,7 @@ export default function AdminDashboard() {
             </button>
             {!collapsedSections.has("account") && (
               <>
+                {navBtn("certificates", Shield, "Certificates")}
                 {navBtn("settings", Settings, "Settings")}
               </>
             )}
@@ -1403,6 +1534,14 @@ export default function AdminDashboard() {
               </div>
             </div>
             <DemoLinksManager />
+          </div>
+
+          <div className={activeTab === "certificates" ? "mt-6 space-y-4" : "hidden"}>
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-100">Data Processing Certificates</h2>
+              <p className="text-sm text-neutral-400 mt-1">Issue a GDPR Article 28 processing certificate directly to a client by email.</p>
+            </div>
+            <AdminCertificatePanel />
           </div>
 
           <div className={activeTab === "settings" ? "mt-6 space-y-4" : "hidden"}>

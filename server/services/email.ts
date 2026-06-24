@@ -61,6 +61,76 @@ export async function sendBlogDraftNotification(opts: {
   });
 }
 
+export async function sendProcessingCertificate(opts: {
+  toEmail: string;
+  clientName: string;
+  clientCompany: string;
+  certRef: string;
+  issuedDate: string;
+  services: string;
+}): Promise<void> {
+  const { toEmail, clientName, clientCompany, certRef, issuedDate, services } = opts;
+  const transporter = getTransporter();
+  await transporter.sendMail({
+    from: fromAddress(),
+    to: toEmail,
+    subject: `Data Processing Certificate — ${certRef}`,
+    html: `
+<div style="font-family: Georgia, 'Times New Roman', serif; max-width: 680px; margin: 0 auto; padding: 40px 32px; border: 2px solid #10b981; border-radius: 4px;">
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="font-size: 22px; color: #10b981; margin: 0 0 4px 0; letter-spacing: 0.05em; text-transform: uppercase;">Data Processing Certificate</h1>
+    <p style="color: #6b7280; font-size: 13px; margin: 0;">Issued under GDPR Article 28 — Processor Compliance</p>
+  </div>
+
+  <table style="width: 100%; border-collapse: collapse; margin-bottom: 28px; font-size: 14px;">
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; width: 180px; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Certificate Reference</td>
+      <td style="padding: 10px 0; font-weight: 600; border-bottom: 1px solid #e5e7eb; font-family: monospace;">${certRef}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Date Issued</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">${issuedDate}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Data Controller</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">${clientName}${clientCompany ? ` (${clientCompany})` : ""}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Data Processor</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">
+        <strong>Miruna Cristiana Paun PFA</strong><br>
+        trading as Synaptica Knowledge Systems<br>
+        Intr. Gheorghe Simionescu, Nr. 19, Apt. B26, Sector 1, Bucharest, Romania<br>
+        CUI: 48304268 &nbsp;|&nbsp; EUID: ROONRC.F2023004336407
+      </td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Processing Activities</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">${services}</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top; border-bottom: 1px solid #e5e7eb;">Legal Basis</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #e5e7eb;">Contractual necessity (GDPR Art. 6(1)(b)); Data Processing Agreement</td>
+    </tr>
+    <tr>
+      <td style="padding: 10px 0; color: #6b7280; vertical-align: top;">Sub-processors</td>
+      <td style="padding: 10px 0;">OpenAI, L.L.C. (AI inference — text analysis and embeddings)</td>
+    </tr>
+  </table>
+
+  <div style="background: #f9fafb; border-radius: 4px; padding: 16px 20px; margin-bottom: 28px; font-size: 13px; color: #374151; line-height: 1.6;">
+    <p style="margin: 0 0 8px 0;">This certificate confirms that <strong>Miruna Cristiana Paun PFA</strong> (the Processor) has processed personal data and/or proprietary content on behalf of the Data Controller named above, in accordance with applicable data protection law, including Regulation (EU) 2016/679 (GDPR).</p>
+    <p style="margin: 0;">Processing was conducted solely for the purposes described above, under appropriate technical and organisational safeguards, and no data was retained beyond what was necessary for service delivery.</p>
+  </div>
+
+  <p style="font-size: 12px; color: #9ca3af; margin: 0; text-align: center;">
+    Miruna Cristiana Paun PFA &mdash; Synaptica Knowledge Systems &mdash; contact@synaptica.dev<br>
+    This certificate was issued automatically. For queries, reply to this email.
+  </p>
+</div>`,
+  });
+}
+
 export async function sendInquiryNotification(opts: {
   toEmail: string;
   name: string;

@@ -19,6 +19,7 @@ import { toolTesterRouter } from "./routes/tool-tester.js";
 import { webhookRouter } from "./routes/webhooks.js";
 import { demoRouter } from "./routes/demo.js";
 import { practiceRouter } from "./routes/practice.js";
+import { certificatesRouter } from "./routes/certificates.js";
 import { docscopeRouter } from "./routes/docscope.js";
 import { docforgeRouter } from "./routes/docforge.js";
 import { seoscopeRouter } from "./routes/seoscope.js";
@@ -120,6 +121,7 @@ app.use("/api/blog", blogRouter);
 app.use("/api/public", publicRouter);
 app.use("/api", demoRouter);
 app.use("/api", practiceRouter);
+app.use("/api/certificates", certificatesRouter);
 
 app.get("/difflens", (_req, res) => {
   res.redirect(302, "https://diff-lens.replit.app/");
